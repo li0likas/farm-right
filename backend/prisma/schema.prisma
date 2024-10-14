@@ -44,5 +44,19 @@ model Field {
   crop      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  tasks             Task[]
 }
+
+model Task {
+  id        Int      @id @default(autoincrement())
+  title     String
+  description String
+  status    String   // You might want to use an enum for statuses (e.g., 'pending', 'completed')
+  fieldId   Int
+  field     Field    @relation(fields: [fieldId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 
