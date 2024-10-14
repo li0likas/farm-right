@@ -30,9 +30,12 @@ export class FieldService {
     });
   }
 
-  async delete(id: number): Promise<Field> {
-    return this.prisma.field.delete({
-      where: { id },
-    });
-  }
+  async delete(id: number): Promise<Field | null> {
+    const field = await this.prisma.field.findUnique({ where: { id } });
+    if (!field) {
+      return null;
+    }
+    await this.prisma.field.delete({ where: { id } });
+    return field;
+  }  
 }
