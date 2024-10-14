@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 111farmright111
+      POSTGRES_DB: farm-right-db
+    ports:
+      - 5432:5432
+    networks:
+      - FARM-RIGHT
+networks:
+  FARM-RIGHT:
