@@ -7,10 +7,11 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { FieldModule } from './field/field.module';
 import { TaskModule } from './task/task.module';
+import { CommentModule } from './comment/comment.module';
  
 
 @Module({
-  imports: [ConfigModule.forRoot({isGlobal: true}), AuthModule, UserModule, PrismaModule, FieldModule, TaskModule],
+  imports: [ConfigModule.forRoot({isGlobal: true}), AuthModule, UserModule, PrismaModule, FieldModule, TaskModule, CommentModule],
   controllers: [],
   providers: [],
 })
