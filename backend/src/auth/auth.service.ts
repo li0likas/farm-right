@@ -46,16 +46,30 @@ export class AuthService {
 
     const hash = await argon.hash(dto.password);
     try {
+      const defaultRole = await this.prisma.role.findUnique({
+        where: { name: 'ADMIN' }, // default role is "ADMIN"  
+      });
+
+      if (!defaultRole) {
+        throw new ForbiddenException('Default role not found');
+      }
       const user = await this.prisma.user.create({
         data: {
           username: dto.name,
           email: dto.email,
           hash,
-          profile_picture: profileURL
+          profile_picture: profileURL,
+          roles: {
+            create: {
+              role: {
+                connect: { id: defaultRole.id }
+              }
+            }
+          }
         },
       });
 
-      return this.signToken(user.id, user.email)
+      return this.signToken(user.id, user.email);
     }
     catch (error) {
       if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
@@ -70,10 +84,41 @@ export class AuthService {
 
   }
 
+  // async signToken(userId: number, email: string): Promise<{ access_token: string }> {
+  //   const payload = {
+  //     sub: userId,
+  //     email
+  //   }
+  //   const secret = this.config.get('JWT_SECRET')
+
+  //   const token = await this.jwt.signAsync(payload, {
+  //     expiresIn: '60m',
+  //     secret: secret
+  //   })
+
+  //   return {
+  //     access_token: token,
+  //   }
+  // }
+
   async signToken(userId: number, email: string): Promise<{ access_token: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        roles: {
+          include: {
+            role: true
+          }
+        }
+      }
+    });
+  
+    const roles = user.roles.map(userRole => userRole.role.id);
+    
     const payload = {
       sub: userId,
-      email
+      email,
+      roles // including roles in the payload to be used in creating token
     }
     const secret = this.config.get('JWT_SECRET')
 
