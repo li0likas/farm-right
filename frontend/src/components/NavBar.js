@@ -34,7 +34,7 @@ const NavBar = () => {
       <div className="md:flex bg-white container justify-center items-center">
         <div className='text-black pt-4 pb-4 text-sm my-auto flex' >
           <Link to="/">
-            <img src={logo} className='h-6' alt="Logo" />
+            <img src={logo} className='h-12' alt="Logo" />
           </Link>
         </div>
         {(() => {

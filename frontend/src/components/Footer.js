@@ -3,12 +3,13 @@ import { useOutletContext, Link, Navigate } from "react-router-dom";
 
 const Footer = () => {
   return (
-    <div className='bg-[#61E9B1] border-b border-b-solid border-b-gray-100 drop-shadow py-1 z-10'>
+    <div className='bg-[#4CAF50] border-b border-b-solid border-b-gray-100 drop-shadow py-1 z-10'>
   <div className="container md:flex mx-auto pt-8">
     <div className='mx-auto md:max-w-80 px-3 pt-5 text-center'>
-      <p>Our mission is uniting people to achieve their goals together by doing physical activities. We expect our users to 
-        join groups, complete personal achievements, mutual challenges and goals, but, most importantly, 
-        motivate each other to become better every day.
+      <p>Our mission is to empower farmers and agronomists by providing innovative tools for seamless farm management.
+        We aim to bring together individuals, teams, and communities to collaborate, share knowledge, and achieve sustainable growth.
+        By simplifying farm operations, enhancing productivity, and supporting informed decision-making, we help our users grow smarter,
+        stronger, and more successful every day.
       </p>
     </div>
     <div className='mx-auto'>
@@ -25,11 +26,11 @@ const Footer = () => {
           Reviews
         </Link>
       </div>
-      <div className='pt-1 flex'>
+      {/* <div className='pt-1 flex'>
         <Link to="/mobile-app" className="text-black hover:text-white hover:text-decoration hover:underline mx-auto flex">
           Mobile app
         </Link>
-      </div>
+      </div> */}
     </div>
     <div className='mx-auto'>
       <div className='flex pt-5'>
