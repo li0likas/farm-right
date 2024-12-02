@@ -1,6 +1,8 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, Delete, NotFoundException, BadRequestException } from '@nestjs/common';
 import { FieldService } from './field.service';
+import { CommentService } from '../comment/comment.service';
 import { CreateFieldDto } from './dto/create-field.dto';
+import { CreateCommentDto } from '../comment/dto/create-comment.dto';
 import { FieldResponseDto } from './dto/field-response.dto';
 import { Field } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -8,7 +10,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @ApiTags('fields')
 @Controller('fields')
 export class FieldController {
-  constructor(private readonly fieldsService: FieldService) {}
+  constructor(private readonly fieldsService: FieldService,     private readonly commentService: CommentService, // Inject the CommentService
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new field' })
@@ -55,5 +58,58 @@ export class FieldController {
       throw new NotFoundException(`Field with id ${id} not found`);
     }
     return deletedField;
-  }  
+  }
+
+  // @Get(':id/tasks/:taskId/comments')
+  // async findAllCommentsForTask(@Param('fieldId') fieldId: string, @Param('taskId') taskId: string) {
+  //   const comments = await this.commentService.findAllByTaskIdAndFieldId(parseInt(fieldId), parseInt(taskId));
+  //   if (!comments.length) {
+  //     throw new NotFoundException(`No comments found for task ${taskId} in field ${fieldId}`);
+  //   }
+  //   return comments;
+  // }
+
+  @Get(':id/tasks/:taskId/comments')
+  async findAllCommentsForTask(
+    @Param('id') fieldId: string,
+    @Param('taskId') taskId: string
+  ) {
+    const parsedFieldId = parseInt(fieldId);
+    const parsedTaskId = parseInt(taskId);
+
+    // Validate that both IDs are valid numbers
+    if (isNaN(parsedFieldId) || isNaN(parsedTaskId)) {
+      throw new BadRequestException('Invalid fieldId or taskId provided.');
+    }
+
+    const comments = await this.commentService.findAllByTaskIdAndFieldId(parsedFieldId, parsedTaskId);
+
+    if (!comments.length) {
+      throw new NotFoundException(`No comments found for task ${taskId} in field ${fieldId}`);
+    }
+
+    return comments;
+  }
+
+
+  @Post(':id/tasks/:taskId/comments')
+  async createComment(
+    @Param('fieldId') fieldId: string,
+    @Param('taskId') taskId: string,
+    @Body() createCommentDto: CreateCommentDto,
+  ) {
+    return this.commentService.createCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), createCommentDto);
+  }
+
+  @Delete(':id/tasks/:taskId/comments')
+  async deleteComment(
+    @Param('fieldId') fieldId: string,
+    @Param('taskId') taskId: string,
+    @Param('commentId') commentId: string,
+  ) {
+    return this.commentService.deleteCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), parseInt(commentId));
+  }
+
 }
+
+

@@ -7,10 +7,13 @@ import { AuthModule } from '../auth/auth.module';
 import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "./strategy";
 import { UserService } from 'src/user/user.service';
+import { CommentModule } from 'src/comment/comment.module';
+import { CommentController } from 'src/comment/comment.controller';
+import { CommentService } from 'src/comment/comment.service';
 
 @Module({
-  imports: [JwtModule.register({}), AuthModule, /*MailModule*/],
-  controllers: [FieldController],
-  providers: [FieldService, PrismaService, JwtStrategy, UserService],
+  imports: [JwtModule.register({}), AuthModule, CommentModule /*MailModule*/],
+  controllers: [FieldController, CommentController],
+  providers: [FieldService, PrismaService, JwtStrategy, UserService, CommentService],
 })
 export class FieldModule {}

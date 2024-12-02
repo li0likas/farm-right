@@ -14,7 +14,11 @@ export class FieldService {
   }
 
   async findAll(): Promise<Field[]> {
-    return this.prisma.field.findMany();
+    return this.prisma.field.findMany({
+      include: {
+        crop: true,
+      },
+    });
   }
 
   async findOne(id: number): Promise<Field> {

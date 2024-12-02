@@ -7,13 +7,13 @@ export class CreateFieldDto {
 
   @IsNumber()
   @IsNotEmpty()
-  size: number;
+  area: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  location: string;
+  perimeter: number;
 
-  @IsString()
+  @IsNumber()
   @IsNotEmpty()
-  crop: string;
+  cropId: number;
 }

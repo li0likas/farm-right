@@ -33,30 +33,89 @@ model User {
   colourHex      String   @default("#000000")
   emoji          String   @default("")
 
+  roles          UserRole[]
+
   @@map("users")
+}
+
+model Role {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  users     UserRole[]
+  rights    RoleRight[]
+}
+
+model Permission {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  roleRights RoleRight[]
+}
+
+model UserRole {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  roleId    Int
+  user      User      @relation(fields: [userId], references: [id])
+  role      Role      @relation(fields: [roleId], references: [id])
+  @@unique([userId, roleId])
+}
+
+model RoleRight {
+  id           Int       @id @default(autoincrement())
+  roleId       Int
+  permissionId Int
+  role         Role      @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  @@unique([roleId, permissionId])
 }
 
 model Field {
   id        Int     @id @default(autoincrement())
   name      String
-  size      Float
-  location  String
-  crop      String
+  area      Float
+  perimeter Float
+  cropId    Int
+  crop      FieldCropOptions @relation(fields: [cropId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks             Task[]
+  tasks     Task[]
 }
 
 model Task {
   id        Int      @id @default(autoincrement())
-  title     String
-  description String
-  status    String   // You might want to use an enum for statuses (e.g., 'pending', 'completed')
+  typeId    Int
+  type      TaskTypeOptions @relation(fields: [typeId], references: [id])
+  description String?
+  dueDate   DateTime?
+  completionDate DateTime?
+  status    String?
   fieldId   Int
-  field     Field    @relation(fields: [fieldId], references: [id])
+  field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  comments  Comment[]
 }
 
+model Comment {
+  id        Int       @id @default(autoincrement())
+  content   String
+  createdAt DateTime  @default(now())
+  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    Int       // Foreign key to Task
+}
 
+model FieldCropOptions {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  fields Field[] 
+}
+
+model TaskTypeOptions {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  tasks Task[]
+}

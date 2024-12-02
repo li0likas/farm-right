@@ -14,10 +14,10 @@ const Footer = () => {
             aria-controls="panel1-content"
             id="panel1-header"
           >
-            <b>What can I do on StrideMile?</b>
+            <b>What can I do on Farm Right?</b>
           </AccordionSummary>
           <AccordionDetails>
-            You can join groups, where people motivate each other to reach mutual goals and challenges, take part in events. You can also complete individual achievements and track your health.
+            You can manage your farm, track crops, and collaborate with other farmers. The platform offers tools for efficient farm operations, including task management, weather tracking, and field analysis.
           </AccordionDetails>
         </Accordion>
         <Accordion className='py-3'>
@@ -29,7 +29,7 @@ const Footer = () => {
             <b>Is the platform free to use?</b>
           </AccordionSummary>
           <AccordionDetails>
-            Yes, at the moment there are no hidden costs.
+            Yes, Farm Right is free to use with no hidden costs.
           </AccordionDetails>
         </Accordion>
         <Accordion className='py-3'>
@@ -38,10 +38,10 @@ const Footer = () => {
             aria-controls="panel2-content"
             id="panel2-header"
           >
-            <b>Should I use the same account for website and mobile app?</b>
+            <b>Can I invite others to join my farm management group?</b>
           </AccordionSummary>
           <AccordionDetails>
-            Yes. StrideMile is cross-platform, therefore, users should use the same account on any device.
+            Yes, if you are the farm admin or have the necessary permissions, you can invite others to join your farm management group.
           </AccordionDetails>
         </Accordion>
         <Accordion className='py-3'>
@@ -50,22 +50,10 @@ const Footer = () => {
             aria-controls="panel2-content"
             id="panel2-header"
           >
-            <b>Can I invite my friends to the group I am a member of?</b>
+            <b>Why should I join the Farm Right community?</b>
           </AccordionSummary>
           <AccordionDetails>
-            If you are the mentor of the group, yes, you can. In other cases, you should contact your group mentor.
-          </AccordionDetails>
-        </Accordion>
-        <Accordion className='py-3'>
-          <AccordionSummary
-            expandIcon={<i className="fa-solid fa-chevron-down"></i>}
-            aria-controls="panel2-content"
-            id="panel2-header"
-          >
-            <b>Why should I join StrideMile community?</b>
-          </AccordionSummary>
-          <AccordionDetails>
-          To elevate your physical activity, find motivation, and enhance your health through engaging interactions with like-minded individuals.
+          To streamline farm management, collaborate with other farmers, and access powerful tools that help increase productivity and sustainability on your farm.
           </AccordionDetails>
         </Accordion>
         <Accordion className='py-3'>
@@ -74,14 +62,13 @@ const Footer = () => {
             aria-controls="panel1-content"
             id="panel1-header"
           >
-            <b>Who can create a group?</b>
+            <b>Who can create a farm management group?</b>
           </AccordionSummary>
           <AccordionDetails>
-            Any user with motivation to unite people in physical activity.
+            Any user who manages a farm or a team of farmers and wants to collaborate on farm-related tasks and operations.
           </AccordionDetails>
         </Accordion>
   </div>
-
   );
 };
 

@@ -15,8 +15,10 @@ import PasswordChange from "./views/PasswordChange";
 import Achievements from "./views/Achievements";
 import GroupPage from "./views/Group";
 import CreateGroup from "./views/CreateGroup";
+import CreateField from "./views/CreateField";
 import PageNotFound from "./views/PageNotFound";
 import Groups from "./views/Groups";
+import Fields from "./views/Fields";
 import GroupInvitation from "./views/GroupInvitation";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +38,7 @@ import AboutUs from "./views/AboutUs";
 import Shop from "./views/Shop";
 import CreateShopItem from "./views/CreateShopItem";
 import EditShopItem from "./views/EditShopItem";
-import AllPurchases from "./views/AllPurchases";
+import Tasks from "./views/Tasks";
 import ShopItem from "./views/ShopItem";
 import AllChats from "./views/AllChats";
 import Chat from "./views/Chat";
@@ -70,11 +72,13 @@ export default function App() {
         <Route path="/group/:groupId" element={<GroupPage />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/create-group" element={<CreateGroup />} />
+        <Route path="/create-field" element={<CreateField />} />
         <Route path="/edit-group/:groupId" element={<EditGroup />} />
         <Route path="/create-event/:groupId" element={<CreateEvent />} />
         <Route path="/create-goal/:groupId" element={<CreateGoal />} />
         <Route path="/create-challenge/:groupId" element={<CreateChallenge />} />
         <Route path="/groups" element={<Groups />} />
+        <Route path="/fields" element={<Fields />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/health-tracking" element={<HealthTracking />} />
         <Route path="/contact-us" element={<ContactUs />} />
@@ -85,7 +89,7 @@ export default function App() {
         <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/shop-item/:itemId" element={<ShopItem />} />
-        <Route path="/all-purchases" element={<AllPurchases />} />
+        <Route path="/tasks" element={<Tasks />} />
         <Route path="/create-shop-item" element={<CreateShopItem />} />
         <Route path="/edit-shop-item/:itemId" element={<EditShopItem />} />
         <Route path="/all-chats" element={<AllChats />} />

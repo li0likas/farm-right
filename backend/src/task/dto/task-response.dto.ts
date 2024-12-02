@@ -1,13 +1,21 @@
-import { IsNumber, IsString, IsNotEmpty, IsDate } from 'class-validator';
+import { IsString, IsNumber, IsDate, IsOptional } from 'class-validator';
 
 export class TaskResponseDto {
-    @IsNotEmpty()
-    @IsString()
-    title: string;
+    @IsNumber()
+    typeId: number;
   
     @IsString()
     description?: string;
+
+    @IsOptional()
+    @IsDate()
+    dueDate?: Date;
   
+    @IsOptional()
+    @IsDate()
+    completionDate?: Date;
+  
+    @IsOptional()
     @IsString()
-    status?: string; // You may want to use an enum instead of string
+    status: string;
 }

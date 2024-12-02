@@ -8,11 +8,11 @@ export class FieldResponseDto {
   name: string;
 
   @IsNumber()
-  size: number;
+  area: number;
 
-  @IsString()
-  location: string;
+  @IsNumber()
+  perimeter: number;
 
-  @IsString()
-  crop: string;
+  @IsNumber()
+  cropId: number;
 }

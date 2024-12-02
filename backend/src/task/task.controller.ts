@@ -1,9 +1,11 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, Delete, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TaskResponseDto } from './dto/task-response.dto';
+import { Prisma } from '@prisma/client';
+
 
 @ApiTags('tasks')
 @Controller('tasks')
@@ -41,15 +43,36 @@ export class TaskController {
     return this.taskService.update(parseInt(id), updateTaskDto);
   }
 
+  // @Delete(':id')
+  // @ApiOperation({ summary: 'Delete a task by id' })
+  // @ApiResponse({ status: 204, description: 'The task has been successfully deleted.' })
+  // @ApiResponse({ status: 404, description: 'Task not found.' })
+  // async delete(@Param('id') id: string): Promise<TaskResponseDto> {
+  //   const deletedTask = await this.taskService.delete(parseInt(id));
+  //   if (deletedTask == null) {
+  //     throw new NotFoundException(`Task with id ${id} not found`);
+  //   }
+  //   return deletedTask;
+  // }
+
+
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a task by id' })
   @ApiResponse({ status: 204, description: 'The task has been successfully deleted.' })
   @ApiResponse({ status: 404, description: 'Task not found.' })
+  @ApiResponse({ status: 422, description: 'Unprocessable Entity. Task has dependencies.' })
   async delete(@Param('id') id: string): Promise<TaskResponseDto> {
-    const deletedTask = await this.taskService.delete(parseInt(id));
-    if (deletedTask == null) {
-      throw new NotFoundException(`Task with id ${id} not found`);
+    try {
+      const deletedTask = await this.taskService.delete(parseInt(id));
+      if (!deletedTask) {
+        throw new NotFoundException(`Task with id ${id} not found`);
+      }
+      return deletedTask;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new UnprocessableEntityException('Task cannot be deleted as it has dependent records (e.g., comments).');
+      }
+      throw error;
     }
-    return deletedTask;
   }
 }
