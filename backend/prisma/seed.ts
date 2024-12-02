@@ -9,6 +9,7 @@ async function main() {
   await prisma.comment.deleteMany({});
   await prisma.task.deleteMany({});
   await prisma.field.deleteMany({});
+  await prisma.fieldCropOptions.deleteMany({});
   await prisma.userRole.deleteMany({});
   await prisma.user.deleteMany({});
   await prisma.roleRight.deleteMany({});
@@ -116,6 +117,31 @@ async function main() {
     });
   }
 
+  // Create field crop options
+  const fieldCropOptions = await prisma.fieldCropOptions.createMany({
+    data: [
+      { name: 'Corn' },
+      { name: 'Wheat' },
+      { name: 'Soybeans' },
+      { name: 'Rice' },
+      { name: 'Barley' },
+    ],
+    skipDuplicates: true,
+  });
+
+  // Create task type options
+  const taskTypeOptions = await prisma.taskTypeOptions.createMany({
+    data: [
+      { name: 'Plowing' },
+      { name: 'Seeding' },
+      { name: 'Fertilizing' },
+      { name: 'Spraying' },
+      { name: 'Harvesting' },
+      { name: 'Tillage' },
+    ],
+    skipDuplicates: true,
+  });  
+
   // Create users
   const adminPassword = await argon.hash('adminpassword');
   const farmerPassword = await argon.hash('farmerpassword');
@@ -221,73 +247,78 @@ async function main() {
   const field1 = await prisma.field.create({
     data: {
       name: 'North Field',
-      size: 50.5,
-      location: 'Northern Region',
-      crop: 'Wheat',
+      area: 50.5,
+      perimeter: 200.0,
+      cropId: 1,
     },
   });
 
   const field2 = await prisma.field.create({
     data: {
       name: 'East Field',
-      size: 80.0,
-      location: 'Eastern Hills',
-      crop: 'Corn',
+      area: 80.0,
+      perimeter: 300.0,
+      cropId: 2,
     },
   });
 
   const field3 = await prisma.field.create({
     data: {
       name: 'West Field',
-      size: 45.0,
-      location: 'Western Plains',
-      crop: 'Barley',
+      area: 45.0,
+      perimeter: 180.0,
+      cropId: 3,
     },
   });
 
   // Create field tasks
   const fieldTask1 = await prisma.task.create({
     data: {
-        title: 'Plowing',
+        typeId: 1,
         description: 'Plowing the field in preparation for planting.',
-        status: 'Pending',
+        status: 'Completed',
         fieldId: field1.id,
+        completionDate: new Date('2024-11-15'),
       }
   });
 
   const fieldTask2 = await prisma.task.create({
     data: {
-        title: 'Fertilizing',
+        typeId: 3,
         description: 'Applying nitrogen fertilizer to boost crop growth.',
-        status: 'In Progress',
+        status: 'Completed',
         fieldId: field1.id,
+        completionDate: new Date('2024-10-10'),
       }
     });
     
   const fieldTask3 = await prisma.task.create({
     data: {   
-        title: 'Irrigation Setup',
-        description: 'Setting up irrigation system in the field.',
+        typeId: 2,
+        description: 'Seeding some wheat 200 kg/ha.',
         status: 'Completed',
         fieldId: field2.id,
+        completionDate: new Date('2024-11-15'),
       }
     });
     
   const fieldTask4 = await prisma.task.create({
     data: {
-      title: 'Weeding',
+      typeId: 4,
       description: 'Removing weeds from the field to prevent crop damage.',
       status: 'Pending',
       fieldId: field2.id,
+      dueDate: new Date('2025-03-01'),
     }
   })
 
   const fieldTask5 = await prisma.task.create({
     data: {
-      title: 'Harvesting',
+      typeId: 5,
       description: 'Harvesting crops from the field.',
       status: 'Pending',
       fieldId: field3.id,
+      dueDate: new Date('2025-09-01'),
     }   
   });
 

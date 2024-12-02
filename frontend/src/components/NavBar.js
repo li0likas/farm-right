@@ -34,7 +34,7 @@ const NavBar = () => {
       <div className="md:flex bg-white container justify-center items-center">
         <div className='text-black pt-4 pb-4 text-sm my-auto flex' >
           <Link to="/">
-            <img src={logo} className='h-12' alt="Logo" />
+            <img src={logo} className='h-6' alt="Logo" />
           </Link>
         </div>
         {(() => {
@@ -69,37 +69,9 @@ const NavBar = () => {
             </div>
           </div>
         </Link>
-        <Link to="/health-tracking" className="my-auto flex pl-2 text-medium hover:text-[#61E9B1]">
+        <Link to="/tasks" className="my-auto flex pl-2 text-medium hover:text-[#61E9B1]">
           <div className='flex ml-2 hover:border-b hover:border-b-solid hover:border-b-[#61E9B1]'>
-            <div className='pl-2 pr-2'>Health</div>
-          </div>
-        </Link>
-        <Link to="/achievements" className="my-auto flex pl-2 text-medium hover:text-[#61E9B1]">
-          <div className='flex ml-2 hover:border-b hover:border-b-solid hover:border-b-[#61E9B1]'>
-            <div className='pl-2 pr-2'>
-              Achievements
-            </div>
-          </div>
-        </Link>
-        <Link to="/leaderboard" className="my-auto flex pl-2 text-medium hover:text-[#61E9B1]">
-          <div className='flex ml-2 hover:border-b hover:border-b-solid hover:border-b-[#61E9B1]'>
-            <div className='pl-2 pr-2'>
-              Leaderboard
-            </div>
-          </div>
-        </Link>
-        <Link to="/shop" className="pl-2 text-medium my-auto flex hover:text-[#61E9B1]">
-          <div className='flex ml-2 hover:border-b hover:border-b-solid hover:border-b-[#61E9B1]'>
-            <div className='pl-2 pr-2'>
-              Shop
-            </div>
-          </div>
-        </Link>
-        <Link to="/all-chats" className="pl-2 text-medium my-auto flex hover:text-[#61E9B1]">
-          <div className='flex ml-2 hover:border-b hover:border-b-solid hover:border-b-[#61E9B1]'>
-            <div className='pl-2 pr-2'>
-              Chats
-            </div>
+            <div className='pl-2 pr-2'>Tasks</div>
           </div>
         </Link>
         <Link to="/about-us" className="pl-2 pr-4 text-medium my-auto flex hover:text-[#61E9B1]">

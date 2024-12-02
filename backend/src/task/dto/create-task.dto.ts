@@ -1,16 +1,24 @@
-import { IsNotEmpty, IsString, IsNumber } from 'class-validator';
+import { IsNumber, IsDate, IsString, IsOptional } from 'class-validator';
 
 export class CreateTaskDto {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
+  @IsNumber()
+  typeId: number;
 
   @IsString()
   description?: string;
 
+  @IsOptional()
+  @IsDate()
+  dueDate?: Date;
+
+  @IsOptional()
+  @IsDate()
+  completionDate?: Date;
+
+  @IsOptional()
   @IsString()
-  status?: string; // You may want to use an enum instead of string
+  status: string;
 
   @IsNumber()
-  fieldId: number; // This will be used to associate the Task with a Field
+  fieldId: number;
 }

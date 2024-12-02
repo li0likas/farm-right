@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service'; // Adjust the import path based on your project structure
+import { PrismaService } from '../prisma/prisma.service';
 import { Task } from '@prisma/client';
 import { CreateTaskDto } from './dto/create-task.dto';
 
@@ -7,8 +7,8 @@ import { CreateTaskDto } from './dto/create-task.dto';
 export class TaskService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createTaskDto: CreateTaskDto): Promise<Task> {
-    const { fieldId, ...taskData } = createTaskDto;
+  async create(data: CreateTaskDto): Promise<Task> {
+    const { fieldId, typeId, description, dueDate, completionDate, status } = data;
 
     const fieldExists = await this.prisma.field.findUnique({
       where: { id: fieldId },
@@ -20,21 +20,34 @@ export class TaskService {
 
     return this.prisma.task.create({
       data: {
-        title: taskData.title,
-        description: taskData.description,
-        status: taskData.status,
-        field: { connect: { id: fieldId } }, 
+        description,
+        dueDate,
+        completionDate,
+        status,
+        field: { connect: { id: fieldId } },
+        type: { connect: { id: typeId } },
       },
     });
   }
 
   async findAll(): Promise<Task[]> {
-    return this.prisma.task.findMany();
+    return this.prisma.task.findMany({
+      include: {
+        field: true,
+        type: true,
+        comments: true,
+      },
+    });
   }
 
   async findOne(id: number): Promise<Task> {
     const task = await this.prisma.task.findUnique({
       where: { id },
+      include: {
+        field: true,
+        type: true,
+        comments: true,
+      },
     });
     if (!task) {
       throw new NotFoundException(`Task with id ${id} not found`);
