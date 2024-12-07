@@ -114,7 +114,7 @@ export default () => {
             <hr className="ml-6 mr-6 mt-4 mb-4" ></hr>
             <p className="text-sm">{item.price} points</p>
             <div className="bg-gray-200 rounded-full h-1 ml-6 mr-6 mb-4 dark:bg-gray-700 mt-6">
-                <div className="bg-[#61E9B1] h-1 rounded-full dark:bg-blue-500" style={{ width: `${item.progress}%` }}></div>
+                <div className="bg-[#388E3C] h-1 rounded-full dark:bg-blue-500" style={{ width: `${item.progress}%` }}></div>
             </div>
             <p className="text-sm">
                 
@@ -127,7 +127,7 @@ export default () => {
             </p>
             <hr className="ml-6 mr-6 mt-4 mb-2" ></hr>
             <div className="flex mx-auto">
-                <button onClick={() => buy(item.id, item.price, points)} className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-2 md:ml-[73px] text-sm border border-solid border-[#61E9B1] flex">
+                <button onClick={() => buy(item.id, item.price, points)} className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-2 md:ml-[73px] text-sm border border-solid border-[#61E9B1] flex">
                     Buy item
                 </button>
             </div>
@@ -157,7 +157,7 @@ export default () => {
                         </div>
                 ))}
                 <div className="pt-6 pb-4">
-                    <Link to="/all-purchases" className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[58px] text-sm border border-solid border-[#61E9B1]">
+                    <Link to="/all-purchases" className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[58px] text-sm border border-solid border-[#61E9B1]">
                         View all purchases
                     </Link>
                 </div>
@@ -165,7 +165,7 @@ export default () => {
             <div className="border border-solid border-[#61E9B1] mr-6 mt-5 rounded-lg p-3 text-center">
                 <p className="font-semibold pb-6">Shop item management</p>
                 <div className="text-center mb-4">
-                    <Link to="/create-shop-item" className="text-center bg-[#61E9B1] mt-12 border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[25px] text-sm border border-solid border-[#61E9B1]">
+                    <Link to="/create-shop-item" className="text-center bg-[#388E3C] mt-12 border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[25px] text-sm border border-solid border-[#61E9B1]">
                         Create a shop item
                     </Link>
                 </div>

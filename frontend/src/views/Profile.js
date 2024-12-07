@@ -88,7 +88,7 @@ const Profile = (props) => {
         <div className='text-2xl font-semibold ml-10 text-center' style={{ color: '#000000' }}>username</div>
         <div className='ml-auto'>
           {(getUser().username === username) ?
-            <Link to="/create-group" className="w-full mb-3 p-3 mt-2 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1] mr-2 whitespace-nowrap">
+            <Link to="/create-group" className="w-full mb-3 p-3 mt-2 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1] mr-2 whitespace-nowrap">
               <i className="fa-solid fa-user-pen"></i> Edit
             </Link>
             : null}
@@ -218,7 +218,7 @@ const Profile = (props) => {
                     <p className='ml-auto'>100</p>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 dark:bg-gray-700">
-                    <div className="bg-[#61E9B1] h-1.5 rounded-full" style={{ width: "15%" }}></div>
+                    <div className="bg-[#388E3C] h-1.5 rounded-full" style={{ width: "15%" }}></div>
                   </div>
 
                   <div className='flex text-xs text-gray-400'>
@@ -259,7 +259,7 @@ const Profile = (props) => {
                     <h2 className="font-semibold">hey</h2>
                     <p className="text-sm">desc</p>
                     <div className="bg-gray-200 rounded-full h-1 ml-6 mr-6 mb-4 dark:bg-gray-700 mt-6">
-                      <div className="bg-[#61E9B1] h-1 rounded-full dark:bg-blue-500" style={{ width: `100%` }}></div>
+                      <div className="bg-[#388E3C] h-1 rounded-full dark:bg-blue-500" style={{ width: `100%` }}></div>
                     </div>
                     <div className="text-[#61E9B1]">100%</div>
                     <hr className="ml-6 mr-6 mt-4 mb-4" />

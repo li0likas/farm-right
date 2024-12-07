@@ -118,7 +118,7 @@ export default () => {
 
         {allChats.filter(chat => chat).sort((a, b) => getTimeDifference(b.createdAt) - getTimeDifference(a.createdAt)).map((chat, index) => (
           <Link key={index} to={`/chats/${chat.senderId !== currentUser ? chat.senderId : chat.receiverId}`}>
-            <div className="mb-3 flex hover:bg-[#61E9B1] border border-solid border-[#61E9B1] rounded-lg">
+            <div className="mb-3 flex hover:bg-[#388E3C] border border-solid border-[#61E9B1] rounded-lg">
               <div className="m-3">
                 <img src={chat.senderData.profile_picture} alt="photo" height={100} width={100} />
               </div>
@@ -134,7 +134,7 @@ export default () => {
         <hr className="my-9 mt-9" />
 
         <Link to="/create-message">
-          <button className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+          <button className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
             <i class="fa-solid fa-message"></i> Create a new message
           </button>
         </Link>

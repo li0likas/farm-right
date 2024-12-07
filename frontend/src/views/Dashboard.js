@@ -481,7 +481,7 @@ export default () => {
                       <p className='ml-auto'>100</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 dark:bg-gray-700">
-                      <div className="bg-[#61E9B1] h-1.5 rounded-full" style={{ width: "15%" }}></div>
+                      <div className="bg-[#388E3C] h-1.5 rounded-full" style={{ width: "15%" }}></div>
                     </div>
                   </div>
                 </div>
@@ -515,7 +515,7 @@ export default () => {
                       <p className='ml-auto'>100</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 dark:bg-gray-700">
-                      <div className="bg-[#61E9B1] h-1.5 rounded-full" style={{ width: "15%" }}></div>
+                      <div className="bg-[#388E3C] h-1.5 rounded-full" style={{ width: "15%" }}></div>
                     </div>
 
                     <div className='flex text-xs text-gray-400'>

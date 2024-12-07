@@ -515,7 +515,7 @@ const InviteForm = () => {
                       <p className='ml-auto'>100</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 dark:bg-gray-700">
-                      <div className="bg-[#61E9B1] h-1.5 rounded-full" style={{ width: "15%" }}></div>
+                      <div className="bg-[#388E3C] h-1.5 rounded-full" style={{ width: "15%" }}></div>
                     </div>
                   </div>
                 </div>
@@ -547,7 +547,7 @@ const InviteForm = () => {
                       <p className='ml-auto'>100</p>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4 dark:bg-gray-700">
-                      <div className="bg-[#61E9B1] h-1.5 rounded-full" style={{ width: "15%" }}></div>
+                      <div className="bg-[#388E3C] h-1.5 rounded-full" style={{ width: "15%" }}></div>
                     </div>
 
                     <div className='flex text-xs text-gray-400'>
@@ -572,19 +572,19 @@ const InviteForm = () => {
             {groupInfo.mentorId == getUser().id ?
               <div className='mb-6 outline outline-2 outline-offset-8 outline-[#88e0ea] rounded-xl'>
                 <p className='mb-4 text-black font-bold'>Group management</p>
-                <Link to={`/create-challenge/${groupId}`} className='mb-2 p-4 bg-[#61E9B1] hover:bg-[#4edba1] rounded-xl block'>
+                <Link to={`/create-challenge/${groupId}`} className='mb-2 p-4 bg-[#388E3C] hover:bg-[#4edba1] rounded-xl block'>
                   <i className="fa-solid fa-person-walking mr-2"></i> Create challenge
                 </Link>
 
-                <Link to={`/create-goal/${groupId}`} className='mb-2 p-4 bg-[#61E9B1] hover:bg-[#4edba1] rounded-xl block'>
+                <Link to={`/create-goal/${groupId}`} className='mb-2 p-4 bg-[#388E3C] hover:bg-[#4edba1] rounded-xl block'>
                   <i className="fa-solid fa-flag-checkered mr-2"></i> Create goal
                 </Link>
 
-                <Link to={`/create-event/${groupId}`} className='mb-2 p-4 bg-[#61E9B1] hover:bg-[#4edba1] rounded-xl block'>
+                <Link to={`/create-event/${groupId}`} className='mb-2 p-4 bg-[#388E3C] hover:bg-[#4edba1] rounded-xl block'>
                   <i className="fa-regular fa-calendar-plus mr-2"></i> Create event
                 </Link>
 
-                <Link to={`/edit-group/${groupId}`} className='mb-6 p-4 bg-[#61E9B1] hover:bg-[#4edba1] rounded-xl block'>
+                <Link to={`/edit-group/${groupId}`} className='mb-6 p-4 bg-[#388E3C] hover:bg-[#4edba1] rounded-xl block'>
                   <i className="fa-solid fa-pen-to-square mr-2"></i> Edit group
                 </Link>
 
@@ -599,7 +599,7 @@ const InviteForm = () => {
                   />
                   <button
                     type="submit"
-                    className='ml-2 p-4 bg-[#61E9B1] hover:bg-[#4edba1] rounded-xl'
+                    className='ml-2 p-4 bg-[#388E3C] hover:bg-[#4edba1] rounded-xl'
                   >
                     Invite
                   </button>

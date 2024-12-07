@@ -117,7 +117,7 @@ export default () => {
             </div>
             <p className='mb-4 text-xl text-center font-semibold mt-12'>Write your review</p>
             <p className="pb-6 text-center">We are waiting for more reviews. Click the button below and contact us!</p>
-            <div className="flex"><Link to="/contact-us" className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black py-3 px-6 text-sm border border-solid border-[#61E9B1] mx-auto flex">
+            <div className="flex"><Link to="/contact-us" className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black py-3 px-6 text-sm border border-solid border-[#61E9B1] mx-auto flex">
               Contact us
               <i class="fa-solid fa-envelope pl-2 pt-1"></i>
             </Link></div>

@@ -86,10 +86,10 @@ const NavBar = () => {
             if (!isLoggedIn()) {
               return (
                 <div>
-                  <Link to="/login" className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-2 text-sm md:ml-2 border border-solid border-[#61E9B1]">
+                  <Link to="/login" className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-2 text-sm md:ml-2 border border-solid border-[#61E9B1]">
                     Log in
                   </Link>
-                  <Link to="/register" className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
+                  <Link to="/register" className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
                     Register
                   </Link>
                 </div>

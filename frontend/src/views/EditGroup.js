@@ -123,7 +123,7 @@ export default () => {
 
         <div className="mb-3">
           <div className="text-base mb-2">Group image</div>
-          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#61E9B1] w-full hover:border-[#61E9B1] overflow-hidden">
+          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#388E3C] w-full hover:border-[#61E9B1] overflow-hidden">
             <label for="uploadcover" className="block whitespace-nowrap w-full overflow-hidden cursor-pointer">{!imageGroupFile ? 'Select image...' : '🖼️ Image selected'}</label>
             <input type="file" className="w-full" id="uploadcover" accept="image/*" onChange={(e) => setImageGroupFile(e.target.files[0])} hidden/>
           </div>
@@ -132,7 +132,7 @@ export default () => {
         
         <div className="">
           <div className="text-base mb-2">Group banner</div>
-          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#61E9B1] w-full hover:border-[#61E9B1] overflow-hidden">
+          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#388E3C] w-full hover:border-[#61E9B1] overflow-hidden">
             <label for="uploadbanner" className="block whitespace-nowrap w-full overflow-hidden cursor-pointer">{!imageBannerFile ? 'Select banner...' : '🖼️ Banner selected'}</label>
             <input type="file" id="uploadbanner" accept="image/*" onChange={(e) => setImageBannerFile(e.target.files[0])} hidden/>
           </div>
@@ -141,7 +141,7 @@ export default () => {
 
         <hr className="my-9 mt-12" />
 
-        <button onClick={editGroup} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+        <button onClick={editGroup} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
         <i className="fa-solid fa-people-group"></i> Edit a group
         </button>
       </div>

@@ -98,7 +98,7 @@ export default () => {
 
       <div className="mb-3">
         <div className="text-base mb-2">Profile image</div>
-        <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#61E9B1] w-full hover:border-[#61E9B1] overflow-hidden">
+        <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#388E3C] w-full hover:border-[#61E9B1] overflow-hidden">
           <label htmlFor="uploadbanner" className="block text-gray-400 whitespace-nowrap w-full overflow-hidden cursor-pointer">{!profileImage ? 'Select image (optional)...' : '🖼️ Image selected'}</label>
           <input type="file" id="uploadbanner" accept="image/*" onChange={(e) => setProfileImage(e.target.files[0])} hidden/>
         </div>
@@ -107,7 +107,7 @@ export default () => {
 
       <hr className="my-6" />
 
-      <button onClick={submit} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+      <button onClick={submit} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
         <i className="fa-solid fa-key"></i> Create an account
       </button>
 

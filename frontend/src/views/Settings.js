@@ -259,7 +259,7 @@ export default function Settings() {
 
                   <hr className="my-6" />
 
-                  <button onClick={submitPassword} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+                  <button onClick={submitPassword} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
                     <i className="fa-solid fa-key"></i> Change a password
                   </button>
                 </div>
@@ -286,7 +286,7 @@ export default function Settings() {
 
                   <hr className="my-6" />
 
-                  <button onClick={submitName} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+                  <button onClick={submitName} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
                     <i className="fa-solid fa-signature"></i> Change a name
                   </button>
                 </div>
@@ -325,7 +325,7 @@ export default function Settings() {
 
                   <hr className="my-6" />
 
-                  <button onClick={submitCustomization} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+                  <button onClick={submitCustomization} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
                     <i className="fa-solid fa-signature"></i> Customization profile
                   </button>
                 </div>

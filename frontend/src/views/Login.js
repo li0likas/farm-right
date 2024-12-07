@@ -81,7 +81,7 @@ export default () => {
 
       <hr className="my-6" />
 
-      <button onClick={login} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+      <button onClick={login} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
         <i className="fa-solid fa-key"></i> Log in
       </button>
 

@@ -99,7 +99,7 @@ export default () => {
 
           <hr className="my-9 mt-12" />
 
-          <button onClick={createField} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+          <button onClick={createField} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
             <i className="fa-solid fa-seedling"></i> Create Field
           </button>
           <Link to="/fields" className="w-full mb-3 p-3 bg-gray-300 border-[1px] border-gray-300 rounded-lg hover:bg-gray-400 text-center block">

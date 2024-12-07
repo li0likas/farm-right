@@ -98,7 +98,7 @@ export default () => {
                         <div className="mt-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla viverra nisl dui, vel consectetur ipsum aliquam eu. Integer at nulla volutpat, imperdiet ante eu, tempus turpis. Fusce pharetra congue enim, a aliquet nisl efficitur sit amet. Sed maximus fermentum dolor ac aliquam. Curabitur placerat rhoncus facilisis.</div>
                         <div className="mt-5"><i className="fa-solid fa-layer-group"></i> type</div>
                         <div className="mt-10 text-lg">Price: 100 points</div>
-                        <button onClick={buy} className="mt-5 bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 text-sm border border-solid border-[#61E9B1] flex">
+                        <button onClick={buy} className="mt-5 bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 text-sm border border-solid border-[#61E9B1] flex">
                             Buy item
                         </button>
                     </div>

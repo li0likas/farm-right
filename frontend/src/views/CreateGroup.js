@@ -100,7 +100,7 @@ export default () => {
   
         <div className="mb-3">
           <div className="text-base mb-2">Group image</div>
-          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#61E9B1] w-full hover:border-[#61E9B1] overflow-hidden">
+          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#388E3C] w-full hover:border-[#61E9B1] overflow-hidden">
             <label htmlFor="uploadcover" className="block whitespace-nowrap w-full overflow-hidden cursor-pointer">{!imageGroupFile ? 'Select image...' : '🖼️ Image selected'}</label>
             <input type="file" className="w-full" id="uploadcover" accept="image/*" onChange={(e) => setImageGroupFile(e.target.files[0])} hidden/>
           </div>
@@ -109,7 +109,7 @@ export default () => {
 
         <div className="">
           <div className="text-base mb-2">Group banner</div>
-          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#61E9B1] w-full hover:border-[#61E9B1] overflow-hidden">
+          <div className="block hover:bg-white text-base text-black border-gray-400 border border-solid rounded-lg pl-3 py-3 hover:bg-[#388E3C] w-full hover:border-[#61E9B1] overflow-hidden">
             <label htmlFor="uploadbanner" className="block whitespace-nowrap w-full overflow-hidden cursor-pointer">{!imageBannerFile ? 'Select banner...' : '🖼️ Banner selected'}</label>
             <input type="file" id="uploadbanner" accept="image/*" onChange={(e) => setImageBannerFile(e.target.files[0])} hidden/>
           </div>
@@ -118,7 +118,7 @@ export default () => {
 
         <hr className="my-9 mt-12" />
 
-        <button onClick={createGroup} className="w-full mb-3 p-3 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+        <button onClick={createGroup} className="w-full mb-3 p-3 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
         <i className="fa-solid fa-people-group"></i> Create a group
         </button>
       </div>
@@ -138,7 +138,7 @@ export default () => {
         <hr className="my-9 mt-12 mr-6" />
 
         <div className="pt-3 pb-4 text-right">
-          <Link to="/groups" className="bg-[#61E9B1] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[83px] text-sm border border-solid border-[#61E9B1]">
+          <Link to="/groups" className="bg-[#388E3C] border-[1px] border-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 md:m-6 md:ml-[83px] text-sm border border-solid border-[#61E9B1]">
             Back to groups
           </Link>
         </div>

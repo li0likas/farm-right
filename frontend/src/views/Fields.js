@@ -37,7 +37,7 @@ const Fields = () => {
     <div>
       {isLoggedIn() && (
         <div className="container bg-white pt-12 pb-8">
-          <div className="text-[#61E9B1]">
+          <div className="text-[#388E3C]">
             <h2 className="text-center text-2xl">Fields</h2>
           </div>
 
@@ -46,9 +46,9 @@ const Fields = () => {
               <p className="text-xl flex mx-auto font-semibold">My Fields</p>
             </div>
             <div className="ml-auto mt-4 sm:flex mr-6">
-              <Link to="/create-field" className="w-full mb-3 p-3 mt-2 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1] mr-2 whitespace-nowrap">Create Field</Link>
+              <Link to="/create-field" className="w-full mb-3 p-3 mt-2 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1] mr-2 whitespace-nowrap">Create Field</Link>
               <input value={fieldName} onChange={(e) => setFieldName(e.target.value)} placeholder="Type field's name" type="text" className="pl-2 rounded-lg bg-gray-50 border border-solid border-[#61E9B1] mr-2 h-12 mt-2" />
-              <button className="w-full mb-3 p-3 mt-2 bg-[#61E9B1] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
+              <button className="w-full mb-3 p-3 mt-2 bg-[#388E3C] border-[1px] border-[#61E9B1] rounded-lg hover:bg-[#4edba1]">
                 <i className="fa-solid fa-magnifying-glass"></i> Search
               </button>
             </div>
@@ -67,7 +67,7 @@ const Fields = () => {
                     <p className="text-sm">Perimeter: {field.perimeter} m</p>
                     <p className="text-sm">Crop: {field.crop ? field.crop.name : 'N/A'}</p>
                     <hr className="ml-6 mr-6 mt-4 mb-6" />
-                    <Link to={`/field/${field.id}`} className="bg-[#61E9B1] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
+                    <Link to={`/field/${field.id}`} className="bg-[#388E3C] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
                       More information
                     </Link>
                     <p className="pb-3"></p>
