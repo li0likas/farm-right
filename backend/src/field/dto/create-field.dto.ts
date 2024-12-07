@@ -16,4 +16,7 @@ export class CreateFieldDto {
   @IsNumber()
   @IsNotEmpty()
   cropId: number;
+
+  @IsNumber()
+  ownerId: number;
 }

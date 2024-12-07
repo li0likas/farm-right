@@ -8,10 +8,11 @@ import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "../field/strategy";
 import { UserService } from 'src/user/user.service';
 import { TaskCronService } from 'src/cron/task-cron.service';
+import { CommentService } from 'src/comment/comment.service';
 
 @Module({
   controllers: [TaskController],
-  providers: [TaskService, PrismaService, JwtStrategy, UserService, TaskCronService],
+  providers: [TaskService, PrismaService, JwtStrategy, UserService, TaskCronService, CommentService],
 
 })
 export class TaskModule {}

@@ -1,16 +1,22 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, UseGuards, Request, Delete, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { TaskService } from './task.service';
+import { CommentService } from '../comment/comment.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { Task } from '@prisma/client';
+import { CreateCommentDto } from '../comment/dto/create-comment.dto';
+import { Task, Comment } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TaskResponseDto } from './dto/task-response.dto';
 import { Prisma } from '@prisma/client';
+import { AuthGuard } from '@nestjs/passport';
 
-
+@UseGuards(AuthGuard('jwt'))
 @ApiTags('tasks')
 @Controller('tasks')
 export class TaskController {
-  constructor(private readonly taskService: TaskService) {}
+  constructor(
+    private readonly taskService: TaskService,
+    private readonly commentService: CommentService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new task' })
@@ -43,7 +49,7 @@ export class TaskController {
     return this.taskService.update(parseInt(id), updateTaskDto);
   }
 
-  // @Delete(':id')
+    // @Delete(':id')
   // @ApiOperation({ summary: 'Delete a task by id' })
   // @ApiResponse({ status: 204, description: 'The task has been successfully deleted.' })
   // @ApiResponse({ status: 404, description: 'Task not found.' })
@@ -54,7 +60,6 @@ export class TaskController {
   //   }
   //   return deletedTask;
   // }
-
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a task by id' })
@@ -75,4 +80,29 @@ export class TaskController {
       throw error;
     }
   }
+
+  @Get(':id/comments')
+  @ApiOperation({ summary: 'Get all comments for a task' })
+  @ApiResponse({ status: 200, description: 'Comments retrieved successfully.' })
+  @ApiResponse({ status: 404, description: 'Task not found.' })
+  async findAllComments(@Param('id') taskId: string): Promise<Comment[]> {
+    return this.commentService.findAll(parseInt(taskId));
+  }
+
+  @Post(':id/comments')
+  @ApiOperation({ summary: 'Create a new comment for a task' })
+  @ApiResponse({ status: 201, description: 'Comment successfully created.' })
+  @ApiResponse({ status: 404, description: 'Task not found.' })
+  async createComment(@Param('id') taskId: string, @Body() createCommentDto: CreateCommentDto): Promise<Comment> {
+    createCommentDto.taskId = parseInt(taskId);
+    return this.commentService.create(createCommentDto); 
+  }
+
+  // @Delete(':id/comments/:commentId')
+  // @ApiOperation({ summary: 'Delete a comment for a task' })
+  // @ApiResponse({ status: 204, description: 'Comment successfully deleted.' })
+  // @ApiResponse({ status: 404, description: 'Comment not found.' })
+  // async deleteComment(@Param('id') taskId: string, @Param('commentId') commentId: string): Promise<void> {
+  //   await this.commentService.delete(parseInt(commentId));
+  // }
 }

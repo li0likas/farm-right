@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as argon from 'argon2';
+import { connect } from 'http2';
 
 const prisma = new PrismaClient();
 
@@ -143,17 +144,13 @@ async function main() {
   });  
 
   // Create users
-  const adminPassword = await argon.hash('adminpassword');
-  const farmerPassword = await argon.hash('farmerpassword');
-  const workerPassword = await argon.hash('workerpassword');
-  const agronomistPassword = await argon.hash('agronomistpassword');
 
   const adminUser = await prisma.user.create({
     data: {
       username: 'admin',
       email: 'admin@example.com',
-      password: adminPassword, // for me to remember :)
-      hash: adminPassword,
+      password: "gvidas123", // for me to remember :)
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -168,8 +165,8 @@ async function main() {
     data: {
       username: 'farmer',
       email: 'farmer@example.com',
-      password: farmerPassword,
-      hash: farmerPassword,
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -184,8 +181,8 @@ async function main() {
     data: {
       username: 'worker1',
       email: 'worker1@example.com',
-      password: workerPassword,
-      hash: workerPassword,
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -200,8 +197,8 @@ async function main() {
     data: {
       username: 'worker2',
       email: 'worker2@example.com',
-      password: workerPassword,
-      hash: workerPassword,
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -216,8 +213,8 @@ async function main() {
     data: {
       username: 'worker3',
       email: 'worker3@example.com',
-      password: workerPassword,
-      hash: workerPassword,
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -232,8 +229,8 @@ async function main() {
     data: {
       username: 'agronomist',
       email: 'agronomist@example.com',
-      password: agronomistPassword,
-      hash: agronomistPassword,
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
       roles: {
         create: {
           role: {
@@ -244,30 +241,56 @@ async function main() {
     }
   });
 
+  // my user
+  const myUser = await prisma.user.create({
+    data: {
+      username: 'gvidas',
+      email: 'gvidas@gmail.com',
+      password: "gvidas123",
+      hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
+      roles: {
+        create: {
+          role: {
+            connect: { id: farmerRole.id }
+          }
+        }
+      },
+      // fields: {
+      //   create: {
+      //     connect: { id: 1 }
+      //   }
+      // }
+    }
+  });
+
+  //Create fields
   const field1 = await prisma.field.create({
     data: {
-      name: 'North Field',
+      name: 'Prie tvenkinio',
       area: 50.5,
       perimeter: 200.0,
       cropId: 1,
+      ownerId: myUser.id,
     },
   });
 
   const field2 = await prisma.field.create({
     data: {
-      name: 'East Field',
+      name: 'Už dirbtuvių',
       area: 80.0,
       perimeter: 300.0,
       cropId: 2,
+      ownerId: myUser.id,
     },
   });
 
   const field3 = await prisma.field.create({
     data: {
-      name: 'West Field',
+      name: 'Prie Editos',
       area: 45.0,
       perimeter: 180.0,
       cropId: 3,
+      ownerId: farmerUser.id,
     },
   });
 
@@ -275,7 +298,7 @@ async function main() {
   const fieldTask1 = await prisma.task.create({
     data: {
         typeId: 1,
-        description: 'Plowing the field in preparation for planting.',
+        description: 'Reikia paruošti žemę sėjai ją suariant.',
         status: 'Completed',
         fieldId: field1.id,
         completionDate: new Date('2024-11-15'),
@@ -285,7 +308,7 @@ async function main() {
   const fieldTask2 = await prisma.task.create({
     data: {
         typeId: 3,
-        description: 'Applying nitrogen fertilizer to boost crop growth.',
+        description: 'Reikalinga išbarstyti azotines trąšas dėl geresnio derliaus.',
         status: 'Completed',
         fieldId: field1.id,
         completionDate: new Date('2024-10-10'),
@@ -295,7 +318,7 @@ async function main() {
   const fieldTask3 = await prisma.task.create({
     data: {   
         typeId: 2,
-        description: 'Seeding some wheat 200 kg/ha.',
+        description: 'Kviečių sėja 200 kg/ha.',
         status: 'Completed',
         fieldId: field2.id,
         completionDate: new Date('2024-11-15'),
@@ -305,7 +328,7 @@ async function main() {
   const fieldTask4 = await prisma.task.create({
     data: {
       typeId: 4,
-      description: 'Removing weeds from the field to prevent crop damage.',
+      description: 'Reikia nupurkšti piktžoles, kad neužgožtų pagrindinės kultūros.',
       status: 'Pending',
       fieldId: field2.id,
       dueDate: new Date('2025-03-01'),
@@ -315,8 +338,8 @@ async function main() {
   const fieldTask5 = await prisma.task.create({
     data: {
       typeId: 5,
-      description: 'Harvesting crops from the field.',
-      status: 'Pending',
+      description: 'Derliaus nuėmimas su javų kombainu.',
+      status: 'Canceled',
       fieldId: field3.id,
       dueDate: new Date('2025-09-01'),
     }   
@@ -326,23 +349,23 @@ async function main() {
 await prisma.comment.createMany({
   data: [
     {
-      content: 'Started planting corn.',
+      content: 'Buvo šlapia, išsivertė dideli luitai.',
       taskId: fieldTask1.id,
       createdAt: new Date(),
     },
     {
-      content: 'Corn planting is halfway done.',
+      content: 'Taip pat beariant kažkur pamečiau vieną kaltą.',
       taskId: fieldTask1.id,
       createdAt: new Date(),
     },
     {
-      content: 'Wheat harvesting started.',
+      content: 'Normą taikiausi 150 kg/ha, bet dėl barstyklės netikslumo išsibarstė 200 kg/ha.',
       taskId: fieldTask2.id,
       createdAt: new Date(),
     },
     {
-      content: 'Wheat harvesting is complete.',
-      taskId: fieldTask2.id,
+      content: 'Sėja pavyko puikiai, gylis gavosi apie 3-4 cm, drėgmės sočiai.',
+      taskId: fieldTask3.id,
       createdAt: new Date(),
     },
   ],

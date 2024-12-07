@@ -13,8 +13,11 @@ export class FieldService {
     });
   }
 
-  async findAll(): Promise<Field[]> {
+  async findAll(userId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
+      where: {
+           ownerId: userId,    
+      },
       include: {
         crop: true,
       },
@@ -41,5 +44,33 @@ export class FieldService {
     }
     await this.prisma.field.delete({ where: { id } });
     return field;
-  }  
+  }
+
+  async findCurrentUserFields(userId: number): Promise<Field[]> {
+    return this.prisma.field.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          //{ groupMembers: { some: { userId } } }
+        ]
+      },
+      // include: {
+      //   groupMembers: {
+      //     include: {
+      //       user: {
+      //         select: {
+      //           username: true,
+      //           colourHex: true
+      //         }
+      //       }
+      //     }
+      //   },
+      //   mentor: {
+      //     select: {
+      //       username: true
+      //     }
+      //   }
+      // }
+    });
+  }
 }

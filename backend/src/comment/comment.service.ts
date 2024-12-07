@@ -57,8 +57,7 @@ export class CommentService {
       });
     }
   
-    async createCommentForTaskAndField(fieldId: number, taskId: number, createCommentDto: CreateCommentDto) {
-
+    async createCommentForTaskAndField(fieldId: number, taskId: number, createCommentDto: CreateCommentDto): Promise<Comment> {
       const task = await this.prisma.task.findFirst({
         where: { id: taskId, fieldId },
       });
@@ -69,8 +68,8 @@ export class CommentService {
   
       return this.prisma.comment.create({
         data: {
-          taskId,
-          ...createCommentDto,
+          content: createCommentDto.content,
+          task: { connect: { id: taskId } },
         },
       });
     }

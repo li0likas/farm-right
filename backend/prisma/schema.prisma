@@ -34,6 +34,7 @@ model User {
   emoji          String   @default("")
 
   roles          UserRole[]
+  fields         Field[]
 
   @@map("users")
 }
@@ -78,6 +79,8 @@ model Field {
   crop      FieldCropOptions @relation(fields: [cropId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  ownerId   Int
+  owner     User         @relation(fields: [ownerId], references: [id])
 
   tasks     Task[]
 }

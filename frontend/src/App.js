@@ -14,6 +14,7 @@ import PasswordRecovery from "./views/PasswordRecovery";
 import PasswordChange from "./views/PasswordChange";
 import Achievements from "./views/Achievements";
 import GroupPage from "./views/Group";
+import FieldPage from "./views/Field";
 import CreateGroup from "./views/CreateGroup";
 import CreateField from "./views/CreateField";
 import PageNotFound from "./views/PageNotFound";
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/group/:groupId" element={<GroupPage />} />
+        <Route path="/fields/:fieldId" element={<FieldPage />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/create-group" element={<CreateGroup />} />
         <Route path="/create-field" element={<CreateField />} />

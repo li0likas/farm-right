@@ -25,8 +25,18 @@ const Fields = () => {
   }, [fieldName, fields]);
 
   const fetchFields = async () => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (!accessToken) {
+      // Not logged in
+      return;
+    }
+
     try {
-      const response = await axios.get('http://localhost:3333/fields');
+      const response = await axios.get('http://localhost:3333/fields', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
       setFields(response.data);
     } catch (error) {
       console.error('Error fetching fields:', error);
@@ -67,7 +77,7 @@ const Fields = () => {
                     <p className="text-sm">Perimeter: {field.perimeter} m</p>
                     <p className="text-sm">Crop: {field.crop ? field.crop.name : 'N/A'}</p>
                     <hr className="ml-6 mr-6 mt-4 mb-6" />
-                    <Link to={`/field/${field.id}`} className="bg-[#388E3C] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
+                    <Link to={`/fields/${field.id}`} className="bg-[#388E3C] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
                       More information
                     </Link>
                     <p className="pb-3"></p>
