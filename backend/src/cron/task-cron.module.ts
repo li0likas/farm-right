@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { TaskCronService } from './task-cron.service';
+// import { Module } from '@nestjs/common';
+// import { TaskCronService } from './task-cron.service';
 
-@Module({
-  providers: [TaskCronService],
-})
-export class CronModule {}
+// @Module({
+//   providers: [TaskCronService],
+// })
+// export class CronModule {}

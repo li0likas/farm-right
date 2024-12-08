@@ -1,6 +1,6 @@
 import '../styles/Home.css';
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useOutletContext } from "react-router-dom";
+import { useParams, Link, useOutletContext, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { getUser } from '../classes/User';
 import { AlertTypes } from '../styles/modules/AlertStyles';
@@ -10,6 +10,9 @@ import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import ProfileIcon from '../components/ProfileIcon';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const getMapsUrl = (loc) => {
   return `https://www.google.com/maps/place/${loc}/`
@@ -26,6 +29,7 @@ const InviteForm = () => {
   const [taskComments, setTaskComments] = useState([]);
   const [commentContent, setCommentContent] = useState('');
   const [challengeParticipants, setChallengeParticipants] = useState({});
+  const navigate = useNavigate();
 
   const [userLocations, setUserLocations] = useState([]);
 
@@ -150,9 +154,9 @@ const InviteForm = () => {
 
       setTasks(sortedTasks);
 
-      sortedTasks.forEach((task) => {
-        fetchTaskComments(task.id);
-      });
+      // sortedTasks.forEach((task) => {
+      //   fetchTaskComments(task.id);
+      // });
     } catch (error) {
       console.error('Error fetching tasks:', error);
     }
@@ -391,9 +395,28 @@ const InviteForm = () => {
     return null;
   };
 
+  const handleDeleteField = async () => {
+    const confirmDelete = window.confirm('Are you sure you want to delete this field?');
+    if (!confirmDelete) return;
+  
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.delete(`http://localhost:3333/fields/${fieldId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      navigate('/fields', { state: { showToast: true, toastMessage: 'Field deleted successfully' } });
+    } catch (error) {
+      console.error('Error deleting field:', error);
+      toast.error('Error deleting field');
+    }
+  };
+
   if (fieldInfo)
     return (
       <div className='container'>
+        <ToastContainer />
 
         <div className='relative mt-10 mb-20 h-32 w-full bg-gradient-to-b from-gray-100 to-gray-200 rounded-xl'>
           <img className='relative mb-20 h-32 w-full bg-gradient-to-b from-gray-100 to-gray-200 rounded-xl object-cover object-center' src={fieldInfo.banner_url} />
@@ -496,20 +519,20 @@ const InviteForm = () => {
                     </div>
                       <div className='ml-auto'>
                           <div className='text-[#4edba1] hover:text-[#61E9B1] flex items-center'>
-                          {task.status === 'Completed' ? (
+                          {task.status.name === 'Completed' ? (
                               <>
                               <i className='fa-solid fa-circle-check' style={{ color: 'green' }}></i>
-                              <span className='ml-2' style={{ color: 'green' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'green' }}>{task.status.name}</span>
                               </>
-                          ) : task.status === 'Pending' ? (
+                          ) : task.status.name === 'Pending' ? (
                               <>
                               <i className='fa-solid fa-hourglass-half' style={{ color: 'goldenrod' }}></i>
-                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status.name}</span>
                               </>
-                          ) : task.status === 'Canceled' ? (
+                          ) : task.status.name === 'Canceled' ? (
                               <>
                               <i className='fa-solid fa-ban' style={{ color: 'red' }}></i>
-                              <span className='ml-2' style={{ color: 'red' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'red' }}>{task.status.name}</span>
                               </>
                           ) : null}
                           </div>
@@ -746,7 +769,9 @@ const InviteForm = () => {
                 */}
               </div>
             </div>
-
+              <button onClick={handleDeleteField} className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2">
+                Delete Field
+              </button>
           </div>
         </div>
       </div>

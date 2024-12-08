@@ -89,10 +89,11 @@ model Task {
   id        Int      @id @default(autoincrement())
   typeId    Int
   type      TaskTypeOptions @relation(fields: [typeId], references: [id])
+  statusId  Int
+  status    TaskStatusOptions @relation(fields: [statusId], references: [id])
   description String?
   dueDate   DateTime?
   completionDate DateTime?
-  status    String?
   fieldId   Int
   field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -117,6 +118,13 @@ model FieldCropOptions {
 }
 
 model TaskTypeOptions {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  tasks Task[]
+}
+
+model TaskStatusOptions {
   id   Int    @id @default(autoincrement())
   name String
 

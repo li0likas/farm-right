@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client'
-import { taskMiddleware } from './prisma.middleware';
+//import { taskMiddleware } from './prisma.middleware';
 
 @Injectable()
 export class PrismaService extends PrismaClient{
@@ -14,6 +14,6 @@ export class PrismaService extends PrismaClient{
             },
         });
 
-        this.$use(taskMiddleware());
+        //this.$use(taskMiddleware());
     }
 }

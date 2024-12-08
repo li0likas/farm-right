@@ -15,7 +15,6 @@ export class TaskResponseDto {
     @IsDate()
     completionDate?: Date;
   
-    @IsOptional()
-    @IsString()
-    status: string;
+    @IsNumber()
+    statusId: number;
 }

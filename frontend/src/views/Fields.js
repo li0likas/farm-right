@@ -1,12 +1,21 @@
 import { useState, useEffect } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { isLoggedIn } from '../classes/Auth';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Fields = () => {
   const [fields, setFields] = useState([]);
   const [fieldName, setFieldName] = useState('');
   const [filteredFields, setFilteredFields] = useState([]);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.showToast) {
+      toast.success(location.state.toastMessage);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     fetchFields();
@@ -45,6 +54,7 @@ const Fields = () => {
 
   return isLoggedIn() ? (
     <div>
+      <ToastContainer />
       {isLoggedIn() && (
         <div className="container bg-white pt-12 pb-8">
           <div className="text-[#388E3C]">

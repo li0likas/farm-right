@@ -29,13 +29,13 @@ export default () => {
 
   const filteredTasks = tasks.filter(task => {
     if (activeTab === "upcoming") {
-      return task.status === "Pending";
+      return task.status.name === "Pending";
     }
     if (activeTab === "canceled") {
-      return task.status === "Canceled";   
+      return task.status.name === "Canceled";   
     }
     else {
-      return task.status === "Completed";
+      return task.status.name === "Completed";
     }
   });
 
@@ -70,6 +70,12 @@ export default () => {
           </button>
         </div>
 
+        <div className="w-full flex justify-end mb-6">
+          <Link to="/create-task" className="bg-[#388E3C] hover:bg-[#4edba1] text-white font-bold py-2 px-4 rounded-lg">
+            Create Task
+          </Link>
+        </div>
+
         {filteredTasks.length === 0 ? (
               <div className="text-center w-full">
                 <p>No tasks.</p>
@@ -86,7 +92,7 @@ export default () => {
                     <div className="max-w-64">
                       <h2 className="font-semibold pb-1">{task.title}</h2>
                       <p className="text-sm"><i className="fa-solid fa-layer-group"></i> Field: {task.field.name}</p>
-                      <p className="text-sm"><i className="fa-solid fa-check-circle"></i> Status: {task.status}</p>
+                      <p className="text-sm"><i className="fa-solid fa-check-circle"></i> Status: {task.status.name}</p>
                     </div>
                     <hr className="mt-4 mb-4 mx-8" />
                     <div>

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Put, UseGuards, Request, Delete, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, Patch, UseGuards, Request, Delete, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CommentService } from '../comment/comment.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -48,6 +48,14 @@ export class TaskController {
   @ApiResponse({ status: 404, description: 'Task not found.' })
   async update(@Param('id') id: string, @Body() updateTaskDto: Partial<CreateTaskDto>): Promise<TaskResponseDto> {
     return this.taskService.update(parseInt(id), updateTaskDto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Patch a task by id' })
+  @ApiResponse({ status: 200, description: 'The task has been successfully patched.' })
+  @ApiResponse({ status: 404, description: 'Task not found.' })
+  async changeTaskStatus(@Param('id') id: string, @Body('statusId') statusId: number) {
+    return this.taskService.changeTaskStatus(parseInt(id), statusId);
   }
 
     // @Delete(':id')

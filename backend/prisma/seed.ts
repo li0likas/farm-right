@@ -142,10 +142,19 @@ async function main() {
       { name: 'Skutimas' },
     ],
     skipDuplicates: true,
+  });
+
+    // Create task status options
+  const taskStatusOptions = await prisma.taskStatusOptions.createMany({
+    data: [
+      { name: 'Completed' },
+      { name: 'Pending' },
+      { name: 'Canceled' },
+    ],
+    skipDuplicates: true,
   });  
 
   // Create users
-
   const adminUser = await prisma.user.create({
     data: {
       username: 'admin',
@@ -300,7 +309,7 @@ async function main() {
     data: {
         typeId: 1,
         description: 'Reikia paruošti žemę sėjai ją suariant.',
-        status: 'Completed',
+        statusId: 1,
         fieldId: field1.id,
         completionDate: new Date('2024-11-15'),
       }
@@ -310,7 +319,7 @@ async function main() {
     data: {
         typeId: 3,
         description: 'Reikalinga išbarstyti azotines trąšas dėl geresnio derliaus.',
-        status: 'Completed',
+        statusId: 1,
         fieldId: field1.id,
         completionDate: new Date('2024-10-10'),
       }
@@ -320,7 +329,7 @@ async function main() {
     data: {   
         typeId: 2,
         description: 'Kviečių sėja 200 kg/ha.',
-        status: 'Completed',
+        statusId: 1,
         fieldId: field2.id,
         completionDate: new Date('2024-11-15'),
       }
@@ -330,7 +339,7 @@ async function main() {
     data: {
       typeId: 4,
       description: 'Reikia nupurkšti piktžoles, kad neužgožtų pagrindinės kultūros.',
-      status: 'Pending',
+      statusId: 2,
       fieldId: field2.id,
       dueDate: new Date('2025-03-01'),
     }
@@ -340,7 +349,7 @@ async function main() {
     data: {
       typeId: 5,
       description: 'Derliaus nuėmimas su javų kombainu.',
-      status: 'Canceled',
+      statusId: 3,
       fieldId: field3.id,
       dueDate: new Date('2025-09-01'),
     }   

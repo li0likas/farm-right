@@ -8,16 +8,13 @@ export class CreateTaskDto {
   description?: string;
 
   @IsOptional()
-  @IsDate()
   dueDate?: Date;
 
   @IsOptional()
-  @IsDate()
   completionDate?: Date;
 
-  @IsOptional()
-  @IsString()
-  status: string;
+  @IsNumber()
+  statusId: number;
 
   @IsNumber()
   fieldId: number;

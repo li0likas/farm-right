@@ -377,7 +377,7 @@ export default () => {
     return `${seconds} seconds`
   }
 
-  const completedTasksCount = tasks.filter(task => task.status === 'Completed').length;
+  const completedTasksCount = tasks.filter(task => task.status.name === 'Completed').length;
   const totalTasksCount = tasks.length;
   const completedPercentage = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
 
@@ -478,20 +478,20 @@ export default () => {
                     </div>
                       <div className='ml-auto'>
                           <div className='text-[#4edba1] hover:text-[#61E9B1] flex items-center'>
-                          {task.status === 'Completed' ? (
+                          {task.status.name === 'Completed' ? (
                               <>
                               <i className='fa-solid fa-circle-check' style={{ color: 'green' }}></i>
-                              <span className='ml-2' style={{ color: 'green' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'green' }}>{task.status.name}</span>
                               </>
-                          ) : task.status === 'Pending' ? (
+                          ) : task.status.name === 'Pending' ? (
                               <>
                               <i className='fa-solid fa-hourglass-half' style={{ color: 'goldenrod' }}></i>
-                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status.name}</span>
                               </>
-                          ) : task.status === 'Canceled' ? (
+                          ) : task.status.name === 'Canceled' ? (
                               <>
                               <i className='fa-solid fa-ban' style={{ color: 'red' }}></i>
-                              <span className='ml-2' style={{ color: 'red' }}>{task.status}</span>
+                              <span className='ml-2' style={{ color: 'red' }}>{task.status.name}</span>
                               </>
                           ) : null}
                           </div>

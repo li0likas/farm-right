@@ -126,12 +126,50 @@ const Task = () => {
     }
   };
 
+  const handleCancelTask = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.patch(
+        `http://localhost:3333/tasks/${taskId}`,
+        { statusId: 3 }, // Set task status to 3 (Canceled)
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      fetchTaskInfo();
+    } catch (error) {
+      console.error('Error canceling task:', error);
+      setAlert({ text: 'Error canceling task', type: AlertTypes.error });
+    }
+  };
+
+  const handleUncancelTask = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      await axios.patch(
+        `http://localhost:3333/tasks/${taskId}`,
+        { statusId: 2 }, // Set task status to 2 (Pending)
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      fetchTaskInfo();
+    } catch (error) {
+      console.error('Error uncanceling task:', error);
+      setAlert({ text: 'Error uncanceling task', type: AlertTypes.Error });
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>; // Show loading indicator
   }
 
   return (
-    <div className='container'>
+    <div className="container bg-white pt-12">
       <h1 className='text-2xl font-bold mb-4'>Task Details</h1>
       <div className='bg-gray-50 p-4 rounded-xl border border-gray-100'>
         <p className='mb-1 font-bold'>
@@ -181,6 +219,23 @@ const Task = () => {
               Participate
             </button>
           )}
+
+          {task.statusId === 2 && ( // Show the button only if the task status is 2 (Pending)
+              <button
+                className='bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2 ml-4'
+                onClick={handleCancelTask}
+              >
+                Cancel Task
+              </button>
+            )}
+            {task.statusId === 3 && ( // Show the button only if the task status is 3 (Canceled)
+              <button
+                className='bg-green-500 hover:bg-green-600 text-white font-bold py-1 px-3 rounded mt-2 ml-4'
+                onClick={handleUncancelTask}
+              >
+                Uncancel Task
+              </button>
+            )}
 
             <h3 className='my-2 text-sm font-bold'>Comments:</h3>
             {taskComments[task.id] && taskComments[task.id].map(comment => (
