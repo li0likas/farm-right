@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { isLoggedIn } from '../classes/Auth';
 
@@ -43,7 +43,7 @@ const Fields = () => {
     }
   };
 
-  return (
+  return isLoggedIn() ? (
     <div>
       {isLoggedIn() && (
         <div className="container bg-white pt-12 pb-8">
@@ -89,7 +89,9 @@ const Fields = () => {
         </div>
       )}
     </div>
-  );
+  ) : (
+    <Navigate to='/login' />
+  )
 };
 
 export default Fields;

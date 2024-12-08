@@ -10,11 +10,12 @@ import { TaskModule } from './task/task.module';
 import { CommentModule } from './comment/comment.module';
 import { FieldCropOptionsModule } from './field/fieldCropsOptions/fieldCropOptions.module';
 import { CronModule } from './cron/task-cron.module';
+import { TaskTypeOptionsModule } from './task/taskTypeOptions/taskTypeOptions.module';
  
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true}), AuthModule, UserModule, PrismaModule, FieldModule,
-    TaskModule, CommentModule, FieldCropOptionsModule, CronModule],
+    TaskModule, CommentModule, FieldCropOptionsModule, TaskTypeOptionsModule, CronModule],
   controllers: [],
   providers: [],
 })

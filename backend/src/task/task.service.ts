@@ -30,8 +30,13 @@ export class TaskService {
     });
   }
 
-  async findAll(): Promise<Task[]> {
+  async findAll(userId: number): Promise<Task[]> {
     return this.prisma.task.findMany({
+      where: {
+        field: {
+          ownerId: userId,
+        },
+      },
       include: {
         field: true,
         type: true,
@@ -93,12 +98,12 @@ export class TaskService {
     });
   }
 
-  // async updateTaskForField(fieldId: number, taskId: number, data: Partial<Task>): Promise<Task> {
-  //   return this.prisma.task.update({
-  //     where: { id: taskId, fieldId },
-  //     data,
-  //   });
-  // }
+  async updateTaskForField(fieldId: number, taskId: number, data: Partial<Task>): Promise<Task> {
+    return this.prisma.task.update({
+      where: { id: taskId, fieldId },
+      data,
+    });
+  }
 
   async deleteTaskForField(fieldId: number, taskId: number): Promise<Task | null> {
     const task = await this.prisma.task.findUnique({ where: { id: taskId, fieldId } });

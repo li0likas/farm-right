@@ -15,8 +15,10 @@ import PasswordChange from "./views/PasswordChange";
 import Achievements from "./views/Achievements";
 import GroupPage from "./views/Group";
 import FieldPage from "./views/Field";
+import TaskPage from "./views/Task";
 import CreateGroup from "./views/CreateGroup";
 import CreateField from "./views/CreateField";
+import CreateTask from "./views/CreateTask"; 
 import PageNotFound from "./views/PageNotFound";
 import Groups from "./views/Groups";
 import Fields from "./views/Fields";
@@ -72,9 +74,12 @@ export default function App() {
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/group/:groupId" element={<GroupPage />} />
         <Route path="/fields/:fieldId" element={<FieldPage />} />
+        <Route path="/tasks/:taskId" element={<TaskPage />} />
         <Route path="/achievements" element={<Achievements />} />
         <Route path="/create-group" element={<CreateGroup />} />
         <Route path="/create-field" element={<CreateField />} />
+        <Route path="/create-task/:fieldId" element={<CreateTask />} />
+        <Route path="/create-task" element={<CreateTask />} />
         <Route path="/edit-group/:groupId" element={<EditGroup />} />
         <Route path="/create-event/:groupId" element={<CreateEvent />} />
         <Route path="/create-goal/:groupId" element={<CreateGoal />} />

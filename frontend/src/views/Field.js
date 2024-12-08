@@ -102,7 +102,7 @@ const InviteForm = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        setGoals(response.data.goals);
+        setGoals(response.data);
       } catch (error) {
         console.error('Error fetching goals:', error);
       }
@@ -213,7 +213,7 @@ const InviteForm = () => {
       );
       setTaskComments(prevState => ({
         ...prevState,
-        [taskId]: [...(prevState[taskId] || []), response.data.comment],
+        [taskId]: [...(prevState[taskId] || []), response.data],
       }));
       setCommentContent('');
       fetchTasks();
@@ -405,103 +405,119 @@ const InviteForm = () => {
             <a className='text-[#4edba1] font-bold pb-2 border-b-4 border-[#4edba1]' href="#">Task timeline</a>
             <hr className='mb-3 mt-2' />
 
-            <div>
-              {tasks.map(task => (
-                <div key={task.id} className='flex mb-8 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
-                  <div className="w-24 h-24">
-                    <img className="w-full h-full object-cover rounded" src={require("../images/task.png")} alt="Task" />
-                  </div>
-                  <div className='mx-4 flex-1'>
-                    <div className='mb-1 flex text-xs text-gray-400'>
-                      <p>Task</p>
-                      <span className='mx-2'>|</span>
-                      {task.completionDate && (
-                        <>
-                          <p>{new Date(task.completionDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                          <span className='mx-2'>|</span>
-                        </>
-                      )}
-                      {task.dueDate && (
-                        <>
-                          <p>{new Date(task.dueDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
-                          <span className='mx-2'>|</span>
-                        </>
-                      )}
-                      <a href={getMapsUrl(task.location)} target="_blank" rel="noopener noreferrer" className='text-[#74cfda]'>
-                        <i className="fa-solid fa-location-dot"></i> {task.location}
-                      </a>
-                    </div>
-                    <p className='mb-1 font-bold'>{task.type.name}</p>
-                    <p className='mb-3 text-sm text-gray-500'>{task.description}</p>
-                    <div className='mt-4'>
-                      <div className='my-auto text-sm text-nowrap'>
-                        Participants:
-                        {task.participants && task.participants.map(participant => (
-                          <span key={participant.id} className='mx-2'>{participant.username} </span>
-                        ))} <i className="fa-solid fa-user-check text-gray-400"></i>
-                      </div>
-                      {task.isParticipating ? (
-                        <button
-                          className='bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2'
-                          onClick={() => handleTaskCancelParticipation(task.id)}
-                        >
-                          Cancel Participation
-                        </button>
-                      ) : (
-                        <button
-                          className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2'
-                          onClick={() => handleTaskParticipate(task.id)}
-                        >
-                          Participate
-                        </button>
-                      )}
-                      {/* <h3 className='my-2 text-sm font-bold'>Comments:</h3>
-                      {taskComments[task.id] && taskComments[task.id].map(comment => (
-                        <div key={comment.id} className='border border-gray-200 p-3 mb-2 rounded'>
-                          <p className='text-gray-600 mb-1'>{comment.content}</p>
-                          <p className='text-xs text-gray-400'>{new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })} {comment.createdBy && comment.createdBy.username && (<p>Created by: {comment.createdBy.username}</p>)}</p>
-                        </div>
-                      ))}
-                      <div className='mt-4'>
-                        <textarea
-                          className='w-full border border-gray-200 rounded p-2 mb-2 text-sm'
-                          placeholder='Write your comment here...'
-                          rows={3}
-                          value={commentContent}
-                          onChange={(e) => setCommentContent(e.target.value)}
-                        />
-                        <button
-                          className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded'
-                          onClick={() => handlePostComment(task.id)}
-                        >
-                          Post
-                        </button>
-                      </div> */}
-                    </div>
-                  </div>
-                    <div className='ml-auto'>
-                        <div className='text-[#4edba1] hover:text-[#61E9B1] flex items-center'>
-                        {task.status === 'Completed' ? (
-                            <>
-                            <i className='fa-solid fa-circle-check' style={{ color: 'green' }}></i>
-                            <span className='ml-2' style={{ color: 'green' }}>{task.status}</span>
-                            </>
-                        ) : task.status === 'Pending' ? (
-                            <>
-                            <i className='fa-solid fa-hourglass-half' style={{ color: 'goldenrod' }}></i>
-                            <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status}</span>
-                            </>
-                        ) : task.status === 'Canceled' ? (
-                            <>
-                            <i className='fa-solid fa-ban' style={{ color: 'red' }}></i>
-                            <span className='ml-2' style={{ color: 'red' }}>{task.status}</span>
-                            </>
-                        ) : null}
-                        </div>
-                    </div>
-                </div>
-              ))}
+            <div className="text-right mb-4">
+              <Link to={`/create-task/${fieldId}`} className='bg-[#388E3C] hover:bg-[#4edba1] text-white font-bold py-2 px-4 rounded'>
+                Create Task
+              </Link>
             </div>
+
+            {tasks.length === 0 ? (
+              <div className="text-center w-full">
+                <p>No tasks.</p>
+              </div>
+            ) : (
+              <div>
+                {tasks.map(task => (
+                  <div key={task.id} className='flex mb-8 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
+                    <div className="w-24 h-24">
+                      <img className="w-full h-full object-cover rounded" src={require("../images/task.png")} alt="Task" />
+                    </div>
+                    <div className='mx-4 flex-1'>
+                      <div className='mb-1 flex text-xs text-gray-400'>
+                        <p>Task</p>
+                        <span className='mx-2'>|</span>
+                        {task.completionDate && (
+                          <>
+                            <p>{new Date(task.completionDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                            <span className='mx-2'>|</span>
+                          </>
+                        )}
+                        {task.dueDate && (
+                          <>
+                            <p>{new Date(task.dueDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                            <span className='mx-2'>|</span>
+                          </>
+                        )}
+                        <a href={getMapsUrl(task.location)} target="_blank" rel="noopener noreferrer" className='text-[#74cfda]'>
+                          <i className="fa-solid fa-location-dot"></i> {task.location}
+                        </a>
+                      </div>
+                      <p className='mb-1 font-bold'>{task.type.name}</p>
+                      <p className='mb-3 text-sm text-gray-500'>{task.description}</p>
+                      <div className='mt-4'>
+                        <div className='my-auto text-sm text-nowrap'>
+                          Participants:
+                          {task.participants && task.participants.map(participant => (
+                            <span key={participant.id} className='mx-2'>{participant.username} </span>
+                          ))} <i className="fa-solid fa-user-check text-gray-400"></i>
+                        </div>
+                        {task.isParticipating ? (
+                          <button
+                            className='bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2'
+                            onClick={() => handleTaskCancelParticipation(task.id)}
+                          >
+                            Cancel Participation
+                          </button>
+                        ) : (
+                          <button
+                            className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2'
+                            onClick={() => handleTaskParticipate(task.id)}
+                          >
+                            Participate
+                          </button>
+                        )}
+
+                        <Link to={`/tasks/${task.id}`} className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2 ml-4'>
+                          View Task
+                        </Link>
+                        {/* <h3 className='my-2 text-sm font-bold'>Comments:</h3>
+                        {taskComments[task.id] && taskComments[task.id].map(comment => (
+                          <div key={comment.id} className='border border-gray-200 p-3 mb-2 rounded'>
+                            <p className='text-gray-600 mb-1'>{comment.content}</p>
+                            <p className='text-xs text-gray-400'>{new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })} {comment.createdBy && comment.createdBy.username && (<p>Created by: {comment.createdBy.username}</p>)}</p>
+                          </div>
+                        ))}
+                        <div className='mt-4'>
+                          <textarea
+                            className='w-full border border-gray-200 rounded p-2 mb-2 text-sm'
+                            placeholder='Write your comment here...'
+                            rows={3}
+                            value={commentContent}
+                            onChange={(e) => setCommentContent(e.target.value)}
+                          />
+                          <button
+                            className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded'
+                            onClick={() => handlePostComment(task.id)}
+                          >
+                            Post
+                          </button>
+                        </div> */}
+                      </div>
+                    </div>
+                      <div className='ml-auto'>
+                          <div className='text-[#4edba1] hover:text-[#61E9B1] flex items-center'>
+                          {task.status === 'Completed' ? (
+                              <>
+                              <i className='fa-solid fa-circle-check' style={{ color: 'green' }}></i>
+                              <span className='ml-2' style={{ color: 'green' }}>{task.status}</span>
+                              </>
+                          ) : task.status === 'Pending' ? (
+                              <>
+                              <i className='fa-solid fa-hourglass-half' style={{ color: 'goldenrod' }}></i>
+                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status}</span>
+                              </>
+                          ) : task.status === 'Canceled' ? (
+                              <>
+                              <i className='fa-solid fa-ban' style={{ color: 'red' }}></i>
+                              <span className='ml-2' style={{ color: 'red' }}>{task.status}</span>
+                              </>
+                          ) : null}
+                          </div>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* <div>
               {challenges.map(challenge => (

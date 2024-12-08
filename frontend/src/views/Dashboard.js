@@ -11,12 +11,13 @@ export default () => {
   const [monthlySteps, setMonthlySteps] = useState([]);
   const [dailySteps, setDailySteps] = useState();
   const [groupInfo, setGroupInfo] = useState('');
-  const [events, setEvents] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [challenges, setChallenges] = useState([]);
   const [goals, setGoals] = useState([]);
-  const [eventComments, setEventComments] = useState([]);
+  const [taskComments, setTaskComments] = useState([]);
   const [commentContent, setCommentContent] = useState('');
   const [challengeParticipants, setChallengeParticipants] = useState({});
+  const [totalFieldArea, setTotalFieldArea] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -64,10 +65,10 @@ export default () => {
       }
     };
 
-    fetchGroupInfo();
-    fetchEvents();
-    fetchChallenges();
-    fetchGoals();
+    //fetchGroupInfo();
+    fetchTasks();
+    //fetchChallenges();
+    //fetchGoals();
   }, [groupId]);
 
   const handleShowChallengeParticipants = async (challengeId) => {
@@ -82,29 +83,35 @@ export default () => {
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/groups/getAllGroupsEvents`, {
+      const response = await axios.get(`http://localhost:3333/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const eventsWithParticipation = await Promise.all(
-        response.data.events.map(async (event) => {
-          const isParticipating = await userIsParticipatingInEvent(event.id);
-          return { ...event, isParticipating };
-        })
-      );
+    //   const tasksWithParticipation = await Promise.all(
+    //     response.data.tasks.map(async (task) => {
+    //       const isParticipating = await userIsParticipatingInTask(task.id);
+    //       return { ...task, isParticipating };
+    //     })
+    //   );
 
-      setEvents(eventsWithParticipation);
+    const sortedTasks = response.data.sort((a, b) => {
+        const dateA = a.dueDate || a.completionDate;
+        const dateB = b.dueDate || b.completionDate;
+        return new Date(dateB) - new Date(dateA);
+      });
 
-      response.data.events.forEach((event) => {
-        fetchEventComments(event.id);
+      setTasks(sortedTasks);
+
+      sortedTasks.forEach((task) => {
+        fetchTaskComments(task.id);
       });
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error fetching tasks:', error);
     }
   };
 
@@ -132,51 +139,51 @@ export default () => {
     }
   };
 
-  const fetchEventComments = async (eventId) => {
+  const fetchTaskComments = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/groups/${eventId}/event-comments`, {
+      const response = await axios.get(`http://localhost:3333/tasks/${taskId}/comments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setEventComments(prevState => ({
+      setTaskComments(prevState => ({
         ...prevState,
-        [eventId]: response.data.comments,
+        [taskId]: response.data,
       }));
     } catch (error) {
-      console.error(`Error fetching comments for event ${eventId}:`, error);
+      console.error(`Error fetching comments for task ${taskId}:`, error);
     }
   };
 
-  const handlePostComment = async (eventId) => {
+  const handlePostComment = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${eventId}/post-comment`,
-        { content: commentContent },
+        `http://localhost:3333/tasks/${taskId}/comments`,
+        { taskId, content: commentContent },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-      setEventComments(prevState => ({
+      setTaskComments(prevState => ({
         ...prevState,
-        [eventId]: [...(prevState[eventId] || []), response.data.comment],
+        [taskId]: [...(prevState[taskId] || []), response.data.comment],
       }));
       setCommentContent('');
-      fetchEvents();
+      fetchTasks();
     } catch (error) {
       console.error('Error posting comment:', error);
     }
   };
 
-  const handleEventParticipate = async (eventId) => {
+  const handleTaskParticipate = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${eventId}/event-participate`,
+        `http://localhost:3333/groups/${taskId}/task-participate`,
         {},
         {
           headers: {
@@ -184,7 +191,7 @@ export default () => {
           },
         }
       );
-      fetchEvents();
+      fetchTasks();
     } catch (error) {
       console.error('Error participating:', error);
     }
@@ -209,11 +216,11 @@ export default () => {
     }
   };
 
-  const handleEventCancelParticipation = async (eventId) => {
+  const handleTaskCancelParticipation = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${eventId}/event-cancel-participation`,
+        `http://localhost:3333/groups/${taskId}/task-cancel-participation`,
         {},
         {
           headers: {
@@ -221,7 +228,7 @@ export default () => {
           },
         }
       );
-      fetchEvents();
+      fetchTasks();
     } catch (error) {
       console.error('Error canceling participation:', error);
     }
@@ -246,11 +253,11 @@ export default () => {
     }
   };
 
-  const userIsParticipatingInEvent = async (eventId) => {
+  const userIsParticipatingInTask = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${eventId}/user-event-participation`,
+        `http://localhost:3333/groups/${taskId}/user-task-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -264,11 +271,11 @@ export default () => {
     }
   };
 
-  const userIsParticipatingInChallenge = async (eventId) => {
+  const userIsParticipatingInChallenge = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${eventId}/user-challenge-participation`,
+        `http://localhost:3333/groups/${taskId}/user-challenge-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -330,6 +337,22 @@ export default () => {
       });
   }, []);
 
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+
+    axios.get('http://localhost:3333/fields', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+      .then(response => {
+        const totalArea = response.data.reduce((sum, field) => sum + field.area, 0);
+        setTotalFieldArea(totalArea);
+      })
+      .catch(error => {
+        console.error('Error fetching fields: ', error);
+      });
+  }, []);
 
   const getMapsUrl = (loc) => {
     return `https://www.google.com/maps/place/${loc}/`
@@ -354,91 +377,132 @@ export default () => {
     return `${seconds} seconds`
   }
 
-  const percentage = (points.userPoints / points.totalPoints) * 100;
+  const completedTasksCount = tasks.filter(task => task.status === 'Completed').length;
+  const totalTasksCount = tasks.length;
+  const completedPercentage = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
 
   return isLoggedIn() ? (
     <div className='container'>
 
       <div className='mt-10 flex'>
         <div className='w-full mr-6'>
-          <a className='text-[#4edba1] font-bold pb-2 border-b-4 border-[#4edba1]' href="#">Latest</a>
+          <a className='text-[#4edba1] font-bold pb-2 border-b-4 border-[#4edba1]' href="#">All tasks in the farm</a>
           <hr className='mb-3 mt-2' />
 
-          <div>
-            {events.map(event => (
-              <div key={event.id} className='flex mb-8 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
-                <div className="w-24 h-24">
-                  <img className="w-full h-full object-cover rounded" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Ludovic_and_Lauren_%288425515069%29.jpg/640px-Ludovic_and_Lauren_%288425515069%29.jpg" alt="Event" />
-                </div>
-                <div className='mx-4 flex-1'>
-                  <div className='mb-1 flex text-xs text-gray-400'>
-                    <p>Event</p>
-                    <span className='mx-2'>|</span>
-                    <p>{new Date(event.date).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
-                    <span className='mx-2'>|</span>
-                    <a href={getMapsUrl(event.location)} target="_blank" rel="noopener noreferrer" className='text-[#74cfda]'>
-                      <i className="fa-solid fa-location-dot"></i> {event.location}
-                    </a>
-                  </div>
-                  <p className='mb-1 font-bold'>{event.title}</p>
-                  <p className='mb-3 text-sm text-gray-500'>{event.description}</p>
-                  <div className='mt-4'>
-                    <div className='my-auto text-sm text-nowrap'>
-                      Participants:
-                      {event.participants && event.participants.map(participant => (
-                        <span key={participant.id} className='mx-2'>{participant.username} </span>
-                      ))} <i className="fa-solid fa-user-check text-gray-400"></i>
-                    </div>
-                    {event.isParticipating ? (
-                      <button
-                        className='bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2'
-                        onClick={() => handleEventCancelParticipation(event.id)}
-                      >
-                        Cancel Participation
-                      </button>
-                    ) : (
-                      <button
-                        className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2'
-                        onClick={() => handleEventParticipate(event.id)}
-                      >
-                        Participate
-                      </button>
-                    )}
-                    <h3 className='my-2 text-sm font-bold'>Comments:</h3>
-                    {eventComments[event.id] && eventComments[event.id].map(comment => (
-                      <div key={comment.id} className='border border-gray-200 p-3 mb-2 rounded'>
-                        <p className='text-gray-600 mb-1'>{comment.content}</p>
-                        <p className='text-xs text-gray-400'>{new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })} {comment.createdBy && comment.createdBy.username && (<p>Created by: {comment.createdBy.username}</p>)}</p>
-                      </div>
-                    ))}
-                    <div className='mt-4'>
-                      <textarea
-                        className='w-full border border-gray-200 rounded p-2 mb-2 text-sm'
-                        placeholder='Write your comment here...'
-                        rows={3}
-                        value={commentContent}
-                        onChange={(e) => setCommentContent(e.target.value)}
-                      />
-                      <button
-                        className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded'
-                        onClick={() => handlePostComment(event.id)}
-                      >
-                        Post
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className='ml-auto'>
-                  <div className='text-[#4edba1] hover:text-[#61E9B1] cursor-pointer'>
-                    <i className='fa-solid fa-circle-check'></i>
-                  </div>
-                </div>
+          {tasks.length === 0 ? (
+              <div className="text-center w-full">
+                <p>No tasks.</p>
               </div>
-            ))}
-          </div>
+            ) : (
+              <div>
+                {tasks.map(task => (
+                  <div key={task.id} className='flex mb-8 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
+                    <div className="w-24 h-24">
+                      <img className="w-full h-full object-cover rounded" src={require("../images/task.png")} alt="Task" />
+                    </div>
+                    <div className='mx-4 flex-1'>
+                    <p className='mb-1 font-bold'>
+                      <i className="fa-solid fa-seedling mr-2"></i>
+                      <Link to={`/fields/${task.field.id}`} className='text-blue-500 hover:underline'>{task.field.name}</Link>
+                    </p>
+                      <div className='mb-1 flex text-xs text-gray-400'>
+                        <p>Task</p>
+                        <span className='mx-2'>|</span>
+                        {task.completionDate && (
+                          <>
+                            <p>{new Date(task.completionDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                            <span className='mx-2'>|</span>
+                          </>
+                        )}
+                        {task.dueDate && (
+                          <>
+                            <p>{new Date(task.dueDate).toLocaleString('lt-LT', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                            <span className='mx-2'>|</span>
+                          </>
+                        )}
+                        <a href={getMapsUrl(task.location)} target="_blank" rel="noopener noreferrer" className='text-[#74cfda]'>
+                          <i className="fa-solid fa-location-dot"></i> {task.location}
+                        </a>
+                      </div>
+                      <p className='mb-1 font-bold'>{task.type.name}</p>
+                      <p className='mb-3 text-sm text-gray-500'>{task.description}</p>
+                      <div className='mt-4'>
+                        {/* <div className='my-auto text-sm text-nowrap'>
+                          Participants:
+                          {task.participants && task.participants.map(participant => (
+                            <span key={participant.id} className='mx-2'>{participant.username} </span>
+                          ))} <i className="fa-solid fa-user-check text-gray-400"></i>
+                        </div>
+                        {task.isParticipating ? (
+                          <button
+                            className='bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2'
+                            onClick={() => handleTaskCancelParticipation(task.id)}
+                          >
+                            Cancel Participation
+                          </button>
+                        ) : (
+                          <button
+                            className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2'
+                            onClick={() => handleTaskParticipate(task.id)}
+                          >
+                            Participate
+                          </button>
+                        )} */}
+
+                        <Link to={`/tasks/${task.id}`} className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded mt-2 '>
+                        View Task
+                        </Link>
+                        {/* <h3 className='my-2 text-sm font-bold'>Comments:</h3>
+                        {taskComments[task.id] && taskComments[task.id].map(comment => (
+                          <div key={comment.id} className='border border-gray-200 p-3 mb-2 rounded'>
+                            <p className='text-gray-600 mb-1'>{comment.content}</p>
+                            <p className='text-xs text-gray-400'>{new Date(comment.createdAt).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })} {comment.createdBy && comment.createdBy.username && (<p>Created by: {comment.createdBy.username}</p>)}</p>
+                          </div>
+                        ))}
+                        <div className='mt-4'>
+                          <textarea
+                            className='w-full border border-gray-200 rounded p-2 mb-2 text-sm'
+                            placeholder='Write your comment here...'
+                            rows={3}
+                            value={commentContent}
+                            onChange={(e) => setCommentContent(e.target.value)}
+                          />
+                          <button
+                            className='bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded'
+                            onClick={() => handlePostComment(task.id)}
+                          >
+                            Post
+                          </button>
+                        </div> */}
+                      </div>
+                    </div>
+                      <div className='ml-auto'>
+                          <div className='text-[#4edba1] hover:text-[#61E9B1] flex items-center'>
+                          {task.status === 'Completed' ? (
+                              <>
+                              <i className='fa-solid fa-circle-check' style={{ color: 'green' }}></i>
+                              <span className='ml-2' style={{ color: 'green' }}>{task.status}</span>
+                              </>
+                          ) : task.status === 'Pending' ? (
+                              <>
+                              <i className='fa-solid fa-hourglass-half' style={{ color: 'goldenrod' }}></i>
+                              <span className='ml-2' style={{ color: 'goldenrod' }}>{task.status}</span>
+                              </>
+                          ) : task.status === 'Canceled' ? (
+                              <>
+                              <i className='fa-solid fa-ban' style={{ color: 'red' }}></i>
+                              <span className='ml-2' style={{ color: 'red' }}>{task.status}</span>
+                              </>
+                          ) : null}
+                          </div>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
 
-          <div>
+          {/* <div>
               {challenges.map(challenge => (
                 <div key={challenge.id} className='flex mb-3 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
                   <img className="my-auto w-24 h-24 object-cover rounded" src="https://media.istockphoto.com/id/1266413326/vector/vector-challenge-sign-pop-art-comic-speech-bubble-with-expression-text-competition-bright.jpg?s=612x612&w=0&k=20&c=eYOQaCn7WvMAEo5ZxVHVVQ-pcNT8HZ-yPeTjueuXi28=" />
@@ -486,11 +550,11 @@ export default () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
 
 
 
-            <div>
+            {/* <div>
               {goals.map(goal => (
                 <div key={goal.id} className='flex mb-3 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100'>
                   <img className="my-auto w-24 h-24 object-cover rounded" src="https://www.speexx.com/wp-content/uploads/goal-setting-basics.jpg" />
@@ -532,25 +596,25 @@ export default () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
 
           </div>
           <div className='w-96 text-sm text-gray-600'>
 
           <div className='mb-4 p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100 text-sm text-gray-600'>
-            <p className='text-black font-bold'>Achievements</p>
-            <p className='mb-3 text-xs text-gray-600'>Percentage of total achievements completed</p>
+            <p className='text-black font-bold'>Tasks</p>
+            <p className='mb-3 text-xs text-gray-600'>Percentage of total tasks completed</p>
             <div className='flex my-auto place-items-center'>
               <p className='flex text-center text-gray-500 text-5xl font-bold'>
-                {((points.userPoints / points.totalPoints) * 100).toFixed(0)} <i className="fa-solid fa-percent"></i>
+                {completedPercentage.toFixed(0)} <i className="fa-solid fa-percent"></i>
               </p>
               <PieChart
               slotProps={{ legend: { hidden: true } }}
               series={[
                 {
                   data: [
-                    { id: 0, value: percentage, color: '#61E9B1', label: 'Completed' },  
-                    { id: 1, value: 100 - percentage, color: '#e1e1e1', label: 'Not done' },
+                    { id: 0, value: completedPercentage, color: '#61E9B1', label: 'Completed' },  
+                    { id: 1, value: 100 - completedPercentage, color: '#e1e1e1', label: 'Not done' },
                   ],
                   innerRadius: 20,
                   outerRadius: 30,
@@ -566,12 +630,22 @@ export default () => {
             </div>
           </div>
 
-          <div className='p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100 text-sm text-gray-600'>
+          {/* <div className='p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100 text-sm text-gray-600'>
             <p className='text-black font-bold'>Steps</p>
             <p className='mb-3 text-xs text-gray-600'>You took this many steps this month:</p>
             <div className='py-4 flex my-auto place-items-center'>
               <p className='flex text-center text-gray-500 text-5xl font-bold'>
                 {monthlySteps}
+              </p>
+            </div>
+          </div> */}
+
+          <div className='p-4 w-full bg-gray-50 rounded-xl border-[1px] border-gray-100 text-sm text-gray-600'>
+            <p className='text-black font-bold'>Fields</p>
+            <p className='mb-3 text-xs text-gray-600'>Total area of all your fields:</p>
+            <div className='py-4 flex my-auto place-items-center'>
+              <p className='flex text-center text-gray-500 text-5xl font-bold'>
+                {totalFieldArea} ha
               </p>
             </div>
           </div>

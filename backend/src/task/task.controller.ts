@@ -3,7 +3,7 @@ import { TaskService } from './task.service';
 import { CommentService } from '../comment/comment.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { CreateCommentDto } from '../comment/dto/create-comment.dto';
-import { Task, Comment } from '@prisma/client';
+import { Comment } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TaskResponseDto } from './dto/task-response.dto';
 import { Prisma } from '@prisma/client';
@@ -29,8 +29,9 @@ export class TaskController {
   @Get()
   @ApiOperation({ summary: 'Get all tasks' })
   @ApiResponse({ status: 200, description: 'All tasks retrieved successfully.' })
-  async findAll(): Promise<TaskResponseDto[]> {
-    return this.taskService.findAll();
+  async findAll(@Request() req): Promise<TaskResponseDto[]> {
+    const userId = req.user.id;
+    return this.taskService.findAll(parseInt(userId));
   }
 
   @Get(':id')
@@ -98,11 +99,11 @@ export class TaskController {
     return this.commentService.create(createCommentDto); 
   }
 
-  // @Delete(':id/comments/:commentId')
-  // @ApiOperation({ summary: 'Delete a comment for a task' })
-  // @ApiResponse({ status: 204, description: 'Comment successfully deleted.' })
-  // @ApiResponse({ status: 404, description: 'Comment not found.' })
-  // async deleteComment(@Param('id') taskId: string, @Param('commentId') commentId: string): Promise<void> {
-  //   await this.commentService.delete(parseInt(commentId));
-  // }
+  @Delete(':id/comments/:commentId')
+  @ApiOperation({ summary: 'Delete a comment for a task' })
+  @ApiResponse({ status: 204, description: 'Comment successfully deleted.' })
+  @ApiResponse({ status: 404, description: 'Comment not found.' })
+  async deleteComment(@Param('id') taskId: string, @Param('commentId') commentId: string): Promise<void> {
+    await this.commentService.delete(parseInt(commentId));
+  }
 }

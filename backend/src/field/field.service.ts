@@ -49,10 +49,10 @@ export class FieldService {
   async findCurrentUserFields(userId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
-        OR: [
-          { ownerId: userId },
+        //OR: [
+           ownerId: userId ,
           //{ groupMembers: { some: { userId } } }
-        ]
+        // ]
       },
       // include: {
       //   groupMembers: {

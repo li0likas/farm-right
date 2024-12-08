@@ -121,11 +121,12 @@ async function main() {
   // Create field crop options
   const fieldCropOptions = await prisma.fieldCropOptions.createMany({
     data: [
-      { name: 'Corn' },
-      { name: 'Wheat' },
-      { name: 'Soybeans' },
-      { name: 'Rice' },
-      { name: 'Barley' },
+      { name: 'Kukurūzai' },
+      { name: 'Kviečiai' },
+      { name: 'Pupos' },
+      { name: 'Žirniai' },
+      { name: 'Miežiai' },
+      { name: 'Rapsai' },
     ],
     skipDuplicates: true,
   });
@@ -133,12 +134,12 @@ async function main() {
   // Create task type options
   const taskTypeOptions = await prisma.taskTypeOptions.createMany({
     data: [
-      { name: 'Plowing' },
-      { name: 'Seeding' },
-      { name: 'Fertilizing' },
-      { name: 'Spraying' },
-      { name: 'Harvesting' },
-      { name: 'Tillage' },
+      { name: 'Arimas' },
+      { name: 'Sėjimas' },
+      { name: 'Tręšimas' },
+      { name: 'Purškimas' },
+      { name: 'Derliaus nuėmimas' },
+      { name: 'Skutimas' },
     ],
     skipDuplicates: true,
   });  

@@ -1,9 +1,11 @@
-import { Controller, Post, Body, Get, Delete, NotFoundException, Param, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, NotFoundException, Param, HttpCode, UseGuards } from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Comment } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
+@UseGuards(AuthGuard('jwt'))
 @ApiTags('comments')
 @Controller('comments')
 export class CommentController {
@@ -37,39 +39,3 @@ export class CommentController {
     }
   }
 }
-
-
-
-
-// @Controller('fields/:fieldId/tasks/:taskId/comments')
-// export class CommentController {
-//   constructor(private readonly commentService: CommentService) {}
-
-//   @Get()
-//   async findAllCommentsForTask(@Param('fieldId') fieldId: string, @Param('taskId') taskId: string) {
-//     // Ensure task belongs to the field before fetching comments
-//     const comments = await this.commentService.findAllByTaskIdAndFieldId(parseInt(fieldId), parseInt(taskId));
-//     if (!comments.length) {
-//       throw new NotFoundException(`No comments found for task ${taskId} in field ${fieldId}`);
-//     }
-//     return comments;
-//   }
-
-//   @Post()
-//   async createComment(
-//     @Param('fieldId') fieldId: string,
-//     @Param('taskId') taskId: string,
-//     @Body() createCommentDto: CreateCommentDto,
-//   ) {
-//     return this.commentService.createCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), createCommentDto);
-//   }
-
-//   @Delete(':commentId')
-//   async deleteComment(
-//     @Param('fieldId') fieldId: string,
-//     @Param('taskId') taskId: string,
-//     @Param('commentId') commentId: string,
-//   ) {
-//     return this.commentService.deleteCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), parseInt(commentId));
-//   }
-// }

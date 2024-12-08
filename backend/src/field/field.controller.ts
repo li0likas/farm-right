@@ -50,25 +50,27 @@ export class FieldController {
   @ApiResponse({ status: 404, description: 'Field not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async findOne(@Request() req, @Param('id') id: string): Promise<FieldResponseDto> {
-    const userId = req.user.id;
+    const userId = parseInt(req.user.id);
     try {
-      if ( !== userId) {
-        throw new HttpException('You do not have permission to access this field', HttpStatus.FORBIDDEN);
-      }
 
-      // const user = await this.groupService.findCurrentUserGroups(req.user.id);
-      // const userIsMember = userGroups.some(group => group.id === gid);
-      // if (!userIsMember && group.visibilityId == 2) {
-      //   throw new HttpException(
-      //     'You are not a member of this group and cannot view its events',
-      //     HttpStatus.FORBIDDEN,
-      //   );
-      // }
-
-      const field = await this.fieldsService.findOne(fieldId);
+      const field = await this.fieldsService.findOne(parseInt(id));
       if (!field) {
         throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
       }
+
+      const userFields = await this.fieldsService.findCurrentUserFields(userId);
+      const userIsMember = userFields.some(field => field.ownerId === userId && field.id === parseInt(id));
+      if (!userIsMember) {
+        throw new HttpException(
+          'You are not the owner of this field and cannot access it.',
+          HttpStatus.FORBIDDEN,
+        );
+      }
+
+      // const field = await this.fieldsService.findOne(id);
+      // if (!field) {
+      //   throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+      // }
 
       return field;
     } catch (error) {
@@ -80,45 +82,105 @@ export class FieldController {
   @ApiOperation({ summary: 'Update a field by id' })
   @ApiResponse({ status: 200, description: 'The field has been successfully updated.', type: FieldResponseDto })
   @ApiResponse({ status: 404, description: 'Field not found.' })
-  async update(@Param('id') id: string, @Body() field: Partial<Field>): Promise<Field> {
-    return this.fieldsService.update(parseInt(id), field);
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async update(@Request() req, @Param('id') id: string, @Body() field: Partial<Field>): Promise<Field> {
+    const userId = parseInt(req.user.id);
+    try {
+      const existingField = await this.fieldsService.findOne(parseInt(id));
+      if (!existingField) {
+        throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+      }
+
+      if (existingField.ownerId !== userId) {
+        throw new HttpException('You do not have permission to update this field', HttpStatus.FORBIDDEN);
+      }
+
+      return this.fieldsService.update(parseInt(id), field);
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a field by id' })
   @ApiResponse({ status: 200, description: 'The field has been successfully deleted.', type: FieldResponseDto })
   @ApiResponse({ status: 404, description: 'Field not found.' })
-  async delete(@Param('id') id: string): Promise<FieldResponseDto> {
-    const deletedField = await this.fieldsService.delete(parseInt(id));
-    if (deletedField == null) {
-      throw new NotFoundException(`Field with id ${id} not found`);
+  @ApiResponse({ status: 403, description: 'Forbidden.' })
+  async delete(@Request() req, @Param('id') id: string): Promise<FieldResponseDto> {
+    const userId = parseInt(req.user.id);
+    try {
+      const existingField = await this.fieldsService.findOne(parseInt(id));
+      if (!existingField) {
+        throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+      }
+
+      if (existingField.ownerId !== userId) {
+        throw new HttpException('You do not have permission to delete this field', HttpStatus.FORBIDDEN);
+      }
+      
+      const deletedField = await this.fieldsService.delete(parseInt(id));
+      return deletedField;
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    return deletedField;
   }
 
   @Get(':id/tasks')
   @ApiOperation({ summary: 'Get all tasks for a field' })
   @ApiResponse({ status: 200, description: 'The tasks have been successfully retrieved.', type: [TaskResponseDto] })
-  async findAllTasks(@Param('id') id: string): Promise<Task[]> {
-    return this.taskService.findAllTasksForField(parseInt(id));
+  async findAllTasks(@Request() req, @Param('id') id: string): Promise<Task[]> {
+    const userId = parseInt(req.user.id);
+    try {
+      const existingField = await this.fieldsService.findOne(parseInt(id));
+      if (!existingField) {
+        throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+      }
+
+      if (existingField.ownerId !== userId) {
+        throw new HttpException('You are not the owner of this field and cannot view its tasks.', HttpStatus.FORBIDDEN);
+      }
+      
+      return this.taskService.findAllTasksForField(parseInt(id));
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Post(':id/tasks')
   @ApiOperation({ summary: 'Create a new task for a field' })
   @ApiResponse({ status: 201, description: 'The task has been successfully created.', type: TaskResponseDto })
   @ApiResponse({ status: 400, description: 'Bad request.' })
-  async createTask(@Param('id') id: string, @Body() createTaskDto: CreateTaskDto): Promise<Task> {
-    return this.taskService.createTaskForField(parseInt(id), createTaskDto);
+  async createTask(@Request() req, @Param('id') id: string, @Body() createTaskDto: CreateTaskDto): Promise<Task> {
+    const userId = parseInt(req.user.id);
+    try {
+      const existingField = await this.fieldsService.findOne(parseInt(id));
+      if (!existingField) {
+        throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+      }
+
+      if (existingField.ownerId !== userId) {
+        throw new HttpException('You are not the owner of this field and cannot create tasks for it.', HttpStatus.FORBIDDEN);
+      }
+      
+      return this.taskService.createTaskForField(parseInt(id), createTaskDto);
+
+    } catch (error) {
+      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
-  // @Put(':id/tasks/:taskId')
-  // @ApiOperation({ summary: 'Update a task for a field' })
-  // @ApiResponse({ status: 200, description: 'The task has been successfully updated.', type: TaskResponseDto })
-  // @ApiResponse({ status: 404, description: 'Task not found.' })
-  // async updateTask(@Param('id') id: string, @Param('taskId') taskId: string, @Body() task: Partial<Task>): Promise<Task> {
-  //   return this.taskService.updateTaskForField(parseInt(id), parseInt(taskId), task);
-  // }
+  // nenaudojamas, kadangi is fields page nebus updatinami taskai
+  @Put(':id/tasks/:taskId')
+  @ApiOperation({ summary: 'Update a task for a field' })
+  @ApiResponse({ status: 200, description: 'The task has been successfully updated.', type: TaskResponseDto })
+  @ApiResponse({ status: 404, description: 'Task not found.' })
+  async updateTask(@Param('id') id: string, @Param('taskId') taskId: string, @Body() task: Partial<Task>): Promise<Task> {
+    return this.taskService.updateTaskForField(parseInt(id), parseInt(taskId), task);
+  }
 
+  // nenaudojamas, kadangi is fields page nebus trinami taskai
   @Delete(':id/tasks/:taskId')
   @ApiOperation({ summary: 'Delete a task for a field' })
   @ApiResponse({ status: 200, description: 'The task has been successfully deleted.', type: TaskResponseDto })
@@ -131,43 +193,46 @@ export class FieldController {
     return deletedTask;
   }
 
-  @Get(':id/tasks/:taskId/comments')
-  async findAllCommentsForTask(
-    @Param('id') fieldId: string,
-    @Param('taskId') taskId: string
-  ) {
-    const parsedFieldId = parseInt(fieldId);
-    const parsedTaskId = parseInt(taskId);
 
-    // Validate that both IDs are valid numbers
-    if (isNaN(parsedFieldId) || isNaN(parsedTaskId)) {
-      throw new BadRequestException('Invalid fieldId or taskId provided.');
-    }
+  // nenaudojami, nes is fields page nebus rodomi tasku komentarai
 
-    const comments = await this.commentService.findAllByTaskIdAndFieldId(parsedFieldId, parsedTaskId);
+  // @Get(':id/tasks/:taskId/comments')
+  // async findAllCommentsForTask(
+  //   @Param('id') fieldId: string,
+  //   @Param('taskId') taskId: string
+  // ) {
+  //   const parsedFieldId = parseInt(fieldId);
+  //   const parsedTaskId = parseInt(taskId);
 
-    if (!comments.length) {
-      throw new NotFoundException(`No comments found for task ${taskId} in field ${fieldId}`);
-    }
+  //   // Validate that both IDs are valid numbers
+  //   if (isNaN(parsedFieldId) || isNaN(parsedTaskId)) {
+  //     throw new BadRequestException('Invalid fieldId or taskId provided.');
+  //   }
 
-    return comments;
-  }
+  //   const comments = await this.commentService.findAllByTaskIdAndFieldId(parsedFieldId, parsedTaskId);
 
-  @Post(':id/tasks/:taskId/comments')
-  async createComment(
-    @Param('fieldId') fieldId: string,
-    @Param('taskId') taskId: string,
-    @Body() createCommentDto: CreateCommentDto,
-  ) {
-    return this.commentService.createCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), createCommentDto);
-  }
+  //   if (!comments.length) {
+  //     throw new NotFoundException(`No comments found for task ${taskId} in field ${fieldId}`);
+  //   }
 
-  @Delete(':id/tasks/:taskId/comments')
-  async deleteComment(
-    @Param('fieldId') fieldId: string,
-    @Param('taskId') taskId: string,
-    @Param('commentId') commentId: string,
-  ) {
-    return this.commentService.deleteCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), parseInt(commentId));
-  }
+  //   return comments;
+  // }
+
+  // @Post(':id/tasks/:taskId/comments')
+  // async createComment(
+  //   @Param('fieldId') fieldId: string,
+  //   @Param('taskId') taskId: string,
+  //   @Body() createCommentDto: CreateCommentDto,
+  // ) {
+  //   return this.commentService.createCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), createCommentDto);
+  // }
+
+  // @Delete(':id/tasks/:taskId/comments')
+  // async deleteComment(
+  //   @Param('fieldId') fieldId: string,
+  //   @Param('taskId') taskId: string,
+  //   @Param('commentId') commentId: string,
+  // ) {
+  //   return this.commentService.deleteCommentForTaskAndField(parseInt(fieldId), parseInt(taskId), parseInt(commentId));
+  // }
 }
