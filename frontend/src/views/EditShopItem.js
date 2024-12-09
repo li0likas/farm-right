@@ -21,7 +21,7 @@ export default () => {
 
   useEffect(() => {
     // Fetch visibility options from the server
-    axios.get('http://localhost:3333/shop-item/categories')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/shop-item/categories`)
       .then(response => {
         setCategoryOptions(response.data);
       })
@@ -51,7 +51,7 @@ export default () => {
     formData.append('category', selectedCategory);
     formData.append('price', itemPrice);
     formData.append('imageFile', imageFile);
-    axios.patch(`http://localhost:3333/shop-item/edit/${itemId}`, formData, {
+    axios.patch(`${process.env.REACT_APP_API_BASE_URL}/shop-item/edit/${itemId}`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'multipart/form-data'

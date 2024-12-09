@@ -7,7 +7,7 @@ function InvitationPage() {
 
   const handleJoinClick = async () => {
     try {
-      const response = await fetch('http://localhost:3333/groups/joinGroup', {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/groups/joinGroup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

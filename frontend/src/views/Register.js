@@ -48,7 +48,7 @@ export default () => {
     formData.append('password', password);
     formData.append('file', profileImage);
 
-    axios.post('http://localhost:3333/auth/signup', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/signup`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

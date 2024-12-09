@@ -87,7 +87,7 @@ const InviteForm = () => {
     const fetchFieldInfo = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`http://localhost:3333/fields/${fieldId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields/${fieldId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -101,7 +101,7 @@ const InviteForm = () => {
     const fetchGoals = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`http://localhost:3333/fields/${fieldId}/goals`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields/${fieldId}/goals`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -120,7 +120,7 @@ const InviteForm = () => {
 
   const handleShowChallengeParticipants = async (challengeId) => {
     try {
-      const response = await axios.get(`http://localhost:3333/groups/${challengeId}/challenge-participants`);
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-participants`);
       setChallengeParticipants((prevState) => ({
         ...prevState,
         [challengeId]: response.data,
@@ -133,7 +133,7 @@ const InviteForm = () => {
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/fields/${fieldId}/tasks`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields/${fieldId}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -165,7 +165,7 @@ const InviteForm = () => {
   const fetchChallenges = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/groups/${fieldId}/challenges`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/${fieldId}/challenges`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -189,7 +189,7 @@ const InviteForm = () => {
   const fetchTaskComments = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/tasks/${taskId}/comments`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -207,7 +207,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/tasks/${taskId}/comments`,
+        `${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`,
         { taskId, content: commentContent },
         {
           headers: {
@@ -230,7 +230,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-participate`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-participate`,
         {},
         {
           headers: {
@@ -248,7 +248,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${challengeId}/challenge-participate`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-participate`,
         {},
         {
           headers: {
@@ -267,7 +267,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-cancel-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-cancel-participation`,
         {},
         {
           headers: {
@@ -285,7 +285,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${challengeId}/challenge-cancel-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-cancel-participation`,
         {},
         {
           headers: {
@@ -304,7 +304,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${taskId}/user-task-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/user-task-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -322,7 +322,7 @@ const InviteForm = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${taskId}/user-challenge-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/user-challenge-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -350,7 +350,7 @@ const InviteForm = () => {
       }
 
       const response = await axios.post(
-        'http://localhost:3333/groups/sendInvitation',
+        `${process.env.REACT_APP_API_BASE_URL}/groups/sendInvitation`,
         {
           groupId: parseInt(fieldId),
           userEmail: email,
@@ -401,7 +401,7 @@ const InviteForm = () => {
   
     try {
       const token = localStorage.getItem('accessToken');
-      await axios.delete(`http://localhost:3333/fields/${fieldId}`, {
+      await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/fields/${fieldId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -18,7 +18,7 @@ export default () => {
   const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
-    axios.get('http://localhost:3333/shop-item/categories')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/shop-item/categories`)
       .then(response => {
         setCategoryOptions(response.data);
       })
@@ -52,7 +52,7 @@ export default () => {
     console.log(itemDescription);
     console.log(itemPrice);
     console.log(selectedCategory);
-    axios.post('http://localhost:3333/shop-item/create', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/shop-item/create`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'multipart/form-data'

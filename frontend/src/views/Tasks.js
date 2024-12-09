@@ -13,7 +13,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/tasks', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(response => setTasks(response.data))

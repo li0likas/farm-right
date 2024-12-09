@@ -22,7 +22,7 @@ export default () => {
   const passwordRecovery = () => {
     if(!validate()) return
 
-    axios.post('http://localhost:3333/auth/forgotPass', {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/forgotPass`, {
       email: email,
     })
       .then(function (response) {

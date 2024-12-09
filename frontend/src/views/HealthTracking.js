@@ -71,7 +71,7 @@ const HealthTracking = () => {
           return;
         }
         
-        const response = await axios.get('http://localhost:3333/health-tracking/getStats', {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/health-tracking/getStats`, {
           headers: {
               Authorization: `Bearer ${accessToken}`
           }
@@ -108,7 +108,7 @@ const HealthTracking = () => {
       weight: parseFloat(formData.weight) // Assuming weight is numeric
     };
 
-    axios.post('http://localhost:3333/health-tracking/createStats', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/health-tracking/createStats`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -132,7 +132,7 @@ const HealthTracking = () => {
           return;
         }
 
-        await axios.delete(`http://localhost:3333/health-tracking/deleteStats/${id}`, {
+        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/health-tracking/deleteStats/${id}`, {
           headers: {
               Authorization: `Bearer ${accessToken}`
           }

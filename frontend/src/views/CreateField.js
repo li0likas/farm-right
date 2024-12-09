@@ -18,7 +18,7 @@ export default () => {
   useEffect(() => {
 
     // Fetch crop options from the server
-    axios.get('http://localhost:3333/field-crop-options')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/field-crop-options`)
       .then(response => {
         setFieldCropOptions(response.data);
       })
@@ -49,7 +49,7 @@ export default () => {
       cropId: parseInt(fieldCrop),
     };
 
-    axios.post('http://localhost:3333/fields', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/fields`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

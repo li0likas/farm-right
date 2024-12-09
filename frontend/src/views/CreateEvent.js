@@ -48,7 +48,7 @@ export default () => {
 
   useEffect(() => {
     // Fetch visibility options from the server
-    axios.get('http://localhost:3333/category-options/event')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/category-options/event`)
       .then(response => {
         setCategoryOptions(response.data);
       })
@@ -92,7 +92,7 @@ export default () => {
       fk_Category: parseInt(selectedCategory)
     };
 
-    axios.post(`http://localhost:3333/groups/${groupId}/createEvent`, requestData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/groups/${groupId}/createEvent`, requestData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

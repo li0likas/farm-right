@@ -42,7 +42,7 @@ const Home = () => {
 
   const fetchPublicGroups = async () => {
     try {
-      const response = await axios.get('http://localhost:3333/groups/publicGroups');
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/publicGroups`);
       setPublicGroups(response.data);
     } catch (error) {
       console.error('Error fetching public groups:', error);
@@ -57,7 +57,7 @@ const Home = () => {
     }
 
     try {
-      const response = await axios.get('http://localhost:3333/groups/userGroups', {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/userGroups`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

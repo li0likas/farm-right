@@ -87,7 +87,7 @@ export default function Settings() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/rewards/unlockedColours', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/rewards/unlockedColours`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -103,7 +103,7 @@ export default function Settings() {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/rewards/unlockedEmojies', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/rewards/unlockedEmojies`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ export default function Settings() {
       return;
     }
   
-    axios.post('http://localhost:3333/auth/passChange', {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/passChange`, {
       oldPassword: currentPassword,
       newPassword: password,
     }, {
@@ -161,7 +161,7 @@ export default function Settings() {
       return;
     }
 
-    axios.post('http://localhost:3333/rewards/applyCustomisation', { hexColour: hexColor, emoji: userEmoji }, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/rewards/applyCustomisation`, { hexColour: hexColor, emoji: userEmoji }, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
@@ -188,7 +188,7 @@ export default function Settings() {
   
     const newName = name;
   
-    axios.post('http://localhost:3333/users/change-username', { username: newName }, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/users/change-username`, { username: newName }, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

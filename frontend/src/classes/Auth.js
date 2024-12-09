@@ -3,7 +3,7 @@ import { setUser, removeUser, getUser } from "./User"
 import axios from "axios"
 
 const fetchUserData = async (accessToken) => {
-    return axios.get(`http://localhost:3333/users/me`, {
+    return axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/me`, {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }

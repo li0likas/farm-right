@@ -24,7 +24,7 @@ export default () => {
     const token = localStorage.getItem('accessToken');
 
     if (!fieldId) {
-    axios.get('http://localhost:3333/fields', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -37,7 +37,7 @@ export default () => {
       });
     }
 
-    axios.get('http://localhost:3333/task-type-options', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/task-type-options`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -49,7 +49,7 @@ export default () => {
         console.error('Error fetching task type options:', error);
       });
 
-    axios.get('http://localhost:3333/task-status-options', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/task-status-options`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -101,7 +101,7 @@ export default () => {
       formData.completionDate = new Date(completionDate);
     }
 
-    axios.post('http://localhost:3333/tasks', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/tasks`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

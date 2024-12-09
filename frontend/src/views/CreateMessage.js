@@ -21,7 +21,7 @@ const CreateMessage = ({ currentUser, history }) => {
     }
 
     try {
-      const response = await axios.get('http://localhost:3333/users/all-users', {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/all-users`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }

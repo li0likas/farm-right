@@ -21,7 +21,7 @@ export default function ProfileIcon({ imageUrl, username, userId }) {
   const open = Boolean(anchorEl);
 
   const getUserPopupData = async () => {
-    await axios.get(`http://localhost:3333/users/popup/${userId}`, {
+    await axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/popup/${userId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('accessToken')}`
       }

@@ -14,7 +14,7 @@ export default () => {
   const [leaderboard, setLeaderboard] = useState([])
 
   useEffect(() => {
-    axios.get('http://localhost:3333/users/leaderboard/top10', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/leaderboard/top10`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

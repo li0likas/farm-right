@@ -22,7 +22,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/achievements/points', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/achievements/points`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -40,7 +40,7 @@ export default () => {
     const fetchGroupInfo = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`http://localhost:3333/groups/group/${groupId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/group/${groupId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -54,7 +54,7 @@ export default () => {
     const fetchGoals = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`http://localhost:3333/groups/getAllGroupsGoals`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/getAllGroupsGoals`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -73,7 +73,7 @@ export default () => {
 
   const handleShowChallengeParticipants = async (challengeId) => {
     try {
-      const response = await axios.get(`http://localhost:3333/groups/${challengeId}/challenge-participants`);
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-participants`);
       setChallengeParticipants((prevState) => ({
         ...prevState,
         [challengeId]: response.data,
@@ -86,7 +86,7 @@ export default () => {
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/tasks`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,7 +118,7 @@ export default () => {
   const fetchChallenges = async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/groups/getAllGroupsChallenges`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/getAllGroupsChallenges`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -142,7 +142,7 @@ export default () => {
   const fetchTaskComments = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/tasks/${taskId}/comments`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -160,7 +160,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/tasks/${taskId}/comments`,
+        `${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`,
         { taskId, content: commentContent },
         {
           headers: {
@@ -183,7 +183,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-participate`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-participate`,
         {},
         {
           headers: {
@@ -201,7 +201,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${challengeId}/challenge-participate`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-participate`,
         {},
         {
           headers: {
@@ -220,7 +220,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-cancel-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-cancel-participation`,
         {},
         {
           headers: {
@@ -238,7 +238,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${challengeId}/challenge-cancel-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${challengeId}/challenge-cancel-participation`,
         {},
         {
           headers: {
@@ -257,7 +257,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${taskId}/user-task-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/user-task-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -275,7 +275,7 @@ export default () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.get(
-        `http://localhost:3333/groups/${taskId}/user-challenge-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/user-challenge-participation`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -292,7 +292,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
   
-    axios.post('http://localhost:3333/rewards/update', {}, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/rewards/update`, {}, {
     headers: {
       Authorization: `Bearer ${token}`
     }
@@ -308,7 +308,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/activity/monthlySteps', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/activity/monthlySteps`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -324,7 +324,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/activity/dailysteps', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/activity/dailysteps`, {
         headers: {
             Authorization: `Bearer ${token}`
         }
@@ -340,7 +340,7 @@ export default () => {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
 
-    axios.get('http://localhost:3333/fields', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields`, {
         headers: {
             Authorization: `Bearer ${token}`
         }

@@ -17,7 +17,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/achievements/all', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/achievements/all`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -33,7 +33,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/achievements/userAchievements', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/achievements/userAchievements`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -49,7 +49,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/achievements/points', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/achievements/points`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }

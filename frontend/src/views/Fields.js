@@ -41,7 +41,7 @@ const Fields = () => {
     }
 
     try {
-      const response = await axios.get('http://localhost:3333/fields', {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

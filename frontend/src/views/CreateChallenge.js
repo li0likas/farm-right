@@ -82,7 +82,7 @@ export default () => {
       end_date: endDate
     };
 
-    axios.post(`http://localhost:3333/groups/${groupId}/createChallenge`, requestData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/groups/${groupId}/createChallenge`, requestData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'

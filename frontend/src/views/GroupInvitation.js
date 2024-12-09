@@ -18,7 +18,7 @@ const GroupInvitation = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:3333/groups/${token}`);
+        const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/groups/${token}`);
         const { data } = response.data;
         const { group, user } = data;
         setGroupName(group.name);
@@ -34,7 +34,7 @@ const GroupInvitation = () => {
 
   const handleJoinClick = async () => {
     try {
-      const response = await axios.post('http://localhost:3333/groups/joinGroup', { token });
+      const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/groups/joinGroup`, { token });
     
       const { statusCode, message } = response.data;
   

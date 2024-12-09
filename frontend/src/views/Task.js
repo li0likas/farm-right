@@ -19,7 +19,7 @@ const Task = () => {
   const fetchTaskInfo = async () => {
     const token = localStorage.getItem('accessToken');
     try {
-      const response = await axios.get(`http://localhost:3333/tasks/${taskId}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,7 +37,7 @@ const Task = () => {
   const fetchTaskComments = async (taskId) => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await axios.get(`http://localhost:3333/tasks/${taskId}/comments`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -55,7 +55,7 @@ const Task = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/tasks/${taskId}/comments`,
+        `${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments`,
         { taskId, content: commentContent },
         {
           headers: {
@@ -77,7 +77,7 @@ const Task = () => {
   const handleDeleteComment = async (commentId) => {
     const token = localStorage.getItem('accessToken');
     try {
-      await axios.delete(`http://localhost:3333/tasks/${taskId}/comments/${commentId}`, {
+      await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}/comments/${commentId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -94,7 +94,7 @@ const Task = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-participate`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-participate`,
         {},
         {
           headers: {
@@ -112,7 +112,7 @@ const Task = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await axios.post(
-        `http://localhost:3333/groups/${taskId}/task-cancel-participation`,
+        `${process.env.REACT_APP_API_BASE_URL}/groups/${taskId}/task-cancel-participation`,
         {},
         {
           headers: {
@@ -130,7 +130,7 @@ const Task = () => {
     try {
       const token = localStorage.getItem('accessToken');
       await axios.patch(
-        `http://localhost:3333/tasks/${taskId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}`,
         { statusId: 3 }, // Set task status to 3 (Canceled)
         {
           headers: {
@@ -149,7 +149,7 @@ const Task = () => {
     try {
       const token = localStorage.getItem('accessToken');
       await axios.patch(
-        `http://localhost:3333/tasks/${taskId}`,
+        `${process.env.REACT_APP_API_BASE_URL}/tasks/${taskId}`,
         { statusId: 2 }, // Set task status to 2 (Pending)
         {
           headers: {

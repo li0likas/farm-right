@@ -19,7 +19,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/shop-item/all', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/shop-item/all`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -35,7 +35,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/shop-item/getMyItems', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/shop-item/getMyItems`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -51,7 +51,7 @@ export default () => {
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
 
-        axios.get('http://localhost:3333/achievements/points', {
+        axios.get(`${process.env.REACT_APP_API_BASE_URL}/achievements/points`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -75,7 +75,7 @@ export default () => {
         const token = localStorage.getItem('accessToken');
         const userP = points.userPoints;
         axios.post(
-          'http://localhost:3333/shop-item/buy', 
+          `${process.env.REACT_APP_API_BASE_URL}/shop-item/buy`, 
           { itemId, itemPrice, userP },
           {
             headers: {

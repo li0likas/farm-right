@@ -20,7 +20,7 @@ export default () => {
 
   useEffect(() => {
     // Fetch visibility options from the server
-    axios.get('http://localhost:3333/visibility-options')
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/visibility-options`)
       .then(response => {
         setVisibilityOptions(response.data);
       })
@@ -54,7 +54,7 @@ export default () => {
     for (let entry of formData.entries()) {
       console.log(entry);
     }
-    axios.post('http://localhost:3333/groups/createGroup', formData, {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/groups/createGroup`, formData, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'multipart/form-data'

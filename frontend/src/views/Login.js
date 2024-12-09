@@ -26,7 +26,7 @@ export default () => {
   const login = async () => {
     if(!validate()) return
 
-    axios.post('http://localhost:3333/auth/signin', {
+    axios.post(`${process.env.REACT_APP_API_BASE_URL}/auth/signin`, {
       username: username,
       password: password,
     })

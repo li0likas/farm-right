@@ -33,7 +33,7 @@ export default () => {
     }
   
     try {
-      const response = await axios.get('http://localhost:3333/users/me', {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${accessToken}`
         }
@@ -52,7 +52,7 @@ export default () => {
       return;
     }
   
-    axios.get('http://localhost:3333/chats/all-chats', {
+    axios.get(`${process.env.REACT_APP_API_BASE_URL}/chats/all-chats`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`
       }
@@ -62,7 +62,7 @@ export default () => {
       const chatsWithUserData = await Promise.all(
         chatsData.map(async chat => {
           try {
-            const userResponse = await axios.get(`http://localhost:3333/users/${chat.senderId}`, {
+            const userResponse = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/users/${chat.senderId}`, {
               headers: {
                 'Authorization': `Bearer ${accessToken}`
               }
