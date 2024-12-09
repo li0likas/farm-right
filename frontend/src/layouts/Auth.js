@@ -2,6 +2,7 @@ import { Outlet, Link } from "react-router-dom";
 import { useState } from 'react'
 import { AlertTypes } from "../styles/modules/AlertStyles";
 import Alert from "../components/Alert";
+import wallpaper from '../images/wallpaper.png';
 
 export default () => {
   const [alert, setAlert] = useState({
@@ -11,7 +12,8 @@ export default () => {
 
   return (
     <div className="flex min-h-dvh p-5" style={{
-      background: "url(https://giffiles.alphacoders.com/220/220213.gif)",
+      //background: "url(https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXZ4eGEzd2p1Ym9heGEzNmx6ZzI0YmRiaTh6cW10cDdxcnU1eWVmbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/k6GLEHT4J90rD68EoD/giphy.gif)",
+      background: `url(${wallpaper})`,
       backgroundSize: "cover",
     }}>
 
