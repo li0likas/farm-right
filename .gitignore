@@ -23,7 +23,7 @@
 # Logs and databases #
 ######################
 *.log
-*.sql
+#*.sql (we need migration files)
 *.sqlite
 
 # OS generated files #
