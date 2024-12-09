@@ -17,6 +17,15 @@ Farmer (owner): Can add/remove workers, manage overall farm data, and oversee al
 
 # User Interface (wireframe)
 
+Home page:
+
+![image](https://github.com/user-attachments/assets/9eecf07f-9098-4e1a-afce-8f2647161c25)
+
+Login page:
+
+![image](https://github.com/user-attachments/assets/fdd4401e-fe97-4cf8-9faf-d51c51f3273e)
+
+
 # UML Deployment Diagram
 
 ![image](https://github.com/user-attachments/assets/d70fad39-c4fa-4f30-91fc-734f3c2c576f)
