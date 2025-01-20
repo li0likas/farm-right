@@ -71,8 +71,16 @@ export default () => {
       setAlert({ text: 'Due Date is required', type: AlertTypes.warning });
       return false;
     }
+    if (taskStatus == 2 && new Date(dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)) {
+      setAlert({ text: 'Due Date cannot be in the past', type: AlertTypes.warning });
+      return false;
+    }
     if (taskStatus == 1 && !completionDate) {
       setAlert({ text: 'Completion Date is required', type: AlertTypes.warning });
+      return false;
+    }
+    if (taskStatus == 1 && new Date(completionDate) > new Date()) {
+      setAlert({ text: 'Completion Date cannot be in the future', type: AlertTypes.warning });
       return false;
     }
     return true;
