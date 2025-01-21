@@ -1,10 +1,13 @@
-import { useOutletContext, Navigate } from "react-router-dom";
-import { useState, useEffect } from 'react';
-import { AlertTypes } from "../styles/modules/AlertStyles";
-import axios from 'axios';
-import NavBar from "../components/NavBar";
-import { Link } from "react-router-dom";
 import { isLoggedIn } from "../classes/Auth";
+import { EditControl } from 'react-leaflet-draw';
+import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
+import { MapContainer, TileLayer, FeatureGroup } from 'react-leaflet';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useOutletContext, Link, Navigate } from "react-router-dom";
+import { AlertTypes } from "../styles/modules/AlertStyles";
+import { area, length } from '@turf/turf';
 
 export default () => {
   const { setAlert } = useOutletContext();
@@ -14,9 +17,9 @@ export default () => {
   const [fieldArea, setFieldArea] = useState('');
   const [fieldPerimeter, setFieldPerimeter] = useState('');
   const [fieldCrop, setFieldCrop] = useState('');
+  const [fieldBoundary, setFieldBoundary] = useState(null);
 
   useEffect(() => {
-
     // Fetch crop options from the server
     axios.get(`${process.env.REACT_APP_API_BASE_URL}/field-crop-options`)
       .then(response => {
@@ -28,7 +31,7 @@ export default () => {
   }, []);
 
   const validate = () => {
-    if (!fieldName || !fieldArea || !fieldPerimeter || !fieldCrop) {
+    if (!fieldName || !fieldArea || !fieldPerimeter || !fieldCrop || !fieldBoundary) {
       setAlert({ text: 'There are empty fields', type: AlertTypes.warning });
       return false;
     }
@@ -47,6 +50,7 @@ export default () => {
       area: parseFloat(fieldArea),
       perimeter: parseFloat(fieldPerimeter),
       cropId: parseInt(fieldCrop),
+      boundary: fieldBoundary,
     };
 
     axios.post(`${process.env.REACT_APP_API_BASE_URL}/fields`, formData, {
@@ -65,6 +69,20 @@ export default () => {
       });
   }
 
+  const handleCreated = (e) => {
+    const layer = e.layer;
+    const boundary = layer.toGeoJSON();
+    setFieldBoundary(boundary);
+  
+    // Calculate area in hectares
+    const fieldArea = area(boundary) / 10000; // Convert from square meters to hectares
+    setFieldArea(fieldArea.toFixed(2));
+  
+    // Calculate perimeter in meters
+    const fieldPerimeter = length(boundary, { units: 'meters' });
+    setFieldPerimeter(fieldPerimeter.toFixed(2));
+  };
+
   return isLoggedIn() ? (
     <div className="w-full">
       <div className="container sm:flex pt-12">
@@ -77,7 +95,7 @@ export default () => {
             <input value={fieldName} onChange={(e) => setFieldName(e.target.value)} type="text" placeholder="Field name" className="w-full p-3 border-[1px] border-gray-400 rounded-lg hover:border-[#61E9B1]" />
           </div>
 
-          <div className="mb-3">
+          {/* <div className="mb-3">
             <div className="text-base mb-2">Area</div>
             <input value={fieldArea} onChange={(e) => setFieldArea(e.target.value)} type="text" placeholder="Area" className="w-full p-3 border-[1px] border-gray-400 rounded-lg hover:border-[#61E9B1]" />
           </div>
@@ -85,7 +103,7 @@ export default () => {
           <div className="mb-3">
             <div className="text-base mb-2">Perimeter</div>
             <input value={fieldPerimeter} onChange={(e) => setFieldPerimeter(e.target.value)} type="text" placeholder="Perimeter" className="w-full p-3 border-[1px] border-gray-400 rounded-lg hover:border-[#61E9B1]" />
-          </div>
+          </div> */}
 
           <div className="mb-3">
             <div className="text-base mb-2">Crop</div>
@@ -95,6 +113,29 @@ export default () => {
                 <option key={option.id} value={option.id}>{option.name.charAt(0).toUpperCase() + option.name.slice(1)}</option>
               ))}
             </select>
+          </div>
+
+          <div className="mb-3">
+            <div className="text-base mb-2">Field Boundary</div>
+            <MapContainer center={[56.3450718, 23.7284381]} zoom={15} style={{ height: "400px", width: "100%" }}>
+              <TileLayer
+                url="https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=8ayfACETeed3UJE2rhiR"
+                attribution='&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> contributors'
+              />
+              <FeatureGroup>
+                <EditControl
+                  position='topright'
+                  onCreated={handleCreated}
+                  draw={{
+                    rectangle: false,
+                    circle: false,
+                    circlemarker: false,
+                    marker: false,
+                    polyline: false,
+                  }}
+                />
+              </FeatureGroup>
+            </MapContainer>
           </div>
 
           <hr className="my-9 mt-12" />

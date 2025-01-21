@@ -6,12 +6,13 @@ import { getUser } from '../classes/User';
 import { AlertTypes } from '../styles/modules/AlertStyles';
 import Alert from '../components/Alert';
 import { io } from "socket.io-client";
-import { MapContainer, TileLayer, useMap, Marker, Popup } from 'react-leaflet'
+import { MapContainer, TileLayer, useMap, Marker, Popup, GeoJSON } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import ProfileIcon from '../components/ProfileIcon';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { centroid } from '@turf/turf';
 
 
 const getMapsUrl = (loc) => {
@@ -414,6 +415,9 @@ const InviteForm = () => {
   };
 
   if (fieldInfo)
+  {
+    const fieldCenter = fieldInfo.boundary ? centroid(fieldInfo.boundary).geometry.coordinates : [55.1694, 23.8813];
+
     return (
       <div className='container'>
         <ToastContainer />
@@ -525,49 +529,20 @@ const InviteForm = () => {
               <h2 className='mb-4 text-black font-bold'>Field Location</h2>
               <div className=''>
 
-                {/* position ?
-                  <>latitude: {position.lat.toFixed(4)}, longitude: {position.lng.toFixed(4)}{' '}</>
-                  : null
-                */}
+              <MapContainer
+                className="markercluster-map w-full h-60 z-0 rounded-xl border-[1px] border-gray-100 overflow-auto"
+                center={[fieldCenter[1], fieldCenter[0]]}
+                zoom={15}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  url="https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=8ayfACETeed3UJE2rhiR"
+                />
+                {fieldInfo.boundary && (
+                  <GeoJSON data={fieldInfo.boundary} />
+                )}
+              </MapContainer>
 
-                <MapContainer
-                  className="markercluster-map w-full h-60 z-0 rounded-xl border-[1px] border-gray-100 overflow-auto"
-                  center={[55.1663, 23.8513]}
-                  zoom={6}
-                  
-                  ref={setMap}
-                  zoomControl={false}
-                  //dragging={false}
-                >
-                  <ResizeMap />
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-                  />
-
-                  {Object.entries(userLocations).map(([userId, location]) => (
-                    <Marker className='cursor-none' position={[location.latitude, location.longitude]} icon={new L.Icon({
-                      iconUrl: require('../images/mapIcon.png'),
-                      iconSize: [22, 22],
-                    })}>
-                      <Popup>
-                        <p>User ID: {userId}</p>
-                      </Popup>
-                    </Marker>
-                  ))}
-
-                </MapContainer>
-
-                {/* 
-                {Object.entries(userLocations).map(([userId, location]) => (
-                  <div key={userId} className='p-4 bg-gray-100 rounded-lg'>
-                    <p>User ID: {userId}</p>
-                    <p>
-                      Location: {location.latitude}, {location.longitude}
-                    </p>
-                  </div>
-                ))}
-                */}
               </div>
             </div>
               <button onClick={handleDeleteField} className="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded mt-2">
@@ -577,6 +552,7 @@ const InviteForm = () => {
         </div>
       </div>
     );
+};
 };
 
 export default InviteForm;

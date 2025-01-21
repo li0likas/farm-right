@@ -281,6 +281,18 @@ async function main() {
       perimeter: 200.0,
       cropId: 1,
       ownerId: myUser.id,
+      boundary: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718]
+          ]
+        ]
+      }  
     },
   });
 
@@ -291,6 +303,18 @@ async function main() {
       perimeter: 300.0,
       cropId: 2,
       ownerId: myUser.id,
+      boundary: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718]
+          ]
+        ]
+      }
     },
   });
 
@@ -301,6 +325,18 @@ async function main() {
       perimeter: 180.0,
       cropId: 3,
       ownerId: farmerUser.id,
+      boundary: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718],
+            [23.7284381, 56.3450718]
+          ]
+        ]
+      }
     },
   });
 

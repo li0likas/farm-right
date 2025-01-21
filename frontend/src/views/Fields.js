@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { isLoggedIn } from '../classes/Auth';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useState, useEffect } from 'react';
+import { centroid } from '@turf/turf';
 
 const Fields = () => {
   const [fields, setFields] = useState([]);
@@ -74,34 +77,45 @@ const Fields = () => {
             </div>
           </div>
 
-          <div className="flex">
-            <div className="w-full grid md:grid-cols-4 md:gap-4 sm:grid-cols-2 sm:gap-4 pl-5 pr-5">
-              {filteredFields.length === 0 ? (
-                <p className='text-black pl-1.5'>No fields found.</p>
-              ) : (
-                filteredFields.map((field) => (
-                  <div key={field.id} className="bg-white rounded-xl mt-3 text-center pt-5 pb-5 bg-gray-50 border border-solid border-[#61E9B1]">
-                    <h2 className="font-semibold">{field.name}</h2>
-                    <hr className="ml-6 mr-6 mt-4 mb-4" />
-                    <p className="text-sm">Area: {field.area} ha</p>
-                    <p className="text-sm">Perimeter: {field.perimeter} m</p>
-                    <p className="text-sm">Crop: {field.crop ? field.crop.name : 'N/A'}</p>
-                    <hr className="ml-6 mr-6 mt-4 mb-6" />
-                    <Link to={`/fields/${field.id}`} className="bg-[#388E3C] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
-                      More information
-                    </Link>
-                    <p className="pb-3"></p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            {filteredFields.map((field) => {
+              const fieldCenter = field.boundary ? centroid(field.boundary).geometry.coordinates : [55.1694, 23.8813];
+              return (
+                <div key={field.id} className="bg-gray-100 p-4 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold">{field.name}</h3>
+                  <p>Area: {field.area} hectares</p>
+                  <p>Perimeter: {field.perimeter} meters</p>
+                  <div className="mt-4">
+                    <MapContainer
+                      center={[fieldCenter[1], fieldCenter[0]]}
+                      zoom={15}
+                      style={{ height: "250px", width: "100%" }}
+                      scrollWheelZoom={false}
+                    >
+                      <TileLayer
+                        url="https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=8ayfACETeed3UJE2rhiR"
+                        attribution='&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> contributors'
+                      />
+                      {field.boundary && (
+                        <GeoJSON data={field.boundary} />
+                      )}
+                    </MapContainer>
                   </div>
-                ))
-              )}
-            </div>
+                  <p className="pb-4"></p>
+                  <Link to={`/fields/${field.id}`} className="bg-[#388E3C] hover:bg-[#4edba1] rounded-lg text-black p-3 m-2 text-sm border border-solid border-[#61E9B1]">
+                    More information
+                  </Link>
+                  <p className="pb-3"></p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
     </div>
   ) : (
     <Navigate to='/login' />
-  )
+  );
 };
 
 export default Fields;

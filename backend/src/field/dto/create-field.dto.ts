@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsObject } from 'class-validator';
 
 export class CreateFieldDto {
   @IsString()
@@ -19,4 +19,7 @@ export class CreateFieldDto {
 
   @IsNumber()
   ownerId: number;
+
+  @IsObject()
+  boundary: object;
 }

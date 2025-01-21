@@ -81,6 +81,7 @@ model Field {
   updatedAt DateTime @updatedAt
   ownerId   Int
   owner     User         @relation(fields: [ownerId], references: [id])
+  boundary  Json
 
   tasks     Task[]
 }

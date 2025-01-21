@@ -27,10 +27,10 @@ export class FieldController {
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(@Request() req): Promise<Field> {
     const ownerId = req.user.id;
-    var {name, area, perimeter, cropId } = req.body;
+    const {name, area, perimeter, cropId, boundary } = req.body;
 
     const createFieldDto: CreateFieldDto = {
-      name, area, perimeter, cropId, ownerId: parseInt(ownerId),
+      name, area, perimeter, cropId, ownerId: parseInt(ownerId), boundary
     };
 
     return this.fieldsService.create(createFieldDto);
