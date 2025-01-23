@@ -5,6 +5,7 @@ import axios from 'axios';
 import NavBar from "../components/NavBar";
 import { Link } from "react-router-dom";
 import { isLoggedIn } from "../classes/Auth";
+import { centroid } from '@turf/turf';
 
 export default () => {
   const { setAlert } = useOutletContext();
@@ -19,6 +20,9 @@ export default () => {
   const [taskType, setTaskType] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [completionDate, setCompletionDate] = useState('');
+  const [optimalDateTime, setOptimalDateTime] = useState(null);
+  const [insights, setInsights] = useState('');
+  const [loading, setLoading] = useState(false); // Add loading state
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -61,6 +65,55 @@ export default () => {
       console.error('Error fetching task status options:', error);
     });
   }, []);
+
+  const fetchOptimalDateTimeAndInsights = async (lat, lon) => {
+    const token = localStorage.getItem('accessToken');
+    setLoading(true); // Set loading to true
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_BASE_URL}/weather/optimal-date`,
+        {
+          params: { lat, lon, dueDate, taskType },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      setOptimalDateTime(response.data.optimalDateTime);
+      setInsights(response.data.insights);
+    } catch (error) {
+      console.error('Error fetching optimal date and insights:', error);
+    } finally {
+      setLoading(false); // Set loading to false
+    }
+  };
+
+  const fetchFieldBoundaryAndOptimalDateTime = async () => {
+    const token = localStorage.getItem('accessToken');
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/fields/${taskField}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const fieldBoundary = response.data.boundary;
+      const fieldCentroid = centroid(fieldBoundary).geometry.coordinates;
+      const [lon, lat] = fieldCentroid;
+      fetchOptimalDateTimeAndInsights(lat, lon);
+    } catch (error) {
+      console.error('Error fetching field boundary:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (taskType && dueDate && taskField && taskStatus == 2) {
+      fetchFieldBoundaryAndOptimalDateTime();
+    } else {
+      setOptimalDateTime(null);
+      setInsights('');
+    }
+  }, [taskType, dueDate, taskField, taskStatus]);
 
   const validate = () => {
     if (!taskDescription || !taskStatus || !taskField || !taskType) {
@@ -130,6 +183,8 @@ export default () => {
     setTaskStatus(status);
     if (status == 1) {
       setDueDate(null);
+      setOptimalDateTime(null);
+      setInsights('');
     } else if (status == 2) {
       setCompletionDate(null);
     }
@@ -193,6 +248,28 @@ export default () => {
               <div className="text-base mb-2">Completion Date</div>
               <input value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} type="date" className="w-full p-3 border-[1px] border-gray-400 rounded-lg hover:border-[#61E9B1]" />
             </div>
+          )}
+
+          {loading ? (
+            <div className="mb-3">
+              <div className="text-base mb-2">Analysing weather data for upcoming task...</div>
+            </div>
+          ) : (
+            <>
+              {optimalDateTime && (
+                <div className="mb-3">
+                  <div className="text-base mb-2">Optimal Date and Time for Task</div>
+                  <p>{optimalDateTime}</p>
+                </div>
+              )}
+
+              {insights && (
+                <div className="mb-3">
+                  <div className="text-base mb-2">Insights</div>
+                  <p>{insights}</p>
+                </div>
+              )}
+            </>
           )}
 
           <hr className="my-9 mt-12" />

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useParams, Link, useOutletContext, Navigate } from "react-router-dom";
 import { isLoggedIn } from "../classes/Auth";
+import Weather from './Weather';
 
 export default () => {
   const { groupId } = useParams();
@@ -387,6 +388,8 @@ export default () => {
         <div className='w-full md:w-2/3 mr-0 md:mr-6'>
           <a className='text-[#4edba1] font-bold pb-2 border-b-4 border-[#4edba1]' href="#">All tasks in the farm</a>
           <hr className='mb-3 mt-2' />
+
+          <Weather location="kaunas" />
 
           {tasks.length === 0 ? (
             <div className="text-center w-full">
