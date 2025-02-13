@@ -1,0 +1,218 @@
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import axios from 'axios';
+import { toast } from 'sonner';
+import { Card } from 'primereact/card';
+import { Button } from 'primereact/button';
+import { Tag } from 'primereact/tag';
+import { InputTextarea } from 'primereact/inputtextarea';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import { Fieldset } from 'primereact/fieldset';
+import { Divider } from 'primereact/divider';
+
+interface Task {
+    id: string;
+    title: string;
+    description: string;
+    status: { name: string };
+    field: { name: string };
+    type: { name: string };
+    dueDate?: string;
+    completionDate?: string;
+    participants?: { id: string; username: string }[];
+    isParticipating?: boolean;
+    statusId: number;
+}
+
+interface Comment {
+    id: string;
+    content: string;
+    createdAt: string;
+    createdBy?: { username: string };
+}
+
+const TaskPage = () => {
+    const pathname = usePathname();
+    const taskId = Number(pathname.split('/').pop()); 
+    const [task, setTask] = useState<Task | null>(null);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [commentContent, setCommentContent] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (taskId) fetchTask();
+    }, [taskId]);
+
+    const fetchTask = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setTask(response.data);
+        } catch (error) {
+            console.error('Error fetching task:', error);
+            toast.error('Failed to load task.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchComments = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setComments(response.data);
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+        }
+    };
+
+    const handlePostComment = async () => {
+        if (!commentContent.trim()) {
+            toast.warning('Comment cannot be empty.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('accessToken');
+            await axios.post(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments`,
+                { taskId, content: commentContent },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            setCommentContent('');
+            fetchComments();
+        } catch (error) {
+            console.error('Error posting comment:', error);
+            toast.error('Failed to post comment.');
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments/${commentId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setComments(comments.filter(comment => comment.id !== commentId));
+            toast.success('Comment deleted.');
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            toast.error('Failed to delete comment.');
+        }
+    };
+
+    const handleTaskAction = async (action: string) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}`;
+            let method: 'post' | 'patch' | 'delete' = 'post'; // Default method
+            let payload = {};
+    
+            switch (action) {
+                case 'participate':
+                    url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/groups/${taskId}/task-participate`;
+                    break;
+                case 'cancel-participation':
+                    url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/groups/${taskId}/task-cancel-participation`;
+                    break;
+                case 'cancel-task':
+                    method = 'patch';
+                    payload = { statusId: 3 }; // Task Canceled
+                    break;
+                case 'uncancel-task':
+                    method = 'patch';
+                    payload = { statusId: 2 }; // Task Back to Pending
+                    break;
+                default:
+                    toast.error('Invalid action.');
+                    return;
+            }
+    
+            if (method === 'post') {
+                await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+            } else if (method === 'patch') {
+                await axios.patch(url, payload, { headers: { Authorization: `Bearer ${token}` } });
+            } else if (method === 'delete') {
+                await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
+            }
+    
+            fetchTask();
+            toast.success(`Task ${action.replace('-', ' ')} successfully.`);
+        } catch (error) {
+            console.error(`Error performing ${action}:`, error);
+            toast.error(`Failed to ${action}.`);
+        }
+    };
+    
+
+    if (loading) return <ProgressSpinner />;
+
+    if (!task) return <div className="text-center text-lg">Task not found.</div>;
+
+    return (
+        <div className="container">
+            <Card title={task.title} className="mb-4 shadow-md border-round">
+                <div className="flex align-items-center justify-content-between">
+                    <Tag value={task.status.name} severity={task.status.name === 'Pending' ? 'warning' : task.status.name === 'Completed' ? 'success' : 'danger'} />
+                </div>
+                <p className="text-lg font-semibold text-primary">
+                    <i className="pi pi-map-marker text-green-500"></i> Field: <span className="text-xl font-bold text-green-700">{task.field.name}</span>
+                </p>
+                <p><strong>Type:</strong> {task.type.name}</p>
+                <p>{task.description}</p>
+                <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-CA') : 'N/A'}</p>
+                <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString('en-CA') : 'N/A'}</p>
+
+                <Divider />
+
+                <Fieldset legend="Participants">
+                    {task.participants && task.participants.length > 0 ? (
+                        task.participants.map(participant => (
+                            <span key={participant.id} className="mr-2">{participant.username} <i className="pi pi-user text-gray-500"></i></span>
+                        ))
+                    ) : (
+                        <p className="text-gray-500">No participants yet.</p>
+                    )}
+                </Fieldset>
+
+                <div className="flex gap-3 mt-3">
+                    {task.isParticipating ? (
+                        <Button label="Cancel Participation" className="p-button-danger" onClick={() => handleTaskAction('cancel-participation')} />
+                    ) : (
+                        <Button label="Participate" className="p-button-primary" onClick={() => handleTaskAction('participate')} />
+                    )}
+                    {task.statusId === 2 && <Button label="Cancel Task" className="p-button-warning" onClick={() => handleTaskAction('cancel-task')} />}
+                    {task.statusId === 3 && <Button label="Uncancel Task" className="p-button-success" onClick={() => handleTaskAction('uncancel-task')} />}
+                </div>
+            </Card>
+
+            <Card title="Comments" className="shadow-md border-round">
+                {comments.length > 0 ? (
+                    comments.map(comment => (
+                        <div key={comment.id} className="border p-2 mb-2 rounded">
+                            <p>{comment.content}</p>
+                            <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                            <Button icon="pi pi-trash" className="p-button-text p-button-danger" onClick={() => handleDeleteComment(comment.id)} />
+                        </div>
+                    ))
+                ) : (
+                    <p className="text-gray-500">No comments yet.</p>
+                )}
+                <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
+                <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
+            </Card>
+        </div>
+    );
+};
+
+export default TaskPage;

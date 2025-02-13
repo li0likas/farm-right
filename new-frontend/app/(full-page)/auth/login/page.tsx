@@ -45,7 +45,7 @@ const LoginPage = () => {
     
             // Navigate to dashboard after successful login
             toast.success('Successful login');
-            router.push('/');
+            router.push('/dashboard');
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 if (error.response?.status === 403 && error.response?.data?.message === "Incorrect credentials") {

@@ -1,0 +1,191 @@
+/* eslint-disable @next/next/no-img-element */
+'use client';
+import { Button } from 'primereact/button';
+import { Chart } from 'primereact/chart';
+import { DataTable } from 'primereact/datatable';
+import { Column } from 'primereact/column';
+import { Menu } from 'primereact/menu';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import axios from 'axios';
+//import { LayoutContext } from '../../layout/context/layoutcontext';
+import { toast } from 'sonner';
+import Link from 'next/link';
+import { PieChart } from '@mui/x-charts/PieChart';
+
+interface Task {
+    id: string;
+    title: string;
+    status: { name: string };
+    field: { name: string };
+    dueDate?: string;
+    completionDate?: string;
+}
+
+const Dashboard = () => {
+    const [tasks, setTasks] = useState<Task[]>([]);
+    const [totalFieldArea, setTotalFieldArea] = useState(0);
+    const [completedPercentage, setCompletedPercentage] = useState(0);
+    const [dailySteps, setDailySteps] = useState(0);
+    const [monthlySteps, setMonthlySteps] = useState([]);
+    const menu1 = useRef<Menu>(null);
+    const menu2 = useRef<Menu>(null);
+    //const { layoutConfig } = useContext(LayoutContext);
+
+    useEffect(() => {
+        fetchTasks();
+        fetchFieldData();
+        fetchStepsData();
+    }, []);
+
+    const fetchTasks = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const sortedTasks = response.data.sort((a: Task, b: Task) => {
+                const dateA = a.dueDate || a.completionDate;
+                const dateB = b.dueDate || b.completionDate;
+                return new Date(dateB || 0).getTime() - new Date(dateA || 0).getTime();
+            });
+
+            setTasks(sortedTasks);
+
+            const completedTasksCount = sortedTasks.filter((task: Task) => task.status.name === 'Completed').length;
+            const totalTasksCount = sortedTasks.length;
+            const percentage = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
+
+            setCompletedPercentage(percentage);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+            toast.error('Failed to fetch tasks.');
+        }
+    };
+
+    const fetchFieldData = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const totalArea = response.data.reduce((sum: number, field: { area: number }) => sum + field.area, 0);
+            setTotalFieldArea(totalArea);
+        } catch (error) {
+            console.error('Error fetching fields:', error);
+            toast.error('Failed to fetch fields.');
+        }
+    };
+
+    const fetchStepsData = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+
+            // Fetch daily steps
+            const dailyResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/activity/dailysteps`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setDailySteps(dailyResponse.data);
+
+            // Fetch monthly steps
+            const monthlyResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/activity/monthlySteps`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setMonthlySteps(monthlyResponse.data);
+        } catch (error) {
+            console.error('Error fetching steps:', error);
+        }
+    };
+
+    return (
+        <div className="grid">
+            {/* 📌 TASKS CARD */}
+            <div className="col-12 lg:col-6 xl:col-3">
+                <div className="card mb-0">
+                    <div className="flex justify-content-between mb-3">
+                        <div>
+                            <span className="block text-500 font-medium mb-3">Task Completion</span>
+                            <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
+                        </div>
+                        <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                            <i className="pi pi-check text-green-500 text-xl" />
+                        </div>
+                    </div>
+                    <PieChart
+                        slotProps={{ legend: { hidden: true } }}
+                        series={[
+                            {
+                                data: [
+                                    { id: 0, value: completedPercentage, color: '#61E9B1', label: 'Completed' },
+                                    { id: 1, value: 100 - completedPercentage, color: '#e1e1e1', label: 'Not done' },
+                                ],
+                                innerRadius: 20,
+                                outerRadius: 30,
+                                paddingAngle: 0,
+                                cornerRadius: 5,
+                                startAngle: 0,
+                                endAngle: 360,
+                                cx: 70,
+                            }
+                        ]}
+                        height={70}
+                    />
+                </div>
+            </div>
+
+            {/* 📌 TOTAL FIELD AREA */}
+            <div className="col-12 lg:col-6 xl:col-3">
+                <div className="card mb-0">
+                    <div className="flex justify-content-between mb-3">
+                        <div>
+                            <span className="block text-500 font-medium mb-3">Total Field Area</span>
+                            <div className="text-900 font-medium text-xl"> {totalFieldArea.toFixed(2)} ha</div>
+                        </div>
+                        <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                            <i className="pi pi-map-marker text-blue-500 text-xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 📌 DAILY STEPS */}
+            <div className="col-12 lg:col-6 xl:col-3">
+                <div className="card mb-0">
+                    <div className="flex justify-content-between mb-3">
+                        <div>
+                            <span className="block text-500 font-medium mb-3">Daily Steps</span>
+                            <div className="text-900 font-medium text-xl">{dailySteps}</div>
+                        </div>
+                        <div className="flex align-items-center justify-content-center bg-cyan-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                            <i className="pi pi-walking text-cyan-500 text-xl" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 📌 TASKS LIST */}
+            <div className="col-12">
+                <div className="card">
+                    <h5>Recent Tasks</h5>
+                    <DataTable value={tasks} responsiveLayout="scroll">
+                        <Column field="type.name" header="Task" />
+                        <Column field="field.name" header="Field" />
+                        <Column field="status.name" header="Status" />
+                        <Column field="dueDate" header="Due Date" body={(data) => data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'N/A'} />
+                        <Column
+                            header="View"
+                            body={(data) => (
+                                <Link href={`/tasks/${data.id}`}>
+                                    <Button icon="pi pi-eye" text />
+                                </Link>
+                            )}
+                        />
+                    </DataTable>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Dashboard;
