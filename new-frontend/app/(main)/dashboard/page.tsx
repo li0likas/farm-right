@@ -1,16 +1,16 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
+
 import { Button } from 'primereact/button';
-import { Chart } from 'primereact/chart';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Menu } from 'primereact/menu';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-//import { LayoutContext } from '../../layout/context/layoutcontext';
+import ProtectedRoute from "@/utils/ProtectedRoute";
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { PieChart } from '@mui/x-charts/PieChart';
+import { isLoggedIn } from "@/utils/auth";
 
 interface Task {
     id: string;
@@ -29,14 +29,17 @@ const Dashboard = () => {
     const [monthlySteps, setMonthlySteps] = useState([]);
     const menu1 = useRef<Menu>(null);
     const menu2 = useRef<Menu>(null);
-    //const { layoutConfig } = useContext(LayoutContext);
 
     useEffect(() => {
+        if (!isLoggedIn()) {
+            toast.error('Unauthorized. Login first.');
+            return;
+        }
+
         fetchTasks();
         fetchFieldData();
         fetchStepsData();
     }, []);
-
     const fetchTasks = async () => {
         try {
             const token = localStorage.getItem('accessToken');
@@ -99,92 +102,94 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="grid">
-            {/* 📌 TASKS CARD */}
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Task Completion</span>
-                            <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
+        <ProtectedRoute>
+            <div className="grid">
+                {/* 📌 TASKS CARD */}
+                <div className="col-12 lg:col-6 xl:col-3">
+                    <div className="card mb-0">
+                        <div className="flex justify-content-between mb-3">
+                            <div>
+                                <span className="block text-500 font-medium mb-3">Task Completion</span>
+                                <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
+                            </div>
+                            <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                                <i className="pi pi-check text-green-500 text-xl" />
+                            </div>
                         </div>
-                        <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-check text-green-500 text-xl" />
-                        </div>
-                    </div>
-                    <PieChart
-                        slotProps={{ legend: { hidden: true } }}
-                        series={[
-                            {
-                                data: [
-                                    { id: 0, value: completedPercentage, color: '#61E9B1', label: 'Completed' },
-                                    { id: 1, value: 100 - completedPercentage, color: '#e1e1e1', label: 'Not done' },
-                                ],
-                                innerRadius: 20,
-                                outerRadius: 30,
-                                paddingAngle: 0,
-                                cornerRadius: 5,
-                                startAngle: 0,
-                                endAngle: 360,
-                                cx: 70,
-                            }
-                        ]}
-                        height={70}
-                    />
-                </div>
-            </div>
-
-            {/* 📌 TOTAL FIELD AREA */}
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Total Field Area</span>
-                            <div className="text-900 font-medium text-xl"> {totalFieldArea.toFixed(2)} ha</div>
-                        </div>
-                        <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-map-marker text-blue-500 text-xl" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* 📌 DAILY STEPS */}
-            <div className="col-12 lg:col-6 xl:col-3">
-                <div className="card mb-0">
-                    <div className="flex justify-content-between mb-3">
-                        <div>
-                            <span className="block text-500 font-medium mb-3">Daily Steps</span>
-                            <div className="text-900 font-medium text-xl">{dailySteps}</div>
-                        </div>
-                        <div className="flex align-items-center justify-content-center bg-cyan-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
-                            <i className="pi pi-walking text-cyan-500 text-xl" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* 📌 TASKS LIST */}
-            <div className="col-12">
-                <div className="card">
-                    <h5>Recent Tasks</h5>
-                    <DataTable value={tasks} responsiveLayout="scroll">
-                        <Column field="type.name" header="Task" />
-                        <Column field="field.name" header="Field" />
-                        <Column field="status.name" header="Status" />
-                        <Column field="dueDate" header="Due Date" body={(data) => data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'N/A'} />
-                        <Column
-                            header="View"
-                            body={(data) => (
-                                <Link href={`/tasks/${data.id}`}>
-                                    <Button icon="pi pi-eye" text />
-                                </Link>
-                            )}
+                        <PieChart
+                            slotProps={{ legend: { hidden: true } }}
+                            series={[
+                                {
+                                    data: [
+                                        { id: 0, value: completedPercentage, color: '#61E9B1', label: 'Completed' },
+                                        { id: 1, value: 100 - completedPercentage, color: '#e1e1e1', label: 'Not done' },
+                                    ],
+                                    innerRadius: 20,
+                                    outerRadius: 30,
+                                    paddingAngle: 0,
+                                    cornerRadius: 5,
+                                    startAngle: 0,
+                                    endAngle: 360,
+                                    cx: 70,
+                                }
+                            ]}
+                            height={70}
                         />
-                    </DataTable>
+                    </div>
+                </div>
+
+                {/* 📌 TOTAL FIELD AREA */}
+                <div className="col-12 lg:col-6 xl:col-3">
+                    <div className="card mb-0">
+                        <div className="flex justify-content-between mb-3">
+                            <div>
+                                <span className="block text-500 font-medium mb-3">Total Field Area</span>
+                                <div className="text-900 font-medium text-xl"> {totalFieldArea.toFixed(2)} ha</div>
+                            </div>
+                            <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                                <i className="pi pi-map-marker text-blue-500 text-xl" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 📌 DAILY STEPS */}
+                <div className="col-12 lg:col-6 xl:col-3">
+                    <div className="card mb-0">
+                        <div className="flex justify-content-between mb-3">
+                            <div>
+                                <span className="block text-500 font-medium mb-3">Daily Steps</span>
+                                <div className="text-900 font-medium text-xl">{dailySteps}</div>
+                            </div>
+                            <div className="flex align-items-center justify-content-center bg-cyan-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
+                                <i className="pi pi-walking text-cyan-500 text-xl" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 📌 TASKS LIST */}
+                <div className="col-12">
+                    <div className="card">
+                        <h5>Recent Tasks</h5>
+                        <DataTable value={tasks} responsiveLayout="scroll">
+                            <Column field="type.name" header="Task" />
+                            <Column field="field.name" header="Field" />
+                            <Column field="status.name" header="Status" />
+                            <Column field="dueDate" header="Due Date" body={(data) => data.dueDate ? new Date(data.dueDate).toLocaleDateString() : 'N/A'} />
+                            <Column
+                                header="View"
+                                body={(data) => (
+                                    <Link href={`/tasks/${data.id}`}>
+                                        <Button icon="pi pi-eye" text />
+                                    </Link>
+                                )}
+                            />
+                        </DataTable>
+                    </div>
                 </div>
             </div>
-        </div>
+        </ProtectedRoute>
     );
 };
 

@@ -9,6 +9,8 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { centroid } from '@turf/turf';
 import GoogleMapComponent from '../../components/GoogleMapComponent';
+import ProtectedRoute from "@/utils/ProtectedRoute";
+import { isLoggedIn } from "@/utils/auth";
 
 interface Field {
     id: string;
@@ -26,14 +28,17 @@ const Fields = () => {
     const [layout, setLayout] = useState<'grid' | 'list'>('grid');
 
     useEffect(() => {
+        if (!isLoggedIn()) {
+            toast.error('Unauthorized. Login first.');
+            return;
+        }
+
         fetchFields();
     }, []);
 
     const fetchFields = async () => {
         try {
-            const accessToken = localStorage.getItem('accessToken');
-            if (!accessToken) return;
-            
+            const accessToken = localStorage.getItem('accessToken');            
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
                 headers: { Authorization: `Bearer ${accessToken}` }
             });
@@ -109,14 +114,16 @@ const Fields = () => {
     };
 
     return (
-        <div className="grid">
-            <div className="col-12">
-                <div className="card">
-                    <h5>My Fields</h5>
-                    <DataView value={filteredFields} layout={layout} paginator rows={9} itemTemplate={itemTemplate} header={dataViewHeader}></DataView>
+        <ProtectedRoute>
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        <h5>My Fields</h5>
+                        <DataView value={filteredFields} layout={layout} paginator rows={9} itemTemplate={itemTemplate} header={dataViewHeader}></DataView>
+                    </div>
                 </div>
             </div>
-        </div>
+        </ProtectedRoute>
     );
 };
 

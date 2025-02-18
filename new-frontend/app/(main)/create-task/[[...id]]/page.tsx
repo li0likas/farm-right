@@ -10,6 +10,8 @@ import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { InputTextarea } from "primereact/inputtextarea";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { isLoggedIn } from "@/utils/auth";
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 const TaskCreatePage = () => {
   const pathname = usePathname();
@@ -27,38 +29,44 @@ const TaskCreatePage = () => {
   const [insights, setInsights] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Fetch options for fields, task types, and statuses
   useEffect(() => {
-    const fetchOptions = async () => {
-      const token = localStorage.getItem("accessToken");
-      try {
-        if (!fieldIdFromUrl) {
-          const fieldsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setTaskFieldOptions(fieldsResponse.data.map((field: any) => ({ label: field.name, value: field.id })));
-        }
-  
-        const taskTypesResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-type-options`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTaskTypeOptions(taskTypesResponse.data.map((type: any) => ({ label: type.name, value: type.id })));
-  
-        const taskStatusResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-status-options`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTaskStatusOptions(taskStatusResponse.data
-          .filter((option: any) => option.name.toLowerCase() !== "canceled")
-          .map((status: any) => ({ label: status.name, value: status.id })));
-      } catch (error) {
-        console.error("Error fetching options:", error);
-        toast.error("Failed to load options.");
-      }
-    };
-  
+    if (!isLoggedIn()) {
+        toast.error('Unauthorized. Login first.');
+        return;
+    }
     fetchOptions();
   }, []);
-  
+
+  // Fetch options for fields, task types, and statuses
+  const fetchOptions = async () => {
+    const token = localStorage.getItem("accessToken");
+    try {
+      if (!fieldIdFromUrl) {
+        const fieldsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setTaskFieldOptions(fieldsResponse.data.map((field: any) => ({ label: field.name, value: field.id })));
+      }
+
+      const taskTypesResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-type-options`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTaskTypeOptions(taskTypesResponse.data.map((type: any) => ({ label: type.name, value: type.id })));
+
+      const taskStatusResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-status-options`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTaskStatusOptions(
+        taskStatusResponse.data
+          .filter((option: any) => option.name.toLowerCase() !== "canceled")
+          .map((status: any) => ({ label: status.name, value: status.id }))
+      );
+    } catch (error) {
+      console.error("Error fetching options:", error);
+      toast.error("Failed to load options.");
+    }
+  };
+
   // Fetch Weather Insights & Optimal Task Time
   const fetchWeatherInsights = async (lat: number, lon: number) => {
     const token = localStorage.getItem("accessToken");
@@ -154,35 +162,33 @@ const TaskCreatePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <Card title="Create a Task" className="mb-6">
-        {/* Task Type Selection */}
-        <Dropdown value={taskType} options={taskTypeOptions} onChange={(e) => setTaskType(e.value)} placeholder="Select Task Type" className="w-full mb-4" />
+    <ProtectedRoute>
+      <div className="container mx-auto p-6">
+        <Card title="Create a Task" className="mb-6">
+          {/* Task Type Selection */}
+          <Dropdown value={taskType} options={taskTypeOptions} onChange={(e) => setTaskType(e.value)} placeholder="Select Task Type" className="w-full mb-4" />
 
-        {/* Description */}
-        <InputTextarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} placeholder="Task Description" rows={3} className="w-full mb-4" />
+          {/* Description */}
+          <InputTextarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} placeholder="Task Description" rows={3} className="w-full mb-4" />
 
-        {/* Task Status Selection */}
-        <Dropdown value={taskStatus} options={taskStatusOptions} onChange={(e) => setTaskStatus(e.value)} placeholder="Select Task Status" className="w-full mb-4" />
+          {/* Task Status Selection */}
+          <Dropdown value={taskStatus} options={taskStatusOptions} onChange={(e) => setTaskStatus(e.value)} placeholder="Select Task Status" className="w-full mb-4" />
 
-        {/* Field Selection */}
-        {!fieldIdFromUrl && (
-          <Dropdown value={taskField} options={taskFieldOptions} onChange={(e) => setTaskField(e.value)} placeholder="Select Field" className="w-full mb-4" />
-        )}
+          {/* Field Selection */}
+          {!fieldIdFromUrl && <Dropdown value={taskField} options={taskFieldOptions} onChange={(e) => setTaskField(e.value)} placeholder="Select Field" className="w-full mb-4" />}
 
-        {/* Due Date Selection */}
-        {taskStatus === 2 && <Calendar value={dueDate} onChange={(e) => setDueDate(e.value)} placeholder="Select Due Date" className="w-full mb-4" showIcon />}
+          {/* Dates */}
+          {taskStatus === 2 && <Calendar value={dueDate} onChange={(e) => setDueDate(e.value)} placeholder="Select Due Date" className="w-full mb-4" showIcon />}
+          {taskStatus === 1 && <Calendar value={completionDate} onChange={(e) => setCompletionDate(e.value)} placeholder="Select Completion Date" className="w-full mb-4" showIcon />}
 
-        {/* Completion Date Selection */}
-        {taskStatus === 1 && <Calendar value={completionDate} onChange={(e) => setCompletionDate(e.value)} placeholder="Select Completion Date" className="w-full mb-4" showIcon />}
+          {loading ? <ProgressSpinner /> : optimalDateTime && <p>🌦 Optimal Date: {optimalDateTime}</p>}
+          {insights && <p>📌 Insights: {insights}</p>}
 
-        {loading ? <ProgressSpinner /> : optimalDateTime && <p>🌦 Optimal Date: {optimalDateTime}</p>}
-        {insights && <p>📌 Insights: {insights}</p>}
-
-        {/* Create Task Button */}
-        <Button label="Create Task" className="p-button-success w-full" onClick={handleCreateTask} />
-      </Card>
-    </div>
+          {/* Create Task Button */}
+          <Button label="Create Task" className="p-button-success w-full" onClick={handleCreateTask} />
+        </Card>
+      </div>
+    </ProtectedRoute>
   );
 };
 

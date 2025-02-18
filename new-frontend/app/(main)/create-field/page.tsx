@@ -8,8 +8,12 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import GoogleMapDraw from "../../components/GoogleMapDraw";
+import { useRouter } from "next/navigation";
+import { isLoggedIn } from "@/utils/auth";
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 const CreateFieldPage = () => {
+  const router = useRouter();
   const [fieldName, setFieldName] = useState("");
   const [fieldCropOptions, setFieldCropOptions] = useState([]);
   const [fieldCrop, setFieldCrop] = useState("");
@@ -18,17 +22,22 @@ const CreateFieldPage = () => {
   const [fieldPerimeter, setFieldPerimeter] = useState("");
 
   useEffect(() => {
-    const fetchCropOptions = async () => {
-      try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/field-crop-options`);
-        setFieldCropOptions(response.data.map((crop: any) => ({ label: crop.name, value: crop.id })));
-      } catch (error) {
-        console.error("Error fetching crop options:", error);
-        toast.error("Failed to load crop options.");
-      }
-    };
+    if (!isLoggedIn()) {
+        toast.error('Unauthorized. Login first.');
+        return;
+    }
     fetchCropOptions();
   }, []);
+
+  const fetchCropOptions = async () => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/field-crop-options`);
+      setFieldCropOptions(response.data.map((crop: any) => ({ label: crop.name, value: crop.id })));
+    } catch (error) {
+      console.error("Error fetching crop options:", error);
+      toast.error("Failed to load crop options.");
+    }
+  };
 
   const validate = () => {
     if (!fieldName || !fieldArea || !fieldPerimeter || !fieldCrop || !fieldBoundary) {
@@ -68,38 +77,40 @@ const CreateFieldPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <Card title="Create a Field" className="mb-6">
-        {/* Field Name */}
-        <div className="mb-4">
-          <label className="block font-bold mb-2">Field Name</label>
-          <InputText value={fieldName} onChange={(e) => setFieldName(e.target.value)} placeholder="Enter field name" className="w-full" />
-        </div>
-
-        {/* Crop Selection */}
-        <div className="mb-4">
-          <label className="block font-bold mb-2">Select Crop</label>
-          <Dropdown value={fieldCrop} options={fieldCropOptions} onChange={(e) => setFieldCrop(e.value)} placeholder="Select a crop" className="w-full" />
-        </div>
-
-        {/* Field Boundary Drawing */}
-        <div className="mb-4">
-          <label className="block font-bold mb-2">Draw Field Boundary</label>
-          <GoogleMapDraw setBoundary={setFieldBoundary} setFieldArea={setFieldArea} setFieldPerimeter={setFieldPerimeter} />
-        </div>
-
-        {/* Field Area & Perimeter */}
-        {fieldArea && fieldPerimeter && (
+    <ProtectedRoute>
+      <div className="container mx-auto p-6">
+        <Card title="Create a Field" className="mb-6">
+          {/* Field Name */}
           <div className="mb-4">
-            <p><strong>Area:</strong> {fieldArea} ha</p>
-            <p><strong>Perimeter:</strong> {fieldPerimeter} m</p>
+            <label className="block font-bold mb-2">Field Name</label>
+            <InputText value={fieldName} onChange={(e) => setFieldName(e.target.value)} placeholder="Enter field name" className="w-full" />
           </div>
-        )}
 
-        {/* Create Field Button */}
-        <Button label="Create Field" className="p-button-success w-full" onClick={createField} />
-      </Card>
-    </div>
+          {/* Crop Selection */}
+          <div className="mb-4">
+            <label className="block font-bold mb-2">Select Crop</label>
+            <Dropdown value={fieldCrop} options={fieldCropOptions} onChange={(e) => setFieldCrop(e.value)} placeholder="Select a crop" className="w-full" />
+          </div>
+
+          {/* Field Boundary Drawing */}
+          <div className="mb-4">
+            <label className="block font-bold mb-2">Draw Field Boundary</label>
+            <GoogleMapDraw setBoundary={setFieldBoundary} setFieldArea={setFieldArea} setFieldPerimeter={setFieldPerimeter} />
+          </div>
+
+          {/* Field Area & Perimeter */}
+          {fieldArea && fieldPerimeter && (
+            <div className="mb-4">
+              <p><strong>Area:</strong> {fieldArea} ha</p>
+              <p><strong>Perimeter:</strong> {fieldPerimeter} m</p>
+            </div>
+          )}
+
+          {/* Create Field Button */}
+          <Button label="Create Field" className="p-button-success w-full" onClick={createField} />
+        </Card>
+      </div>
+    </ProtectedRoute>
   );
 };
 

@@ -13,6 +13,7 @@ import { LayoutContext } from './context/layoutcontext';
 import { PrimeReactContext } from 'primereact/api';
 import { ChildContainerProps, LayoutState, AppTopbarRef } from '@/types';
 import { usePathname, useSearchParams } from 'next/navigation';
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 const Layout = ({ children }: ChildContainerProps) => {
     const { layoutConfig, layoutState, setLayoutState } = useContext(LayoutContext);
@@ -125,14 +126,16 @@ const Layout = ({ children }: ChildContainerProps) => {
     return (
         <React.Fragment>
             <div className={containerClass}>
-                <AppTopbar ref={topbarRef} />
-                <div ref={sidebarRef} className="layout-sidebar">
-                    <AppSidebar />
-                </div>
+                <ProtectedRoute>
+                    <AppTopbar ref={topbarRef} />
+                    <div ref={sidebarRef} className="layout-sidebar">
+                        <AppSidebar />
+                    </div>
+                </ProtectedRoute>
                 <div className="layout-main-container">
                     <div className="layout-main">{children}</div>
                     <AppFooter />
-                </div>
+                </div>            
                 <AppConfig />
                 <div className="layout-mask"></div>
             </div>

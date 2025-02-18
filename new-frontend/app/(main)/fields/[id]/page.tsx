@@ -10,6 +10,8 @@ import { Tag } from "primereact/tag";
 import { Divider } from "primereact/divider";
 import { ProgressSpinner } from "primereact/progressspinner";
 import GoogleMapComponent from "../../../components/GoogleMapComponent";
+import { isLoggedIn } from "@/utils/auth";
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 const FieldViewPage = () => {
   const pathname = usePathname();
@@ -21,6 +23,12 @@ const FieldViewPage = () => {
   // Fetch Field Info
   useEffect(() => {
     if (!fieldId) return;
+
+    if (!isLoggedIn()) {
+      toast.error('Unauthorized. Login first.');
+      return;
+    }
+
     fetchFieldInfo();
     fetchTasks();
   }, [fieldId]);
@@ -80,62 +88,64 @@ const FieldViewPage = () => {
     : { lat: 55.1694, lng: 23.8813 };
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Field Name */}
-      <Card className="mb-4">
-        <h2 className="text-2xl font-bold text-green-700">{fieldInfo.name}</h2>
-      </Card>
+    <ProtectedRoute>
+      <div className="container mx-auto p-6">
+        {/* Field Name */}
+        <Card className="mb-4">
+          <h2 className="text-2xl font-bold text-green-700">{fieldInfo.name}</h2>
+        </Card>
 
-      <Divider />
+        <Divider />
 
-      {/* Tasks Section */}
-      <Card title="Tasks" className="mb-6">
-        <div className="text-right">
-          <Button
-            label="Create Task"
-            className="p-button-primary"
-            onClick={() => (window.location.href = `/create-task/${fieldId}`)}
-          />
+        {/* Tasks Section */}
+        <Card title="Tasks" className="mb-6">
+          <div className="text-right">
+            <Button
+              label="Create Task"
+              className="p-button-primary"
+              onClick={() => (window.location.href = `/create-task/${fieldId}`)}
+            />
+          </div>
+
+          {tasks.length === 0 ? (
+            <div className="text-center text-gray-500 mt-4">No tasks available.</div>
+          ) : (
+            tasks.map((task) => (
+              <div key={task.id} className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-lg">
+                  <i className="pi pi-check-circle text-green-600 text-2xl"></i>
+                </div>
+                <div className="flex-1 ml-4">
+                  <p className="font-bold">{task.type.name}</p>
+                  <p className="text-sm text-gray-500">{task.description}</p>
+                  <p className="text-xs text-gray-400">
+                    Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
+                  </p>
+                  <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
+                </div>
+                <div className="ml-auto flex gap-2">
+                  <Button label="View" className="p-button-secondary" onClick={() => (window.location.href = `/tasks/${task.id}`)} />
+                </div>
+              </div>
+            ))
+          )}
+        </Card>
+
+        <Divider />
+
+        {/* Google Map Component */}
+        <Card title="Field Location">
+          <GoogleMapComponent center={fieldCenter} boundary={fieldInfo?.boundary} />
+        </Card>
+
+        <Divider />
+
+        {/* Delete Field Button at the Bottom */}
+        <div className="text-center mt-4">
+          <Button label="Delete Field" className="p-button-danger" onClick={handleDeleteField} />
         </div>
-
-        {tasks.length === 0 ? (
-          <div className="text-center text-gray-500 mt-4">No tasks available.</div>
-        ) : (
-          tasks.map((task) => (
-            <div key={task.id} className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-              <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-lg">
-                <i className="pi pi-check-circle text-green-600 text-2xl"></i>
-              </div>
-              <div className="flex-1 ml-4">
-                <p className="font-bold">{task.type.name}</p>
-                <p className="text-sm text-gray-500">{task.description}</p>
-                <p className="text-xs text-gray-400">
-                  Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
-                </p>
-                <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
-              </div>
-              <div className="ml-auto flex gap-2">
-                <Button label="View" className="p-button-secondary" onClick={() => (window.location.href = `/tasks/${task.id}`)} />
-              </div>
-            </div>
-          ))
-        )}
-      </Card>
-
-      <Divider />
-
-      {/* Google Map Component */}
-      <Card title="Field Location">
-        <GoogleMapComponent center={fieldCenter} boundary={fieldInfo?.boundary} />
-      </Card>
-
-      <Divider />
-
-      {/* Delete Field Button at the Bottom */}
-      <div className="text-center mt-4">
-        <Button label="Delete Field" className="p-button-danger" onClick={handleDeleteField} />
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 

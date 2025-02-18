@@ -11,6 +11,8 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Fieldset } from 'primereact/fieldset';
 import { Divider } from 'primereact/divider';
+import { isLoggedIn } from "@/utils/auth";
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 interface Task {
     id: string;
@@ -42,7 +44,15 @@ const TaskPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (taskId) fetchTask();
+        if (!isLoggedIn()) {
+            toast.error('Unauthorized. Login first.');
+            return;
+        }
+        if (taskId) 
+        {
+            fetchTask();
+            fetchComments();
+        }
     }, [taskId]);
 
     const fetchTask = async () => {
@@ -160,58 +170,60 @@ const TaskPage = () => {
     if (!task) return <div className="text-center text-lg">Task not found.</div>;
 
     return (
-        <div className="container">
-            <Card title={task.title} className="mb-4 shadow-md border-round">
-                <div className="flex align-items-center justify-content-between">
-                    <Tag value={task.status.name} severity={task.status.name === 'Pending' ? 'warning' : task.status.name === 'Completed' ? 'success' : 'danger'} />
-                </div>
-                <p className="text-lg font-semibold text-primary">
-                    <i className="pi pi-map-marker text-green-500"></i> Field: <span className="text-xl font-bold text-green-700">{task.field.name}</span>
-                </p>
-                <p><strong>Type:</strong> {task.type.name}</p>
-                <p>{task.description}</p>
-                <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-CA') : 'N/A'}</p>
-                <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString('en-CA') : 'N/A'}</p>
+        <ProtectedRoute>
+            <div className="container">
+                <Card title={task.title} className="mb-4 shadow-md border-round">
+                    <div className="flex align-items-center justify-content-between">
+                        <Tag value={task.status.name} severity={task.status.name === 'Pending' ? 'warning' : task.status.name === 'Completed' ? 'success' : 'danger'} />
+                    </div>
+                    <p className="text-lg font-semibold text-primary">
+                        <i className="pi pi-map-marker text-green-500"></i> Field: <span className="text-xl font-bold text-green-700">{task.field.name}</span>
+                    </p>
+                    <p><strong>Type:</strong> {task.type.name}</p>
+                    <p>{task.description}</p>
+                    <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-CA') : 'N/A'}</p>
+                    <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString('en-CA') : 'N/A'}</p>
 
-                <Divider />
+                    <Divider />
 
-                <Fieldset legend="Participants">
-                    {task.participants && task.participants.length > 0 ? (
-                        task.participants.map(participant => (
-                            <span key={participant.id} className="mr-2">{participant.username} <i className="pi pi-user text-gray-500"></i></span>
+                    <Fieldset legend="Participants">
+                        {task.participants && task.participants.length > 0 ? (
+                            task.participants.map(participant => (
+                                <span key={participant.id} className="mr-2">{participant.username} <i className="pi pi-user text-gray-500"></i></span>
+                            ))
+                        ) : (
+                            <p className="text-gray-500">No participants yet.</p>
+                        )}
+                    </Fieldset>
+
+                    <div className="flex gap-3 mt-3">
+                        {task.isParticipating ? (
+                            <Button label="Cancel Participation" className="p-button-danger" onClick={() => handleTaskAction('cancel-participation')} />
+                        ) : (
+                            <Button label="Participate" className="p-button-primary" onClick={() => handleTaskAction('participate')} />
+                        )}
+                        {task.statusId === 2 && <Button label="Cancel Task" className="p-button-warning" onClick={() => handleTaskAction('cancel-task')} />}
+                        {task.statusId === 3 && <Button label="Uncancel Task" className="p-button-success" onClick={() => handleTaskAction('uncancel-task')} />}
+                    </div>
+                </Card>
+
+                <Card title="Comments" className="shadow-md border-round">
+                    {comments.length > 0 ? (
+                        comments.map(comment => (
+                            <div key={comment.id} className="border p-2 mb-2 rounded">
+                                <p>{comment.content}</p>
+                                <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                                <Button icon="pi pi-trash" className="p-button-text p-button-danger" onClick={() => handleDeleteComment(comment.id)} />
+                            </div>
                         ))
                     ) : (
-                        <p className="text-gray-500">No participants yet.</p>
+                        <p className="text-gray-500">No comments yet.</p>
                     )}
-                </Fieldset>
-
-                <div className="flex gap-3 mt-3">
-                    {task.isParticipating ? (
-                        <Button label="Cancel Participation" className="p-button-danger" onClick={() => handleTaskAction('cancel-participation')} />
-                    ) : (
-                        <Button label="Participate" className="p-button-primary" onClick={() => handleTaskAction('participate')} />
-                    )}
-                    {task.statusId === 2 && <Button label="Cancel Task" className="p-button-warning" onClick={() => handleTaskAction('cancel-task')} />}
-                    {task.statusId === 3 && <Button label="Uncancel Task" className="p-button-success" onClick={() => handleTaskAction('uncancel-task')} />}
-                </div>
-            </Card>
-
-            <Card title="Comments" className="shadow-md border-round">
-                {comments.length > 0 ? (
-                    comments.map(comment => (
-                        <div key={comment.id} className="border p-2 mb-2 rounded">
-                            <p>{comment.content}</p>
-                            <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
-                            <Button icon="pi pi-trash" className="p-button-text p-button-danger" onClick={() => handleDeleteComment(comment.id)} />
-                        </div>
-                    ))
-                ) : (
-                    <p className="text-gray-500">No comments yet.</p>
-                )}
-                <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
-                <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
-            </Card>
-        </div>
+                    <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
+                    <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
+                </Card>
+            </div>
+        </ProtectedRoute>
     );
 };
 

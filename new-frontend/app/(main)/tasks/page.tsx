@@ -11,6 +11,8 @@ import { Card } from 'primereact/card';
 import { Tag } from 'primereact/tag';
 import Image from 'next/image';
 import taskImage from '@/public/images/taskImage.png';
+import { isLoggedIn } from "@/utils/auth";
+import ProtectedRoute from "@/utils/ProtectedRoute";
 
 interface Task {
     id: string;
@@ -28,6 +30,10 @@ const TasksPage = () => {
     const [activeTab, setActiveTab] = useState<string>('Pending');
 
     useEffect(() => {
+        if (!isLoggedIn()) {
+            toast.error('Unauthorized. Login first.');
+            return;
+        }
         fetchTasks();
     }, []);
 
@@ -87,22 +93,24 @@ const TasksPage = () => {
     };
 
     return (
-        <div className="grid">
-            <div className="col-12">
-                <div className="card">
-                    {/* ✅ Moved Create Task Button Above the Tabs */}
-                    <div className="flex justify-end mb-3">
-                        <Button label="Create Task" icon="pi pi-plus" className="p-button-success" onClick={() => router.push('/create-task')} />
+        <ProtectedRoute>
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        {/* ✅ Moved Create Task Button Above the Tabs */}
+                        <div className="flex justify-end mb-3">
+                            <Button label="Create Task" icon="pi pi-plus" className="p-button-success" onClick={() => router.push('/create-task')} />
+                        </div>
+
+                        {/* ✅ Task Filters (Tabs) */}
+                        <TabMenu model={tabItems} activeIndex={tabItems.findIndex((tab) => tab.label === activeTab)} onTabChange={handleTabChange} />
+
+                        {/* ✅ Task List - Removed Pagination */}
+                        <DataView value={filteredTasks} layout="list" itemTemplate={dataviewListItem} />
                     </div>
-
-                    {/* ✅ Task Filters (Tabs) */}
-                    <TabMenu model={tabItems} activeIndex={tabItems.findIndex((tab) => tab.label === activeTab)} onTabChange={handleTabChange} />
-
-                    {/* ✅ Task List - Removed Pagination */}
-                    <DataView value={filteredTasks} layout="list" itemTemplate={dataviewListItem} />
                 </div>
             </div>
-        </div>
+        </ProtectedRoute>
     );
 };
 
