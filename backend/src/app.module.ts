@@ -14,11 +14,13 @@ import { TaskTypeOptionsModule } from './task/taskTypeOptions/taskTypeOptions.mo
 import { TaskStatusOptionsModule } from './task/taskStatusOptions/taskStatusOptions.module';
 import { WeatherModule } from './weather/weather.module';
 import { AiModule } from './ai/ai.module';
+import { EquipmentModule } from './equipment/equipment.module';
+import { EquipmentTypeOptionsModule } from './equipment/equipmentTypeOptions/equipmentTypeOptions.module';
 
 @Module({
   imports: [ConfigModule.forRoot({isGlobal: true}), AuthModule, UserModule, PrismaModule, FieldModule,
     TaskModule, CommentModule, FieldCropOptionsModule, TaskTypeOptionsModule, TaskStatusOptionsModule,
-    WeatherModule, AiModule
+    WeatherModule, AiModule, EquipmentModule, EquipmentTypeOptionsModule
     /*, CronModule*/],
   controllers: [],
   providers: [],

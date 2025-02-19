@@ -1,4 +1,4 @@
-import { IsNumber, IsDate, IsString, IsOptional } from 'class-validator';
+import { IsNumber, IsDate, IsString, IsOptional, IsArray } from 'class-validator';
 
 export class CreateTaskDto {
   @IsNumber()
@@ -18,4 +18,8 @@ export class CreateTaskDto {
 
   @IsNumber()
   fieldId: number;
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  equipmentIds?: number[];
 }

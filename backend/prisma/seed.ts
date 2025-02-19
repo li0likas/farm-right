@@ -5,8 +5,12 @@ import { connect } from 'http2';
 const prisma = new PrismaClient();
 
 async function main() {
+  console.log("🔄 Clearing existing data...");
 
   // Clear existing data
+  await prisma.taskEquipment.deleteMany({});
+  await prisma.equipment.deleteMany({});
+  await prisma.equipmentTypeOptions.deleteMany({});
   await prisma.comment.deleteMany({});
   await prisma.task.deleteMany({});
   await prisma.field.deleteMany({});
@@ -16,6 +20,8 @@ async function main() {
   await prisma.roleRight.deleteMany({});
   await prisma.role.deleteMany({});
   await prisma.permission.deleteMany({});
+
+  console.log("✅ Existing data cleared.");
 
   // Create permissions
   const permissions = await prisma.permission.createMany({
@@ -118,6 +124,20 @@ async function main() {
     });
   }
 
+    // Create equipment type options
+    const equipmentTypeOptions = await prisma.equipmentTypeOptions.createMany({
+      data: [
+        { name: "Tractor" },
+        { name: "Combine Harvester" },
+        { name: "Plow" },
+        { name: "Sprayer" },
+        { name: "Seeder" },
+        { name: "Cultivator" },
+        { name: "Fertilizer Spreader" }
+      ],
+      skipDuplicates: true
+    });
+  
   // Create field crop options
   const fieldCropOptions = await prisma.fieldCropOptions.createMany({
     data: [
@@ -152,7 +172,7 @@ async function main() {
       { name: 'Canceled' },
     ],
     skipDuplicates: true,
-  });  
+  }); 
 
   // Create users
   const adminUser = await prisma.user.create({
@@ -270,6 +290,36 @@ async function main() {
       //     connect: { id: 1 }
       //   }
       // }
+    }
+  });
+
+  // Fetch created equipment types
+  const tractorType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Tractor" } });
+  const harvesterType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Combine Harvester" } });
+  const sprayerType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Sprayer" } });
+
+  // Add equipment for user
+  const tractor = await prisma.equipment.create({
+    data: {
+      name: "John Deere 6155M",
+      typeId: tractorType.id,
+      ownerId: myUser.id,
+    }
+  });
+
+  const harvester = await prisma.equipment.create({
+    data: {
+      name: "New Holland CR10.90",
+      typeId: harvesterType.id,
+      ownerId: myUser.id,
+    }
+  });
+
+  const sprayer = await prisma.equipment.create({
+    data: {
+      name: "Amazone UX 11200",
+      typeId: sprayerType.id,
+      ownerId: myUser.id,
     }
   });
 
@@ -416,6 +466,15 @@ await prisma.comment.createMany({
     },
   ],
   skipDuplicates: true,
+});
+
+// Assign equipment to tasks
+await prisma.taskEquipment.createMany({
+  data: [
+    { taskId: fieldTask1.id, equipmentId: tractor.id },
+    { taskId: fieldTask4.id, equipmentId: sprayer.id },
+  ],
+  skipDuplicates: true
 });
   console.log('Seeding completed successfully!');
 }

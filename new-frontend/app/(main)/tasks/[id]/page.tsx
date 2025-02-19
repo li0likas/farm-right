@@ -13,13 +13,23 @@ import { Fieldset } from 'primereact/fieldset';
 import { Divider } from 'primereact/divider';
 import { isLoggedIn } from "@/utils/auth";
 import ProtectedRoute from "@/utils/ProtectedRoute";
+import GoogleMapComponent from "../../../components/GoogleMapComponent";
 
 interface Task {
     id: string;
     title: string;
     description: string;
     status: { name: string };
-    field: { name: string };
+    field: {
+        name: string;
+        boundary?: {
+            type: "Feature";
+            geometry: {
+                type: "Polygon";
+                coordinates: number[][][];
+            };
+        };
+    };
     type: { name: string };
     dueDate?: string;
     completionDate?: string;
@@ -28,11 +38,19 @@ interface Task {
     statusId: number;
 }
 
+
 interface Comment {
     id: string;
     content: string;
     createdAt: string;
     createdBy?: { username: string };
+}
+
+interface Equipment {
+    id: number;
+    name: string;
+    typeId: number;
+    description: string | null;
 }
 
 const TaskPage = () => {
@@ -41,6 +59,7 @@ const TaskPage = () => {
     const [task, setTask] = useState<Task | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentContent, setCommentContent] = useState('');
+    const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -52,6 +71,7 @@ const TaskPage = () => {
         {
             fetchTask();
             fetchComments();
+            fetchEquipment();
         }
     }, [taskId]);
 
@@ -80,7 +100,22 @@ const TaskPage = () => {
 
             setComments(response.data);
         } catch (error) {
+            toast.error('Failed to fetch comments.');
             console.error('Error fetching comments:', error);
+        }
+    };
+
+    const fetchEquipment = async () => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/equipment`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setEquipment(response.data);
+        } catch (error) {
+            toast.error('Failed to fetch equipment.');
+            console.error('Error fetching equipment:', error);
         }
     };
 
@@ -166,13 +201,26 @@ const TaskPage = () => {
     
 
     if (loading) return <ProgressSpinner />;
-
     if (!task) return <div className="text-center text-lg">Task not found.</div>;
+
+    const fieldCenter = task.field?.boundary?.geometry?.coordinates?.[0]?.[0]
+    ? { lat: task.field?.boundary?.geometry?.coordinates[0][0][1], lng: task.field?.boundary?.geometry?.coordinates[0][0][0] }
+    : { lat: 55.1694, lng: 23.8813 };
 
     return (
         <ProtectedRoute>
             <div className="container">
                 <Card title={task.title} className="mb-4 shadow-md border-round">
+                   
+                   <Divider />
+
+                    {/* Google Map Component */}
+                    <Card>
+                        <GoogleMapComponent center={fieldCenter} boundary={task.field?.boundary} />
+                    </Card>
+
+                    <Divider />
+
                     <div className="flex align-items-center justify-content-between">
                         <Tag value={task.status.name} severity={task.status.name === 'Pending' ? 'warning' : task.status.name === 'Completed' ? 'success' : 'danger'} />
                     </div>
@@ -185,7 +233,21 @@ const TaskPage = () => {
                     <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString('en-CA') : 'N/A'}</p>
 
                     <Divider />
+                    {/* 🏗️ Equipment Section */}
+                    <Fieldset legend="Equipment Used">
+                        {equipment.length > 0 ? (
+                            equipment.map((equip) => (
+                                <div key={equip.id} className="border p-2 mb-2 rounded">
+                                    <p><strong>Name:</strong> {equip.name}</p>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-gray-500">No equipment assigned to this task.</p>
+                        )}
+                    </Fieldset>
+                    <Divider />
 
+                    {/* 👥 Participants */}
                     <Fieldset legend="Participants">
                         {task.participants && task.participants.length > 0 ? (
                             task.participants.map(participant => (
@@ -207,6 +269,7 @@ const TaskPage = () => {
                     </div>
                 </Card>
 
+                {/* 💬 Comments Section */}
                 <Card title="Comments" className="shadow-md border-round">
                     {comments.length > 0 ? (
                         comments.map(comment => (

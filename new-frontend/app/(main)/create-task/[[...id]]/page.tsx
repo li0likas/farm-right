@@ -9,9 +9,10 @@ import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { InputTextarea } from "primereact/inputtextarea";
-import { ProgressSpinner } from "primereact/progressspinner";
+import { MultiSelect } from "primereact/multiselect";
 import { isLoggedIn } from "@/utils/auth";
 import ProtectedRoute from "@/utils/ProtectedRoute";
+import { ProgressSpinner } from "primereact/progressspinner";
 
 const TaskCreatePage = () => {
   const pathname = usePathname();
@@ -28,6 +29,8 @@ const TaskCreatePage = () => {
   const [optimalDateTime, setOptimalDateTime] = useState(null);
   const [insights, setInsights] = useState("");
   const [loading, setLoading] = useState(false);
+  const [equipmentList, setEquipmentList] = useState<{ label: string; value: number }[]>([]);
+  const [selectedEquipment, setSelectedEquipment] = useState<number[]>([]);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -35,6 +38,7 @@ const TaskCreatePage = () => {
         return;
     }
     fetchOptions();
+    fetchUserEquipment();
   }, []);
 
   // Fetch options for fields, task types, and statuses
@@ -85,6 +89,27 @@ const TaskCreatePage = () => {
     }
   };
 
+  // Fetch user's equipment and ensure correct format
+  const fetchUserEquipment = async () => {
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const formattedEquipment = response.data.map((equip: any) => ({
+        label: equip.name,
+        value: equip.id,
+      }));
+
+      setEquipmentList(formattedEquipment);
+    } catch (error) {
+      console.error("Error fetching equipment:", error);
+      toast.error("Failed to load equipment.");
+    }
+  };
+
   // Fetch field boundary and get optimal task date
   const fetchOptimalTaskDate = async () => {
     const token = localStorage.getItem("accessToken");
@@ -111,7 +136,7 @@ const TaskCreatePage = () => {
 
   // Form Validation
   const validateForm = () => {
-    if (!taskDescription || !taskStatus || !taskField || !taskType) {
+    if (!taskDescription || !taskStatus || !taskField || !taskType || !selectedEquipment.length) {
       toast.warning("Please fill in all required fields.");
       return false;
     }
@@ -144,6 +169,7 @@ const TaskCreatePage = () => {
       statusId: taskStatus,
       fieldId: taskField,
       typeId: parseInt(taskType),
+      equipmentIds: selectedEquipment,
     };
 
     if (dueDate) taskData.dueDate = new Date(dueDate);
@@ -177,9 +203,24 @@ const TaskCreatePage = () => {
           {/* Field Selection */}
           {!fieldIdFromUrl && <Dropdown value={taskField} options={taskFieldOptions} onChange={(e) => setTaskField(e.value)} placeholder="Select Field" className="w-full mb-4" />}
 
-          {/* Dates */}
+          {/* Due Date Selection */}
           {taskStatus === 2 && <Calendar value={dueDate} onChange={(e) => setDueDate(e.value)} placeholder="Select Due Date" className="w-full mb-4" showIcon />}
+
+          {/* Completion Date Selection */}
           {taskStatus === 1 && <Calendar value={completionDate} onChange={(e) => setCompletionDate(e.value)} placeholder="Select Completion Date" className="w-full mb-4" showIcon />}
+
+          {/* ✅ Equipment Selection (Multi-Select Dropdown) */}
+          <div className="mb-4">
+            <h5>Select Equipment</h5>
+            <MultiSelect
+              value={selectedEquipment}
+              options={equipmentList}
+              onChange={(e) => setSelectedEquipment(e.value)}
+              placeholder="Select Equipment"
+              className="w-full"
+              display="chip"
+            />
+          </div>
 
           {loading ? <ProgressSpinner /> : optimalDateTime && <p>🌦 Optimal Date: {optimalDateTime}</p>}
           {insights && <p>📌 Insights: {insights}</p>}

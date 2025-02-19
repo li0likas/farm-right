@@ -1,5 +1,4 @@
 import { GoogleMap, LoadScript, Polygon } from '@react-google-maps/api';
-import { useEffect } from 'react';
 
 interface GoogleMapComponentProps {
     center: { lat: number; lng: number };
@@ -23,10 +22,6 @@ const googleMapOptions = {
 const GoogleMapComponent = ({ center, boundary }: GoogleMapComponentProps) => {
     const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
 
-    // useEffect(() => {
-    //     console.log("Boundary Data:", boundary);
-    // }, [boundary]);
-
     const polygonPaths =
         boundary?.geometry?.coordinates?.[0] && Array.isArray(boundary.geometry.coordinates[0])
             ? boundary.geometry.coordinates[0].map((coord) => ({
@@ -34,11 +29,6 @@ const GoogleMapComponent = ({ center, boundary }: GoogleMapComponentProps) => {
                   lng: coord[0]  // Longitude
               }))
             : [];
-
-    // useEffect(() => {
-    //     console.log("Polygon Paths:", polygonPaths);
-    // }, [polygonPaths]);
-
     return (
         <LoadScript googleMapsApiKey={GOOGLE_MAPS_API_KEY}>
             <GoogleMap mapContainerStyle={containerStyle} center={center} zoom={15} options={googleMapOptions}>

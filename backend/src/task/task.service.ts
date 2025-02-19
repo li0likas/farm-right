@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Task } from '@prisma/client';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -8,16 +8,26 @@ export class TaskService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateTaskDto): Promise<Task> {
-    const { fieldId, typeId, description, dueDate, completionDate, statusId } = data;
-
+    const { fieldId, typeId, description, dueDate, completionDate, statusId, equipmentIds } = data;
+  
     const fieldExists = await this.prisma.field.findUnique({
       where: { id: fieldId },
     });
-
+  
     if (!fieldExists) {
       throw new NotFoundException(`Field with id ${fieldId} not found`);
     }
-
+  
+    if (equipmentIds && equipmentIds.length > 0) {
+      const validEquipment = await this.prisma.equipment.findMany({
+        where: { id: { in: equipmentIds } },
+      });
+  
+      if (validEquipment.length !== equipmentIds.length) {
+        throw new BadRequestException("One or more selected equipment does not exist.");
+      }
+    }
+  
     return this.prisma.task.create({
       data: {
         description,
@@ -26,9 +36,18 @@ export class TaskService {
         field: { connect: { id: fieldId } },
         type: { connect: { id: typeId } },
         status: { connect: { id: statusId } },
+        equipments: equipmentIds && equipmentIds.length > 0
+          ? {
+              createMany: {
+                data: equipmentIds.map(equipmentId => ({
+                  equipmentId,
+                })),
+              },
+            }
+          : undefined,
       },
     });
-  }
+  }  
 
   async findAll(userId: number): Promise<Task[]> {
     return this.prisma.task.findMany({
