@@ -20,6 +20,9 @@ export class CreateFieldDto {
   @IsNumber()
   ownerId: number;
 
+  @IsNumber()
+  farmId: number;
+
   @IsObject()
   boundary: object;
 }

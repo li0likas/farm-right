@@ -13,13 +13,18 @@ export class FieldService {
     });
   }
 
-  async findAll(userId: number): Promise<Field[]> {
+  async findAll(userId: number, selectedFarmId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
-           ownerId: userId,    
+        farmId: selectedFarmId,
+        OR: [
+          { ownerId: userId },
+          { farm: { members: { some: { userId } } } },
+        ],
       },
       include: {
         crop: true,
+        farm: true,
       },
     });
   }
@@ -27,6 +32,10 @@ export class FieldService {
   async findOne(id: number): Promise<Field> {
     return this.prisma.field.findUnique({
       where: { id },
+      include: {
+        crop: true,
+        farm: true,
+      },
     });
   }
 
@@ -46,31 +55,19 @@ export class FieldService {
     return field;
   }
 
-  async findCurrentUserFields(userId: number): Promise<Field[]> {
+  async findCurrentUserFields(userId: number, selectedFarmId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
-        //OR: [
-           ownerId: userId ,
-          //{ groupMembers: { some: { userId } } }
-        // ]
+        farmId: selectedFarmId,
+        OR: [
+          { ownerId: userId },
+          { farm: { members: { some: { userId } } } },
+        ],
       },
-      // include: {
-      //   groupMembers: {
-      //     include: {
-      //       user: {
-      //         select: {
-      //           username: true,
-      //           colourHex: true
-      //         }
-      //       }
-      //     }
-      //   },
-      //   mentor: {
-      //     select: {
-      //       username: true
-      //     }
-      //   }
-      // }
+      include: {
+        crop: true,
+        farm: true,
+      },
     });
   }
 }

@@ -29,8 +29,11 @@ const TaskCreatePage = () => {
   const [optimalDateTime, setOptimalDateTime] = useState(null);
   const [insights, setInsights] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [loadingAI, setLoadingAI] = useState(false);
   const [equipmentList, setEquipmentList] = useState<{ label: string; value: number }[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<number[]>([]);
+  const recognitionRef = React.useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
     if (!isLoggedIn()) {
@@ -40,6 +43,22 @@ const TaskCreatePage = () => {
     fetchOptions();
     fetchUserEquipment();
   }, []);
+
+
+  const getAuthHeaders = () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
+
+    if (!accessToken || !selectedFarmId) {
+      toast.error("Missing authentication or farm selection.");
+      return null;
+    }
+
+    return {
+      Authorization: `Bearer ${accessToken}`,
+      "x-selected-farm-id": selectedFarmId
+    };
+  };
 
   // Fetch options for fields, task types, and statuses
   const fetchOptions = async () => {
@@ -89,20 +108,18 @@ const TaskCreatePage = () => {
     }
   };
 
-  // Fetch user's equipment and ensure correct format
   const fetchUserEquipment = async () => {
-    const token = localStorage.getItem("accessToken");
-
+    const headers = getAuthHeaders();
+    if (!headers) return;
+  
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, { headers });
+  
       const formattedEquipment = response.data.map((equip: any) => ({
         label: equip.name,
         value: equip.id,
       }));
-
+  
       setEquipmentList(formattedEquipment);
     } catch (error) {
       console.error("Error fetching equipment:", error);
@@ -112,17 +129,25 @@ const TaskCreatePage = () => {
 
   // Fetch field boundary and get optimal task date
   const fetchOptimalTaskDate = async () => {
-    const token = localStorage.getItem("accessToken");
+    const headers = getAuthHeaders();
+    if (!headers) return;
+  
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${taskField}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const [lon, lat] = response.data.boundary.geometry.coordinates[0][0];
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${taskField}`, { headers });
+  
+      // Ensure `boundary` exists and correctly access `coordinates`
+      const boundary = response.data.boundary;
+      if (!boundary || !boundary.coordinates || boundary.coordinates.length === 0) {
+        console.log("Boundary data is missing or invalid");
+        return;
+      }
+  
+      const [lon, lat] = boundary.coordinates[0][0];
       fetchWeatherInsights(lat, lon);
     } catch (error) {
       console.error("Error fetching field boundary:", error);
     }
-  };
+  };  
 
   // Trigger weather data fetch when needed
   useEffect(() => {
@@ -159,11 +184,15 @@ const TaskCreatePage = () => {
     return true;
   };
 
-  // Create Task API Call
   const handleCreateTask = async () => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.warning("Please fill in all required fields.");
+      return;
+    }
 
-    const token = localStorage.getItem("accessToken");
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     const taskData: any = {
       description: taskDescription,
       statusId: taskStatus,
@@ -176,15 +205,67 @@ const TaskCreatePage = () => {
     if (completionDate) taskData.completionDate = new Date(completionDate);
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks`, taskData, {
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-      });
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks`, taskData, { headers });
       toast.success("Task created successfully.");
       window.location.href = `/fields/${taskField}`;
     } catch (error) {
-      console.error("Error creating task:", error);
       toast.error("Failed to create task.");
     }
+  };
+
+   // 🎤 Start voice recording
+   const startVoiceRecognition = () => {
+    if (!("webkitSpeechRecognition" in window)) {
+      toast.error("Speech recognition not supported in this browser.");
+      return;
+    }
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.lang = "lt-LT"; // Set to Lithuanian
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognitionRef.current = recognition; // Store reference
+
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onresult = (event) => {
+      const speechText = event.results[0][0].transcript;
+      setTaskDescription(speechText);
+      toast.success("Voice input received. Processing...");
+      refineDescriptionWithAI(speechText);
+    };
+    recognition.onerror = (event) => {
+      setIsRecording(false);
+      toast.error("Speech recognition error. Try again.");
+      console.error(event);
+    };
+    recognition.onend = () => setIsRecording(false);
+
+    recognition.start();
+  };
+
+  // ⏹️ Stop voice recognition
+  const stopVoiceRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop(); // 🛑 Stop recognition
+      setIsRecording(false);
+      toast.info("Voice recording stopped.");
+    }
+  }
+
+  // 🔄 Send raw text to AI for refinement
+  const refineDescriptionWithAI = async (rawText: string) => {
+    setLoadingAI(true);
+    try {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/ai/task-description`, {
+        rawText,
+      });
+      setTaskDescription(response.data.refinedTaskDescription);
+      toast.success("AI optimized the description.");
+    } catch (error) {
+      toast.error("Failed to refine description.");
+      console.error(error);
+    }
+    setLoadingAI(false);
   };
 
   return (
@@ -194,8 +275,29 @@ const TaskCreatePage = () => {
           {/* Task Type Selection */}
           <Dropdown value={taskType} options={taskTypeOptions} onChange={(e) => setTaskType(e.value)} placeholder="Select Task Type" className="w-full mb-4" />
 
-          {/* Description */}
-          <InputTextarea value={taskDescription} onChange={(e) => setTaskDescription(e.target.value)} placeholder="Task Description" rows={3} className="w-full mb-4" />
+          {/* 🎤 Task Description with Voice Button */}
+          <div className="flex align-items-center gap-2 mb-4">
+            <InputTextarea
+              value={taskDescription}
+              onChange={(e) => setTaskDescription(e.target.value)}
+              placeholder="Task Description"
+              rows={3}
+              className="w-full"
+            />
+            <Button
+              icon={isRecording ? "pi pi-stop" : "pi pi-microphone"}
+              className={isRecording ? "p-button-danger" : "p-button-primary"}
+              onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
+              tooltip={isRecording ? "Stop recording" : "Start recording"}
+            />
+          </div>
+
+          {/* 🔄 AI Processing Loader */}
+          {loadingAI && (
+            <div className="flex justify-content-center my-2">
+              <ProgressSpinner />
+            </div>
+          )}
 
           {/* Task Status Selection */}
           <Dropdown value={taskStatus} options={taskStatusOptions} onChange={(e) => setTaskStatus(e.value)} placeholder="Select Task Status" className="w-full mb-4" />
@@ -222,8 +324,34 @@ const TaskCreatePage = () => {
             />
           </div>
 
-          {loading ? <ProgressSpinner /> : optimalDateTime && <p>🌦 Optimal Date: {optimalDateTime}</p>}
-          {insights && <p>📌 Insights: {insights}</p>}
+          {/* Display Loading Spinner When Fetching Data */}
+          {loading && (
+            <div className="flex justify-content-center my-4">
+              <ProgressSpinner />
+            </div>
+          )}
+
+          {!loading && (optimalDateTime || insights) && (
+            <div className="p-3 mt-4 border-round shadow-2 surface-100">
+              {/* 🌦 Optimal Date Display */}
+              {optimalDateTime && (
+                <div className="flex align-items-center gap-2 mb-3">
+                  <i className="pi pi-calendar text-blue-500 text-lg"></i>
+                  <span className="font-bold text-lg text-blue-700">
+                    Recommended date for this task: <span className="text-2xl">{new Date(optimalDateTime).toLocaleDateString('lt-LT')}</span>
+                  </span>
+                </div>
+              )}
+
+              {/* 📌 Weather Insights Display */}
+              {insights && (
+                <div className="flex align-items-start gap-2">
+                  <i className="pi pi-info-circle text-green-500 text-lg"></i>
+                  <span className="text-md text-gray-700">{insights}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Create Task Button */}
           <Button label="Create Task" className="p-button-success w-full" onClick={handleCreateTask} />

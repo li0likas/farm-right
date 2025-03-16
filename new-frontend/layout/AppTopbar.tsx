@@ -41,8 +41,11 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             label: 'Logout',
             icon: 'pi pi-sign-out',
             command: () => {
-                localStorage.removeItem('accessToken'); // Clear token
-                router.push('/auth/login'); // Redirect to login page
+                localStorage.removeItem('accessToken'); 
+                localStorage.removeItem('x-selected-farm-id');
+                localStorage.removeItem('user');
+    
+                router.push('/auth/login');
                 toast.success("Logged out successfully");
             }
         }

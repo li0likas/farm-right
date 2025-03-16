@@ -18,7 +18,14 @@ const AppMenu = () => {
                 { label: 'Fields', icon: 'pi pi-fw pi-check-square', to: '/fields' },
                 { label: 'Tasks', icon: 'pi pi-fw pi-check-square', to: '/tasks' },
                 { label: 'Equipment', icon: 'pi pi-fw pi-check-square', to: '/equipment' },
-                { label: 'Employees', icon: 'pi pi-fw pi-check-square', to: '/employees' },
+                { label: 'Farm Members', icon: 'pi pi-fw pi-check-square', to: '/farm-members' },
+                {
+                    label: 'Configuration',
+                    icon: 'pi pi-fw pi-cog',
+                    items: [
+                        { label: 'Roles & Permissions', icon: 'pi pi-fw pi-shield', to: '/configuration/roles-permissions' }
+                    ]
+                }                
             ]
         },
         {

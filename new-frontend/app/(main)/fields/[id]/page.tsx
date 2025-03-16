@@ -20,10 +20,9 @@ const FieldViewPage = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Field Info
   useEffect(() => {
     if (!fieldId) return;
-
+    
     if (!isLoggedIn()) {
       toast.error('Unauthorized. Login first.');
       return;
@@ -33,49 +32,65 @@ const FieldViewPage = () => {
     fetchTasks();
   }, [fieldId]);
 
+  const getAuthHeaders = () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
+
+    if (!accessToken || !selectedFarmId) {
+      toast.error("Missing authentication or farm selection.");
+      return null;
+    }
+
+    return {
+      Authorization: `Bearer ${accessToken}`,
+      'x-selected-farm-id': selectedFarmId,
+    };
+  };
+
+  // ✅ Fetch Field Info
   const fetchFieldInfo = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, { headers });
       setFieldInfo(response.data);
     } catch (error) {
-      console.error("Error fetching field info:", error);
-      toast.error("Failed to load field data.");
+      if (error.response?.status === 403) {
+        window.location.href = "/pages/unauthorized";
+      } else {
+        toast.error("Failed to load field data.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const fetchTasks = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}/tasks`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}/tasks`, { headers });
       const sortedTasks = response.data.sort((a: any, b: any) =>
         new Date(b.dueDate || b.completionDate) > new Date(a.dueDate || a.completionDate) ? 1 : -1
       );
       setTasks(sortedTasks);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
       toast.error("Failed to load tasks.");
     }
   };
 
-  // Delete Field
   const handleDeleteField = async () => {
     if (!window.confirm("Are you sure you want to delete this field?")) return;
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, { headers });
       toast.success("Field deleted successfully.");
-      window.location.href = "/fields"; // Redirect after deletion
+      window.location.href = "/fields";
     } catch (error) {
-      console.error("Error deleting field:", error);
       toast.error("Failed to delete field.");
     }
   };

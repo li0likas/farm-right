@@ -23,18 +23,35 @@ const CreateFieldPage = () => {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-        toast.error('Unauthorized. Login first.');
-        return;
+      toast.error("Unauthorized. Login first.");
+      return;
     }
     fetchCropOptions();
   }, []);
 
+  const getAuthHeaders = () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
+
+    if (!accessToken || !selectedFarmId) {
+      toast.error("Missing authentication or farm selection.");
+      return null;
+    }
+
+    return {
+      Authorization: `Bearer ${accessToken}`,
+      "x-selected-farm-id": selectedFarmId,
+    };
+  };
+
   const fetchCropOptions = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/field-crop-options`);
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/field-crop-options`, { headers });
       setFieldCropOptions(response.data.map((crop: any) => ({ label: crop.name, value: crop.id })));
     } catch (error) {
-      console.error("Error fetching crop options:", error);
       toast.error("Failed to load crop options.");
     }
   };
@@ -50,29 +67,28 @@ const CreateFieldPage = () => {
   const createField = async () => {
     if (!validate()) return;
 
-    const accessToken = localStorage.getItem("accessToken");
-    if (!accessToken) {
-      toast.error("Authentication required.");
-      return;
-    }
+    const headers = getAuthHeaders();
+    if (!headers) return;
 
     const formData = {
       name: fieldName,
       area: parseFloat(fieldArea),
       perimeter: parseFloat(fieldPerimeter),
       cropId: parseInt(fieldCrop),
+      farmId: parseInt(headers["x-selected-farm-id"]),
       boundary: fieldBoundary,
     };
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, formData, {
-        headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      });
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, formData, { headers });
       toast.success("Field created successfully.");
-      window.location.href = "/fields";
+      router.push("/fields");
     } catch (error) {
-      console.error("Error creating field:", error);
-      toast.error("Failed to create field.");
+      if (error.response?.status === 403) {
+        window.location.href = "/pages/unauthorized";
+      } else {
+        toast.error("Failed to create field.");
+      }
     }
   };
 

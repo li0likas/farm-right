@@ -10,8 +10,10 @@ import { TaskResponseDto } from '../task/dto/task-response.dto';
 import { Field, Task } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { Permissions } from '../decorators/permissions.decorator';
+import { PermissionsGuard } from '../guards/permissions.guard';
 
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 @ApiTags('fields')
 @Controller('fields')
 export class FieldController {
@@ -22,63 +24,89 @@ export class FieldController {
   ) {}
 
   @Post()
+  @Permissions('FIELD_CREATE')
   @ApiOperation({ summary: 'Create a new field' })
   @ApiResponse({ status: 201, description: 'The field has been successfully created.' })
   @ApiResponse({ status: 400, description: 'Bad request.' })
   async create(@Request() req): Promise<Field> {
     const ownerId = req.user.id;
-    const {name, area, perimeter, cropId, boundary } = req.body;
+    const { name, area, perimeter, cropId, farmId, boundary } = req.body;
 
     const createFieldDto: CreateFieldDto = {
-      name, area, perimeter, cropId, ownerId: parseInt(ownerId), boundary
+      name, area, perimeter, cropId, ownerId: parseInt(ownerId), farmId: parseInt(farmId), boundary
     };
 
     return this.fieldsService.create(createFieldDto);
   }
 
   @Get()
+  @Permissions('FIELD_READ')
   @ApiOperation({ summary: 'Get all fields' })
   @ApiResponse({ status: 200, description: 'The fields have been successfully retrieved.', type: [FieldResponseDto] })
   async findAll(@Request() req): Promise<Field[]> {
     const userId = req.user.id;
-    return this.fieldsService.findAll(parseInt(userId));
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']); // ✅ Extract farmId from headers
+    if (!selectedFarmId) throw new HttpException('No selected farm ID provided.', HttpStatus.BAD_REQUEST);
+
+    return this.fieldsService.findAll(userId, selectedFarmId);
   }
 
+  // @Get(':id')
+  // @ApiOperation({ summary: 'Get a field by id' })
+  // @ApiResponse({ status: 200, description: 'The field has been successfully retrieved.', type: FieldResponseDto })
+  // @ApiResponse({ status: 404, description: 'Field not found.' })
+  // @ApiResponse({ status: 403, description: 'Forbidden.' })
+  // async findOne(@Request() req, @Param('id') id: string): Promise<FieldResponseDto> {
+  //   const userId = parseInt(req.user.id);
+  //   try {
+
+  //     const field = await this.fieldsService.findOne(parseInt(id));
+  //     if (!field) {
+  //       throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+  //     }
+
+  //     const userFields = await this.fieldsService.findCurrentUserFields(userId);
+  //     const userIsMember = userFields.some(field => field.ownerId === userId && field.id === parseInt(id));
+  //     if (!userIsMember) {
+  //       throw new HttpException(
+  //         'You are not the owner of this field and cannot access it.',
+  //         HttpStatus.FORBIDDEN,
+  //       );
+  //     }
+
+  //     // const field = await this.fieldsService.findOne(id);
+  //     // if (!field) {
+  //     //   throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+  //     // }
+
+  //     return field;
+  //   } catch (error) {
+  //     throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+  //   }
+  // }
+
   @Get(':id')
+  @Permissions('FIELD_READ')
   @ApiOperation({ summary: 'Get a field by id' })
-  @ApiResponse({ status: 200, description: 'The field has been successfully retrieved.', type: FieldResponseDto })
+  @ApiResponse({ status: 200, description: 'The field has been successfully retrieved.' })
   @ApiResponse({ status: 404, description: 'Field not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async findOne(@Request() req, @Param('id') id: string): Promise<FieldResponseDto> {
+  async findOne(@Request() req, @Param('id') id: string): Promise<Field> {
     const userId = parseInt(req.user.id);
-    try {
-
-      const field = await this.fieldsService.findOne(parseInt(id));
-      if (!field) {
-        throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
-      }
-
-      const userFields = await this.fieldsService.findCurrentUserFields(userId);
-      const userIsMember = userFields.some(field => field.ownerId === userId && field.id === parseInt(id));
-      if (!userIsMember) {
-        throw new HttpException(
-          'You are not the owner of this field and cannot access it.',
-          HttpStatus.FORBIDDEN,
-        );
-      }
-
-      // const field = await this.fieldsService.findOne(id);
-      // if (!field) {
-      //   throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
-      // }
-
-      return field;
-    } catch (error) {
-      throw new HttpException(error.message, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    if (!selectedFarmId) {
+      throw new HttpException('Selected farm ID is required', HttpStatus.BAD_REQUEST);
     }
+    const field = await this.fieldsService.findOne(parseInt(id));
+    if (!field) {
+      throw new HttpException(`Field with id ${id} not found`, HttpStatus.NOT_FOUND);
+    }
+
+    return field;
   }
 
   @Put(':id')
+  @Permissions('FIELD_UPDATE')
   @ApiOperation({ summary: 'Update a field by id' })
   @ApiResponse({ status: 200, description: 'The field has been successfully updated.', type: FieldResponseDto })
   @ApiResponse({ status: 404, description: 'Field not found.' })
@@ -102,6 +130,7 @@ export class FieldController {
   }
 
   @Delete(':id')
+  @Permissions('FIELD_DELETE')
   @ApiOperation({ summary: 'Delete a field by id' })
   @ApiResponse({ status: 200, description: 'The field has been successfully deleted.', type: FieldResponseDto })
   @ApiResponse({ status: 404, description: 'Field not found.' })
@@ -127,6 +156,7 @@ export class FieldController {
   }
 
   @Get(':id/tasks')
+  @Permissions('FIELD_TASK_READ')
   @ApiOperation({ summary: 'Get all tasks for a field' })
   @ApiResponse({ status: 200, description: 'The tasks have been successfully retrieved.', type: [TaskResponseDto] })
   async findAllTasks(@Request() req, @Param('id') id: string): Promise<Task[]> {
@@ -149,6 +179,7 @@ export class FieldController {
   }
 
   @Post(':id/tasks')
+  @Permissions('FIELD_TASK_CREATE')
   @ApiOperation({ summary: 'Create a new task for a field' })
   @ApiResponse({ status: 201, description: 'The task has been successfully created.', type: TaskResponseDto })
   @ApiResponse({ status: 400, description: 'Bad request.' })
@@ -171,27 +202,27 @@ export class FieldController {
     }
   }
 
-  // nenaudojamas, kadangi is fields page nebus updatinami taskai
-  @Put(':id/tasks/:taskId')
-  @ApiOperation({ summary: 'Update a task for a field' })
-  @ApiResponse({ status: 200, description: 'The task has been successfully updated.', type: TaskResponseDto })
-  @ApiResponse({ status: 404, description: 'Task not found.' })
-  async updateTask(@Param('id') id: string, @Param('taskId') taskId: string, @Body() task: Partial<Task>): Promise<Task> {
-    return this.taskService.updateTaskForField(parseInt(id), parseInt(taskId), task);
-  }
+  // // nenaudojamas, kadangi is fields page nebus updatinami taskai
+  // @Put(':id/tasks/:taskId')
+  // @ApiOperation({ summary: 'Update a task for a field' })
+  // @ApiResponse({ status: 200, description: 'The task has been successfully updated.', type: TaskResponseDto })
+  // @ApiResponse({ status: 404, description: 'Task not found.' })
+  // async updateTask(@Param('id') id: string, @Param('taskId') taskId: string, @Body() task: Partial<Task>): Promise<Task> {
+  //   return this.taskService.updateTaskForField(parseInt(id), parseInt(taskId), task);
+  // }
 
-  // nenaudojamas, kadangi is fields page nebus trinami taskai
-  @Delete(':id/tasks/:taskId')
-  @ApiOperation({ summary: 'Delete a task for a field' })
-  @ApiResponse({ status: 200, description: 'The task has been successfully deleted.', type: TaskResponseDto })
-  @ApiResponse({ status: 404, description: 'Task not found.' })
-  async deleteTask(@Param('id') id: string, @Param('taskId') taskId: string): Promise<Task> {
-    const deletedTask = await this.taskService.deleteTaskForField(parseInt(id), parseInt(taskId));
-    if (deletedTask == null) {
-      throw new NotFoundException(`Task with id ${taskId} not found in field ${id}`);
-    }
-    return deletedTask;
-  }
+  // // nenaudojamas, kadangi is fields page nebus trinami taskai
+  // @Delete(':id/tasks/:taskId')
+  // @ApiOperation({ summary: 'Delete a task for a field' })
+  // @ApiResponse({ status: 200, description: 'The task has been successfully deleted.', type: TaskResponseDto })
+  // @ApiResponse({ status: 404, description: 'Task not found.' })
+  // async deleteTask(@Param('id') id: string, @Param('taskId') taskId: string): Promise<Task> {
+  //   const deletedTask = await this.taskService.deleteTaskForField(parseInt(id), parseInt(taskId));
+  //   if (deletedTask == null) {
+  //     throw new NotFoundException(`Task with id ${taskId} not found in field ${id}`);
+  //   }
+  //   return deletedTask;
+  // }
 
 
   // nenaudojami, nes is fields page nebus rodomi tasku komentarai

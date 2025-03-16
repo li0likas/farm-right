@@ -1,4 +1,15 @@
-import { Body, Controller, Post, Req, UseGuards, HttpException, HttpStatus, UseInterceptors, UploadedFile, UploadedFiles} from "@nestjs/common";
+import { 
+  Body, 
+  Controller, 
+  Post, 
+  Req, 
+  UseGuards, 
+  HttpException, 
+  HttpStatus, 
+  UseInterceptors, 
+  UploadedFiles 
+} from "@nestjs/common";
+
 import { AuthService } from "./auth.service";
 import { AuthDto, AuthlogDto, AuthForgDto, AuthpassDto } from "./dto";
 import { AuthGuard } from "@nestjs/passport";
@@ -8,48 +19,72 @@ import { diskStorage, Multer } from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 
 @Controller('auth')
-export class AuthController{
-    constructor(private authService: AuthService){}
+export class AuthController {
+    constructor(private authService: AuthService) {}
 
     @Post('signup')
     @UseInterceptors(AnyFilesInterceptor({
       storage: diskStorage({
         destination: (req, file, cb) => {
-          var destination = "./uploads/userimages"
+          const destination = "./uploads/userimages";
           cb(null, destination);
         },
         filename: (req, file, cb) => {
-          const filename: string =
-            path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
-          const extension: string = path.parse(file.originalname).ext;
+          const filename = path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
+          const extension = path.parse(file.originalname).ext;
           cb(null, `${filename}${extension}`);
         },
       }),
     }))
-    signup(@Body() dto: AuthDto, @UploadedFiles() files: Array<Multer.File>){
-        var profileFN = null;
-        for(let i = 0; i < files.length; i++){
-          profileFN = process.env.USER_PHOTO_PATH + files[i].filename;
+    async signup(@Body() dto: AuthDto, @UploadedFiles() files: Array<Multer.File>) {
+        try {
+            let profileFN = null;
+            if (files.length > 0) {
+                profileFN = process.env.USER_PHOTO_PATH + files[0].filename;
+            }
+
+            const { access_token, farms } = await this.authService.signup(dto, profileFN);
+
+            return { access_token, farms }; // Ensure correct token naming
+        } catch (error) {
+            console.error("Signup Error:", error);
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
-        return this.authService.signup(dto, profileFN)
     }
 
     @Post('signin')
-    signin(@Body() dto: AuthlogDto){
-        console.log(dto)
-        return this.authService.signin(dto)
+    async signin(@Body() dto: AuthlogDto) {
+        try {
+            console.log("Login Attempt:", dto);
+            const { access_token, farms } = await this.authService.signin(dto);
+
+            return { access_token, farms }; // Ensure token format matches standard
+        } catch (error) {
+            console.error("Signin Error:", error);
+            throw new HttpException(error.message, HttpStatus.UNAUTHORIZED);
+        }
     }
 
     @Post('forgotPass')
-    forgot(@Body() dto: AuthForgDto) {
-        console.log(dto);
-        return this.authService.sendForgot(dto);
+    async forgot(@Body() dto: AuthForgDto) {
+        try {
+            console.log("Forgot password request:", dto);
+            return this.authService.sendForgot(dto);
+        } catch (error) {
+            console.error("Forgot Password Error:", error);
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @UseGuards(AuthGuard('jwt'))
     @Post('passReset')
-    passReset(@Body() dto: AuthpassDto,@Req() req){
-        return this.authService.passReset(dto, req.user.email);
+    async passReset(@Body() dto: AuthpassDto, @Req() req) {
+        try {
+            return this.authService.passReset(dto, req.user.email);
+        } catch (error) {
+            console.error("Password Reset Error:", error);
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @UseGuards(AuthGuard('jwt'))
@@ -61,11 +96,8 @@ export class AuthController{
   
         return { message: 'Password change successful' };
       } catch (error) {
-        if (error instanceof HttpException) {
-          throw error;
-        } else {
-          throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        console.error("Password Change Error:", error);
+        throw new HttpException(error.message || 'Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
       }
     }
 }

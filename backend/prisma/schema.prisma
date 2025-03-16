@@ -33,42 +33,59 @@ model User {
   colourHex      String   @default("#000000")
   emoji          String   @default("")
 
-  roles          UserRole[]
   fields         Field[]
   equipments     Equipment[]
+  farms          Farm[]    @relation("OwnerFarms")
+  memberships    FarmMember[]
 
   @@map("users")
 }
 
 model Role {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  users     UserRole[]
-  rights    RoleRight[]
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  farmMembers     FarmMember[]
+  farmPermissions FarmRolePermission[]
 }
 
 model Permission {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  roleRights RoleRight[]
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  farmPermissions FarmRolePermission[]
 }
 
-model UserRole {
-  id        Int       @id @default(autoincrement())
-  userId    Int
-  roleId    Int
-  user      User      @relation(fields: [userId], references: [id])
-  role      Role      @relation(fields: [roleId], references: [id])
-  @@unique([userId, roleId])
+model FarmRolePermission {
+  id            Int         @id @default(autoincrement())
+  farmId        Int
+  roleId        Int
+  permissionId  Int
+  farm          Farm        @relation(fields: [farmId], references: [id])
+  role          Role        @relation(fields: [roleId], references: [id])
+  permission    Permission  @relation(fields: [permissionId], references: [id])
+
+  @@unique([farmId, roleId, permissionId]) // Ensure unique permission per farm & role
 }
 
-model RoleRight {
-  id           Int       @id @default(autoincrement())
-  roleId       Int
-  permissionId Int
-  role         Role      @relation(fields: [roleId], references: [id])
-  permission   Permission @relation(fields: [permissionId], references: [id])
-  @@unique([roleId, permissionId])
+model Farm {
+  id              Int             @id @default(autoincrement())
+  name            String
+  ownerId         Int
+  owner           User            @relation("OwnerFarms", fields: [ownerId], references: [id])
+  members         FarmMember[]
+  fields          Field[]
+  rolePermissions FarmRolePermission[]
+}
+
+model FarmMember {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  farmId      Int
+  roleId      Int
+  user        User      @relation(fields: [userId], references: [id])
+  farm        Farm      @relation(fields: [farmId], references: [id])
+  role        Role      @relation(fields: [roleId], references: [id]) 
+
+  @@unique([userId, farmId]) 
 }
 
 model Field {
@@ -77,11 +94,13 @@ model Field {
   area      Float
   perimeter Float
   cropId    Int
+  farmId    Int
   crop      FieldCropOptions @relation(fields: [cropId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ownerId   Int
   owner     User         @relation(fields: [ownerId], references: [id])
+  farm      Farm      @relation(fields: [farmId], references: [id])
   boundary  Json
 
   tasks     Task[]

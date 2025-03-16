@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 //import { MailModule } from "./mail/mail.module";
 import { JwtModule } from "@nestjs/jwt";
-import { JwtStrategy } from "../field/strategy";
+import { JwtStrategy } from "../auth/strategy";
 import { UserService } from 'src/user/user.service';
 //import { TaskCronService } from 'src/cron/task-cron.service';
 import { CommentService } from 'src/comment/comment.service';

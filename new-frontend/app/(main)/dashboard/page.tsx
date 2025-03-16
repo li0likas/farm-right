@@ -25,8 +25,6 @@ const Dashboard = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [totalFieldArea, setTotalFieldArea] = useState(0);
     const [completedPercentage, setCompletedPercentage] = useState(0);
-    const [dailySteps, setDailySteps] = useState(0);
-    const [monthlySteps, setMonthlySteps] = useState([]);
     const menu1 = useRef<Menu>(null);
     const menu2 = useRef<Menu>(null);
 
@@ -38,7 +36,6 @@ const Dashboard = () => {
 
         fetchTasks();
         fetchFieldData();
-        fetchStepsData();
     }, []);
     const fetchTasks = async () => {
         try {
@@ -68,37 +65,28 @@ const Dashboard = () => {
 
     const fetchFieldData = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('accessToken');    
+            const selectedFarmId = localStorage.getItem('x-selected-farm-id'); // ✅ Get farmId    
+            if (!selectedFarmId) {
+                toast.error("No farm selected!");
+                return;
+            }
+            
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { 
+                    Authorization: `Bearer ${accessToken}`,
+                    'x-selected-farm-id': selectedFarmId // ✅ Corrected header key
+                }
             });
-
             const totalArea = response.data.reduce((sum: number, field: { area: number }) => sum + field.area, 0);
             setTotalFieldArea(totalArea);
         } catch (error) {
-            console.error('Error fetching fields:', error);
-            toast.error('Failed to fetch fields.');
-        }
-    };
-
-    const fetchStepsData = async () => {
-        try {
-            const token = localStorage.getItem('accessToken');
-
-            // Fetch daily steps
-            const dailyResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/activity/dailysteps`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setDailySteps(dailyResponse.data);
-
-            // Fetch monthly steps
-            const monthlyResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/activity/monthlySteps`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setMonthlySteps(monthlyResponse.data);
-        } catch (error) {
-            console.error('Error fetching steps:', error);
-        }
+            if (error.response?.status === 403) {
+                window.location.href = '/pages/unauthorized'; // ✅ Redirect on 403
+            } else {
+                toast.error("Failed to fetch fields.");
+            }
+        }     
     };
 
     return (
@@ -159,7 +147,7 @@ const Dashboard = () => {
                         <div className="flex justify-content-between mb-3">
                             <div>
                                 <span className="block text-500 font-medium mb-3">Daily Steps</span>
-                                <div className="text-900 font-medium text-xl">{dailySteps}</div>
+                                <div className="text-900 font-medium text-xl">5</div>
                             </div>
                             <div className="flex align-items-center justify-content-center bg-cyan-100 border-round" style={{ width: '2.5rem', height: '2.5rem' }}>
                                 <i className="pi pi-walking text-cyan-500 text-xl" />

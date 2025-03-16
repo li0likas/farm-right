@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
 //import { MailModule } from "./mail/mail.module";
 import { JwtModule } from "@nestjs/jwt";
-import { JwtStrategy } from "./strategy";
+import { JwtStrategy } from "../auth/strategy";
 import { UserService } from 'src/user/user.service';
 import { CommentModule } from 'src/comment/comment.module';
 import { CommentController } from 'src/comment/comment.controller';

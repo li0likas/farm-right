@@ -38,15 +38,27 @@ const Fields = () => {
 
     const fetchFields = async () => {
         try {
-            const accessToken = localStorage.getItem('accessToken');            
+            const accessToken = localStorage.getItem('accessToken');    
+            const selectedFarmId = localStorage.getItem('x-selected-farm-id'); // ✅ Get farmId    
+            if (!selectedFarmId) {
+                toast.error("No farm selected!");
+                return;
+            }
+            
             const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
+                headers: { 
+                    Authorization: `Bearer ${accessToken}`,
+                    'x-selected-farm-id': selectedFarmId // ✅ Corrected header key
+                }
             });
             setFields(response.data);
             setFilteredFields(response.data);
         } catch (error) {
-            console.error('Error fetching fields:', error);
-            toast.error('Failed to fetch fields.');
+            if (error.response?.status === 403) {
+                window.location.href = '/pages/unauthorized'; // ✅ Redirect on 403
+            } else {
+                toast.error("Failed to fetch fields.");
+            }
         }
     };
 
