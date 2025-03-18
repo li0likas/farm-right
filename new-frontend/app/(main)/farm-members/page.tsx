@@ -11,115 +11,155 @@ import { Column } from "primereact/column";
 import { toast } from "sonner";
 import { Dialog } from "primereact/dialog";
 import { isLoggedIn } from "@/utils/auth";
+import { getUser } from "@/utils/user";
+
+// ✅ Function to get auth headers (including farm ID)
+const getAuthHeaders = () => {
+  const accessToken = localStorage.getItem("accessToken");
+  const selectedFarmId = localStorage.getItem("x-selected-farm-id");
+
+  if (!accessToken || !selectedFarmId) {
+    toast.error("Missing authentication or farm selection.");
+    return null;
+  }
+
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    "x-selected-farm-id": selectedFarmId
+  };
+};
+
+type Role = {
+  id: number;
+  name: string;
+};
 
 const FarmMembersPage = () => {
   const router = useRouter();
-  const [farmId, setFarmId] = useState<number | null>(null);
   const [members, setMembers] = useState([]);
-  const [roles, setRoles] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState<{ label: string; value: number }[]>([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
   const [visible, setVisible] = useState(false);
+  const [roleChanges, setRoleChanges] = useState<{ [key: number]: number }>({});
+  const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    // ✅ Redirect if not logged in
     if (!isLoggedIn()) {
       toast.error("Unauthorized. Login first.");
       router.push("/auth/login");
       return;
     }
 
-    // ✅ Get farmId from local storage
-    const storedFarmId = localStorage.getItem("selectedFarmId");
-    if (!storedFarmId) {
-      toast.error("No farm selected. Redirecting...");
-      router.push("/select-farm");
-      return;
+    const user = getUser();
+    if (user?.id) {
+      setCurrentUserId(parseInt(user.id, 10));
     }
-    setFarmId(Number(storedFarmId));
 
-    // ✅ Fetch Data
-    fetchMembers(Number(storedFarmId));
+    fetchMembers();
     fetchRoles();
-    fetchUsers();
   }, []);
 
-  // ✅ Fetch farm members
-  const fetchMembers = async (farmId: number) => {
+  // ✅ Fetch farm members (uses `getAuthHeaders()`)
+  const fetchMembers = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${farmId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members`, { headers });
       setMembers(response.data);
     } catch (error) {
       toast.error("Failed to load members");
     }
   };
 
-  // ✅ Fetch available roles
+  // ✅ Fetch available roles (uses `getAuthHeaders()`)
   const fetchRoles = async () => {
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRoles(response.data.map((role) => ({ label: role.name, value: role.id })));
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles`, { headers });
+      setRoles(response.data.map((role: Role) => ({ label: role.name, value: role.id })));
     } catch (error) {
       toast.error("Failed to load roles");
     }
   };
 
-  // ✅ Fetch users to invite
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(response.data.map((user) => ({ label: user.username, value: user.id })));
-    } catch (error) {
-      toast.error("Failed to load users");
-    }
-  };
-
-  // ✅ Add a member
+  // ✅ Add a member (uses `getAuthHeaders()`)
   const addMember = async () => {
-    if (!farmId) return;
+    const headers = getAuthHeaders();
+    if (!headers || !selectedUser || !selectedRole) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members`,
-        {
-          farmId,
-          userId: selectedUser,
-          roleId: selectedRole,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members`, { userId: selectedUser, roleId: selectedRole }, { headers });
 
       toast.success("Member added successfully!");
       setVisible(false);
-      fetchMembers(farmId);
+      fetchMembers();
     } catch (error) {
       toast.error("Failed to add member");
     }
   };
 
-  // ✅ Remove a member
+  // ✅ Remove a member (uses `getAuthHeaders()`)
   const removeMember = async (userId: number) => {
-    if (!farmId) return;
+    const headers = getAuthHeaders();
+    if (!headers) return;
+
     try {
-      const token = localStorage.getItem("accessToken");
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${farmId}/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${userId}`, { headers });
 
       toast.success("Member removed!");
-      fetchMembers(farmId);
+      fetchMembers();
     } catch (error) {
       toast.error("Failed to remove member");
+    }
+  };
+
+  // Function to confirm deletion
+  const confirmDelete = (userId: number) => {
+    setMemberToDelete(userId);
+    setDeleteDialogVisible(true);
+  };
+
+  // Function to handle the deletion
+  const handleDelete = async () => {
+    if (memberToDelete !== null) {
+      await removeMember(memberToDelete);
+      setDeleteDialogVisible(false);
+      setMemberToDelete(null);
+    }
+  };
+
+  // ✅ Handle role change (store updates in state)
+  const handleRoleChange = (userId: number, newRoleId: number) => {
+    setRoleChanges((prev) => ({ ...prev, [userId]: newRoleId }));
+  };
+
+  // ✅ Save role change (uses `getAuthHeaders()`)
+  const saveRoleChange = async (userId: number) => {
+    const headers = getAuthHeaders();
+    if (!headers || !roleChanges[userId]) return;
+
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${userId}`,
+        { roleId: roleChanges[userId] },
+        { headers }
+      );
+
+      toast.success("Role updated successfully!");
+      fetchMembers();
+      setRoleChanges((prev) => {
+        const updated = { ...prev };
+        delete updated[userId];
+        return updated;
+      });
+    } catch (error) {
+      toast.error("Failed to update role");
     }
   };
 
@@ -132,22 +172,84 @@ const FarmMembersPage = () => {
         <DataTable value={members} responsiveLayout="scroll">
           <Column field="username" header="Name" />
           <Column field="email" header="Email" />
-          <Column field="role" header="Role" />
+
+          <Column
+            header="Role"
+            body={(rowData) => {
+              const isEditing = roleChanges[rowData.id] !== undefined;
+              const isCurrentUser = rowData.id === currentUserId; // check if this row is the logged-in user
+
+              return (
+                <div className="flex align-items-center gap-2">
+                  {isEditing ? (
+                    <>
+                      <Dropdown
+                        value={roleChanges[rowData.id] || rowData.roleId}
+                        options={roles}
+                        onChange={(e) => handleRoleChange(rowData.id, e.value)}
+                        placeholder="Select Role"
+                        className="w-12rem"
+                      />
+                      <Button 
+                        icon="pi pi-check" 
+                        className="p-button-sm p-button-success" 
+                        onClick={() => saveRoleChange(rowData.id)} 
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <span>{roles.find(role => role.value === rowData.roleId)?.label || "Unknown Role"}</span>
+                      {!isCurrentUser && (
+                        <Button 
+                          icon="pi pi-pencil" 
+                          className="p-button-sm p-button-text" 
+                          onClick={() => setRoleChanges((prev) => ({ ...prev, [rowData.id]: rowData.roleId }))}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              );
+            }}
+          />
+
           <Column
             header="Remove"
-            body={(rowData) => (
-              <Button icon="pi pi-trash" className="p-button-danger" onClick={() => removeMember(rowData.id)} />
-            )}
+            body={(rowData) => {
+              const isCurrentUser = rowData.id === currentUserId; // check if this row is the logged-in user
+
+              return isCurrentUser ? null : (
+                <Button
+                  icon="pi pi-trash"
+                  className="p-button-danger"
+                  onClick={() => confirmDelete(rowData.id)}
+                />
+              );
+            }}
           />
         </DataTable>
       </Card>
+
+      <Dialog
+        header="Confirm Deletion"
+        visible={deleteDialogVisible}
+        onHide={() => setDeleteDialogVisible(false)}
+        footer={
+          <>
+            <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
+            <Button label="Delete" icon="pi pi-check" className="p-button-danger" onClick={handleDelete} />
+          </>
+        }
+      >
+        <p>Are you sure you want to remove this member?</p>
+      </Dialog>
+
 
       {/* Add Member Dialog */}
       <Dialog header="Add Farm Member" visible={visible} onHide={() => setVisible(false)}>
         <div className="p-fluid">
           <Dropdown
             value={selectedUser}
-            options={users}
             onChange={(e) => setSelectedUser(e.value)}
             placeholder="Select User"
             className="w-full mb-3"

@@ -56,6 +56,11 @@ async function main() {
       { name: 'EQUIPMENT_READ' },
       { name: 'EQUIPMENT_UPDATE' },
       { name: 'EQUIPMENT_DELETE' },
+
+      // Equipment that is added in task permissions
+      { name: 'TASK_EQUIPMENT_READ' },
+      { name: 'TASK_EQUIPMENT_ASSIGN' },
+      { name: 'TASK_EQUIPMENT_REMOVE' },
       
       // Farm permissions
       { name: 'FARM_CREATE' },
@@ -87,10 +92,10 @@ async function main() {
       { name: 'PERMISSION_REMOVE' },
 
       // Farm member permissions
-      { name: 'FARM_MEMBER_CREATE' },
+      { name: 'FARM_MEMBER_INVITE' },
       { name: 'FARM_MEMBER_READ' },
-      { name: 'FARM_MEMBER_UPDATE' },
-      { name: 'FARM_MEMBER_DELETE' },
+      { name: 'FARM_MEMBER_UPDATE_ROLE' },
+      { name: 'FARM_MEMBER_REMOVE' },
 
 
     ],
@@ -444,6 +449,9 @@ async function main() {
   const tractorType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Tractor" } });
   const harvesterType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Combine Harvester" } });
   const sprayerType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Sprayer" } });
+  const plowType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Plow" } });
+  const fertilizerSpreaderType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Fertilizer Spreader" } });
+  const cultivatorType = await prisma.equipmentTypeOptions.findUnique({ where: { name: "Cultivator" } });
 
   // Add equipment for user
   const tractor = await prisma.equipment.create({
@@ -451,6 +459,7 @@ async function main() {
       name: "John Deere 6155M",
       typeId: tractorType.id,
       ownerId: gvidasUser.id,
+      farmId: farm.id,
     }
   });
 
@@ -459,6 +468,7 @@ async function main() {
       name: "New Holland CR10.90",
       typeId: harvesterType.id,
       ownerId: gvidasUser.id,
+      farmId: farm.id,
     }
   });
 
@@ -467,6 +477,53 @@ async function main() {
       name: "Amazone UX 11200",
       typeId: sprayerType.id,
       ownerId: gvidasUser.id,
+      farmId: farm.id,
+    }
+  });
+
+  const plow = await prisma.equipment.create({
+    data: {
+      name: "Kuhn Vari-Master 153",
+      typeId: plowType.id,
+      ownerId: farmerUser.id,
+      farmId: farm2.id,
+    }
+  });
+  
+  const harvester2 = await prisma.equipment.create({
+    data: {
+      name: "DON 1500-B",
+      typeId: harvesterType.id,
+      ownerId: farmerUser.id,
+      farmId: farm2.id,
+    }
+  });
+
+  const tractor2 = await prisma.equipment.create({
+    data: {
+      name: "Valtra T191h",
+      typeId: tractorType.id,
+      ownerId: farmerUser.id,
+      farmId: farm2.id,
+    }
+  });
+  
+  // Additional equipment for Farm 2
+  const spreader = await prisma.equipment.create({
+    data: {
+      name: "Amazone ZA-TS 3200",
+      typeId: fertilizerSpreaderType.id,
+      ownerId: farmerUser.id,
+      farmId: farm2.id,
+    }
+  });
+  
+  const cultivator = await prisma.equipment.create({
+    data: {
+      name: "Horsch Cruiser XL 6000",
+      typeId: cultivatorType.id,
+      ownerId: farmerUser.id,
+      farmId: farm2.id,
     }
   });
 

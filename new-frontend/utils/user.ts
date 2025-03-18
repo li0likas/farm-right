@@ -29,10 +29,20 @@ export const updateUser = (userData: User): void => {
 export const getUser = (): User => {
     try {
         const user = localStorage.getItem('user');
-        return user ? JSON.parse(user) : {}; // Return empty object instead of null
+        return user ? JSON.parse(user) : {
+            id: '',
+            username: '',
+            email: '',
+            farms: []
+        }; // Return default User object instead of empty object
     } catch (error) {
         console.error("Error parsing user from localStorage:", error);
-        return {}; // Always return an empty object on error
+        return {
+            id: '',
+            username: '',
+            email: '',
+            farms: []
+        }; // Always return a default User object on error
     }
 };
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Field } from '@prisma/client';
 import { CreateFieldDto } from './dto/create-field.dto';
@@ -11,16 +11,12 @@ export class FieldService {
     return this.prisma.field.create({
       data,
     });
-  }
+  } 
 
   async findAll(userId: number, selectedFarmId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
-        farmId: selectedFarmId,
-        OR: [
-          { ownerId: userId },
-          { farm: { members: { some: { userId } } } },
-        ],
+        farmId: selectedFarmId, // Ensure fields belong to the selected farm
       },
       include: {
         crop: true,
@@ -29,9 +25,12 @@ export class FieldService {
     });
   }
 
-  async findOne(id: number): Promise<Field> {
-    return this.prisma.field.findUnique({
-      where: { id },
+  async findOne(id: number, selectedFarmId: number): Promise<Field> {
+    return this.prisma.field.findFirst({
+      where: { 
+        id, 
+        farmId: selectedFarmId, // Ensure field belongs to selected farm
+      },
       include: {
         crop: true,
         farm: true,
@@ -39,22 +38,29 @@ export class FieldService {
     });
   }
 
-  async update(id: number, data: Partial<Field>): Promise<Field> {
+  async update(id: number, data: Partial<Field>, selectedFarmId: number): Promise<Field> {
     return this.prisma.field.update({
-      where: { id },
+      where: { 
+        id,
+        farmId: selectedFarmId, // Ensure field belongs to selected farm
+      },
       data,
     });
   }
 
-  async delete(id: number): Promise<Field | null> {
-    const field = await this.prisma.field.findUnique({ where: { id } });
+  async delete(id: number, selectedFarmId: number): Promise<Field | null> {
+    const field = await this.prisma.field.findFirst({ 
+      where: { id, farmId: selectedFarmId }, // Ensure field belongs to selected farm
+    });
+  
     if (!field) {
-      return null;
+      throw new NotFoundException(`Field with ID ${id} was not found in the selected farm`);
     }
+  
     await this.prisma.field.delete({ where: { id } });
     return field;
   }
-
+  
   async findCurrentUserFields(userId: number, selectedFarmId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
@@ -69,5 +75,5 @@ export class FieldService {
         farm: true,
       },
     });
-  }
+  } 
 }

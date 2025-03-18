@@ -117,6 +117,17 @@ export class UserService {
         });
     }
 
+    async getUserFarms(userId: number) {
+      return this.prisma.farm.findMany({
+        where: {
+          OR: [
+            { ownerId: userId }, // User is the farm owner
+            { members: { some: { userId } } } // User is a farm member
+          ]
+        }
+      });
+    }
+
     // async getTop10UsersByPoints(userId: number) {
     //   const usersWithPoints = await this.prisma.user.findMany({
     //     select: {

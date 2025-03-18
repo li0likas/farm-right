@@ -54,7 +54,7 @@ const Fields = () => {
             setFields(response.data);
             setFilteredFields(response.data);
         } catch (error) {
-            if (error.response?.status === 403) {
+            if (axios.isAxiosError(error) && error.response?.status === 403) {
                 window.location.href = '/pages/unauthorized'; // ✅ Redirect on 403
             } else {
                 toast.error("Failed to fetch fields.");

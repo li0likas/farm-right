@@ -1,12 +1,13 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
 import { classNames } from 'primereact/utils';
-import React, { forwardRef, useContext, useImperativeHandle, useRef, useState } from 'react';
+import React, { forwardRef, useContext, useImperativeHandle, useRef, useState, useEffect } from 'react';
 import { AppTopbarRef } from '@/types';
 import { LayoutContext } from './context/layoutcontext';
 import { Menu } from 'primereact/menu';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import api from '@/utils/api';
+import axios from 'axios';
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -16,13 +17,41 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const profileMenuRef = useRef<Menu>(null);
     const router = useRouter();
 
-    useImperativeHandle(ref, () => ({
-        menubutton: menubuttonRef.current,
-        topbarmenu: topbarmenuRef.current,
-        topbarmenubutton: topbarmenubuttonRef.current
-    }));
+    interface Farm {
+        id: number;
+        name: string;
+    }
 
-    // Define menu items
+    const [farms, setFarms] = useState<Farm[]>([]);
+    const [selectedFarm, setSelectedFarm] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchFarms = async () => {
+            try {
+                const accessToken = localStorage.getItem('accessToken'); 
+                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`, {
+                    headers: { 
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                });
+                setFarms(response.data);
+                const currentFarm = localStorage.getItem('x-selected-farm-id');
+                setSelectedFarm(currentFarm ? parseInt(currentFarm) : response.data[0]?.id);
+            } catch (error) {
+                console.error("Failed to fetch farms:", error);
+            }
+        };
+
+        fetchFarms();
+    }, []);
+
+    const switchFarm = (farmId: number) => {
+        localStorage.setItem('x-selected-farm-id', farmId.toString());
+        setSelectedFarm(farmId);
+        toast.success("Farm switched successfully!");
+        window.location.reload(); // Refresh the page to apply changes
+    };
+
     const profileMenuItems = [
         {
             label: 'Profile',
@@ -38,10 +67,24 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             separator: true
         },
         {
+            label: 'Switch Farm',
+            icon: 'pi pi-refresh',
+            items: farms.length > 1 
+                ? farms.map(farm => ({
+                    label: farm.name,
+                    icon: farm.id === selectedFarm ? 'pi pi-check-circle' : 'pi pi-circle',
+                    command: () => switchFarm(farm.id)
+                }))
+                : [{ label: 'No other farms available', disabled: true }]
+        },
+        {
+            separator: true
+        },
+        {
             label: 'Logout',
             icon: 'pi pi-sign-out',
             command: () => {
-                localStorage.removeItem('accessToken'); 
+                localStorage.removeItem('accessToken');
                 localStorage.removeItem('x-selected-farm-id');
                 localStorage.removeItem('user');
     

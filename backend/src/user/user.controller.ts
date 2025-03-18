@@ -1,23 +1,30 @@
-import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards, HttpException, HttpStatus } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Request, UseGuards, HttpException, HttpStatus } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { AuthGuard } from "@nestjs/passport";
-import { Request } from 'express';
+import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 
 @Controller('users')
+@UseGuards(AuthGuard('jwt'))
 export class UserController {
 
   constructor(private userService: UserService) { }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  getMe(@Req() req: Request) {
+  getMe(@Request() req) {
     return req.user;
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('all-users')
   async getAllUsers() {
     return this.userService.findAllUsers();
+  }
+
+  @Get('farms')
+  @ApiOperation({ summary: 'Get all farms assigned to the authenticated user' })
+  @ApiResponse({ status: 200, description: 'Farms retrieved successfully' })
+  async getUserFarms(@Request() req) {
+    const userId = req.user.id;
+    return this.userService.getUserFarms(userId);
   }
 
   // @UseGuards(AuthGuard('jwt'))
@@ -26,22 +33,10 @@ export class UserController {
   //   return this.userService.getLastSeenLocation(userId);
   // }
 
-  @Get(':id')
-  async getUserById(@Param('id') id: string) {
-    try {
-      const user = await this.userService.getUserById(parseInt(id));
-      if (!user) {
-        throw new Error('User not found');
-      }
-      return user;
-    } catch (error) {
-      throw new Error('Error fetching user details: ' + error.message);
-    }
-  }
 
-  @UseGuards(AuthGuard('jwt'))
+
   @Post('change-username')
-  async changeUsername(@Body() data: { username: string }, @Req() req) {
+  async changeUsername(@Body() data: { username: string }, @Request() req) {
     try {
       const userId = req.user.id;
       await this.userService.changeUsername(userId, data.username);
@@ -52,6 +47,20 @@ export class UserController {
       } else {
         throw new HttpException('An error occurred while changing the username', HttpStatus.INTERNAL_SERVER_ERROR);
       }
+    }
+  }
+
+  // this has to be last because it catches all /users/xxxx routes
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    try {
+      const user = await this.userService.getUserById(parseInt(id));
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    } catch (error) {
+      throw new Error('Error fetching user details: ' + error.message);
     }
   }
 

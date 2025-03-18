@@ -10,7 +10,7 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
-  @Permissions('PERMISSION_READ')
+  @Permissions('PERMISSION_READ', 'FARM_MEMBER_UPDATE_ROLE') // Allow both permissions
   async getAllRoles(@Request() req) {
     const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
     if (isNaN(selectedFarmId)) {

@@ -14,4 +14,7 @@ export class CreateEquipmentDto {
 
   @IsNumber()
   ownerId: number;
+
+  @IsNumber()
+  farmId: number;
 }

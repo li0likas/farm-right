@@ -8,7 +8,7 @@ import { Card } from 'primereact/card';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
-import { InputTextarea } from 'primereact/inputtextarea'; // ✅ Fixed import
+import { InputTextarea } from 'primereact/inputtextarea';
 import ProtectedRoute from "@/utils/ProtectedRoute";
 
 interface EquipmentType {
@@ -28,6 +28,21 @@ const CreateEquipmentPage = () => {
         fetchEquipmentTypes();
     }, []);
 
+    const getAuthHeaders = () => {
+        const accessToken = localStorage.getItem('accessToken');
+        const selectedFarmId = localStorage.getItem('x-selected-farm-id');
+
+        if (!accessToken || !selectedFarmId) {
+            toast.error('Missing authentication or farm selection.');
+            return null;
+        }
+
+        return {
+            Authorization: `Bearer ${accessToken}`,
+            'x-selected-farm-id': selectedFarmId
+        };
+    };
+
     const fetchEquipmentTypes = async () => {
         try {
             const token = localStorage.getItem('accessToken');
@@ -43,31 +58,32 @@ const CreateEquipmentPage = () => {
 
     const handleCreateEquipment = async () => {
         if (!name || !type) {
-            toast.warning('Please fill in all required fields.');
-            return;
+            toast.warning("Please fill in all required fields.");
+          return;
         }
 
         setLoading(true);
-
+      
+        const headers = getAuthHeaders();
+        if (!headers) return;
+      
+        const formData = {
+          name: name,
+          typeId: type,
+          description,
+        };
+      
         try {
-            const token = localStorage.getItem('accessToken');
-            await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, {
-                name,
-                typeId: type,
-                description
-            }, {
-                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-            });
-
-            toast.success('Equipment created successfully!');
-            router.push('/equipment'); // Redirect to the equipment list
+          await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, formData, { headers });
+          toast.success("Equipment created successfully.");
+          router.push('/equipment'); // Redirect to the equipment list
         } catch (error) {
-            console.error('Error creating equipment:', error);
-            toast.error('Failed to create equipment.');
+          toast.error("Failed to create equipment.");
         } finally {
             setLoading(false);
         }
-    };
+      };
+    
 
     return (
         <ProtectedRoute>

@@ -1,35 +1,65 @@
-import { Controller, Get, Post, Delete, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Param, Body, UseGuards, Request, HttpStatus, HttpException } from '@nestjs/common';
 import { FarmMembersService } from './farm-members.service';
 import { AuthGuard } from '@nestjs/passport';
+import { PermissionsGuard } from '../guards/permissions.guard';
+import { Permissions } from '../decorators/permissions.decorator';
+import { request } from 'http';
 
 @Controller('farm-members')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 export class FarmMembersController {
   constructor(private readonly farmMembersService: FarmMembersService) {}
 
-  @Get(':farmId')
-  async getFarmMembers(@Param('farmId') farmId: string) {
-    return this.farmMembersService.getFarmMembers(parseInt(farmId));
+  @Get()
+  @Permissions('FARM_MEMBER_READ')
+  async getFarmMembers(@Request() req) {
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    if (!selectedFarmId) {
+      throw new HttpException('Selected farm ID is required.', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.farmMembersService.getFarmMembers(selectedFarmId);
   }
 
   @Post()
+  @Permissions('FARM_MEMBER_INVITE')
   async addFarmMember(
-    @Body() { farmId, userId, roleId }: { farmId: string; userId: string; roleId: string }
+    @Request() req,
+    @Body() { userId, roleId }: { userId: string; roleId: string }
   ) {
-    return this.farmMembersService.addFarmMember(parseInt(farmId), parseInt(userId), parseInt(roleId));
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    if (!selectedFarmId) {
+      throw new HttpException('Selected farm ID is required.', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.farmMembersService.addFarmMember(selectedFarmId, parseInt(userId), parseInt(roleId));
   }
 
-  @Delete(':farmId/:userId')
-  async removeFarmMember(@Param('farmId') farmId: string, @Param('userId') userId: string) {
-    return this.farmMembersService.removeFarmMember(parseInt(farmId), parseInt(userId));
+  @Delete(':userId')
+  @Permissions('FARM_MEMBER_REMOVE')
+  async removeFarmMember(@Request() req, @Param('userId') userId: string) {
+    const requesterId = req.user.id; // get the current user ID
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    if (!selectedFarmId) {
+      throw new HttpException('Selected farm ID is required.', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.farmMembersService.removeFarmMember(selectedFarmId, parseInt(userId), requesterId);
   }
 
-  @Patch(':farmId/:userId')
+  @Patch(':userId')
+  @Permissions('FARM_MEMBER_UPDATE_ROLE')
   async updateFarmMemberRole(
-    @Param('farmId') farmId: string,
+    @Request() req,
     @Param('userId') userId: string,
     @Body() { roleId }: { roleId: string }
   ) {
-    return this.farmMembersService.updateFarmMemberRole(parseInt(farmId), parseInt(userId), parseInt(roleId));
+    const requesterId = req.user.id; // get the current user ID
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    if (!selectedFarmId) {
+      throw new HttpException('Selected farm ID is required.', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.farmMembersService.updateFarmMemberRole(selectedFarmId, parseInt(userId), parseInt(roleId), requesterId);
   }
 }

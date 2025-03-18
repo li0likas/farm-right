@@ -45,7 +45,7 @@ const login = async (accessToken: string): Promise<boolean> => {
 const logout = (): void => {
     removeToken();
     removeUser();
-    localStorage.removeItem("selectedFarmId");
+    localStorage.removeItem("x-selected-farm-id");
 };
 
 export { isLoggedIn, login, logout };

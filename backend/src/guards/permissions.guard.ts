@@ -48,17 +48,17 @@ export class PermissionsGuard implements CanActivate {
     }
     
     // 🔴 Debugging
-    console.log("Full farmMember Object:", JSON.stringify(farmMember, null, 2));
+    //console.log("Full farmMember Object:", JSON.stringify(farmMember, null, 2));
       
 
     // ✅ Extract user's permissions from their assigned role
     const userPermissions = farmMember.role.farmPermissions.map((fp) => fp.permission.name);
 
-    console.log("UserPermissions:", userPermissions);
-    console.log("RequiredPermissions:", requiredPermissions);
+    //console.log("UserPermissions:", userPermissions);
+    //console.log("RequiredPermissions:", requiredPermissions);
 
-    // ✅ Check if user has **ALL** required permissions
-    const hasPermission = requiredPermissions.every((perm) => userPermissions.includes(perm));
+    // ✅ Check if user has **at least one** of the required permissions
+    const hasPermission = requiredPermissions.some((perm) => userPermissions.includes(perm));
 
     if (!hasPermission) {
       throw new ForbiddenException('You do not have the required permissions.');

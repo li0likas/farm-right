@@ -19,32 +19,36 @@ export class FarmMembersService {
       id: member.user.id,
       username: member.user.username,
       email: member.user.email,
-      role: member.role.name
+      role: member.role.name,
+      roleId: member.role.id
     }));
   }
 
   async addFarmMember(farmId: number, userId: number, roleId: number) {
-    // Check if user is already a member
-    const existingMember = await this.prisma.farmMember.findFirst({
-      where: { farmId, userId }
-    });
+    const existingMember = await this.prisma.farmMember.findFirst({ where: { farmId, userId } });
 
     if (existingMember) {
       throw new ForbiddenException('User is already a member of this farm');
     }
 
-    return this.prisma.farmMember.create({
-      data: { farmId, userId, roleId }
-    });
+    return this.prisma.farmMember.create({ data: { farmId, userId, roleId } });
   }
 
-  async removeFarmMember(farmId: number, userId: number) {
-    return this.prisma.farmMember.deleteMany({
-      where: { farmId, userId }
-    });
+  async removeFarmMember(farmId: number, userId: number, requesterId: number) {
+    // Prevent user from deleting themselves
+    if (userId === requesterId) {
+      throw new ForbiddenException("You cannot remove yourself from the farm.");
+    }
+
+    return this.prisma.farmMember.deleteMany({ where: { farmId, userId } });
   }
 
-  async updateFarmMemberRole(farmId: number, userId: number, roleId: number) {
+  async updateFarmMemberRole(farmId: number, userId: number, roleId: number, requesterId: number) {
+    // Prevent user from changing their own role
+    if (userId === requesterId) {
+      throw new ForbiddenException("You cannot update your own role.");
+    }
+
     return this.prisma.farmMember.updateMany({
       where: { farmId, userId },
       data: { roleId }
