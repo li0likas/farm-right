@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -10,24 +9,8 @@ import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { toast } from "sonner";
 import { Dialog } from "primereact/dialog";
-import { isLoggedIn } from "@/utils/auth";
 import { getUser } from "@/utils/user";
-
-// ✅ Function to get auth headers (including farm ID)
-const getAuthHeaders = () => {
-  const accessToken = localStorage.getItem("accessToken");
-  const selectedFarmId = localStorage.getItem("x-selected-farm-id");
-
-  if (!accessToken || !selectedFarmId) {
-    toast.error("Missing authentication or farm selection.");
-    return null;
-  }
-
-  return {
-    Authorization: `Bearer ${accessToken}`,
-    "x-selected-farm-id": selectedFarmId
-  };
-};
+import api from "@/utils/api";
 
 type Role = {
   id: number;
@@ -47,12 +30,6 @@ const FarmMembersPage = () => {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      toast.error("Unauthorized. Login first.");
-      router.push("/auth/login");
-      return;
-    }
-
     const user = getUser();
     if (user?.id) {
       setCurrentUserId(parseInt(user.id, 10));
@@ -62,40 +39,29 @@ const FarmMembersPage = () => {
     fetchRoles();
   }, []);
 
-  // ✅ Fetch farm members (uses `getAuthHeaders()`)
   const fetchMembers = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members`, { headers });
+      const response = await api.get("/farm-members");
       setMembers(response.data);
     } catch (error) {
       toast.error("Failed to load members");
     }
   };
 
-  // ✅ Fetch available roles (uses `getAuthHeaders()`)
   const fetchRoles = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles`, { headers });
+      const response = await api.get("/roles");
       setRoles(response.data.map((role: Role) => ({ label: role.name, value: role.id })));
     } catch (error) {
       toast.error("Failed to load roles");
     }
   };
 
-  // ✅ Add a member (uses `getAuthHeaders()`)
   const addMember = async () => {
-    const headers = getAuthHeaders();
-    if (!headers || !selectedUser || !selectedRole) return;
+    if (!selectedUser || !selectedRole) return;
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members`, { userId: selectedUser, roleId: selectedRole }, { headers });
-
+      await api.post("/farm-members", { userId: selectedUser, roleId: selectedRole });
       toast.success("Member added successfully!");
       setVisible(false);
       fetchMembers();
@@ -104,14 +70,9 @@ const FarmMembersPage = () => {
     }
   };
 
-  // ✅ Remove a member (uses `getAuthHeaders()`)
   const removeMember = async (userId: number) => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${userId}`, { headers });
-
+      await api.delete(`/farm-members/${userId}`);
       toast.success("Member removed!");
       fetchMembers();
     } catch (error) {
@@ -119,38 +80,15 @@ const FarmMembersPage = () => {
     }
   };
 
-  // Function to confirm deletion
-  const confirmDelete = (userId: number) => {
-    setMemberToDelete(userId);
-    setDeleteDialogVisible(true);
-  };
-
-  // Function to handle the deletion
-  const handleDelete = async () => {
-    if (memberToDelete !== null) {
-      await removeMember(memberToDelete);
-      setDeleteDialogVisible(false);
-      setMemberToDelete(null);
-    }
-  };
-
-  // ✅ Handle role change (store updates in state)
   const handleRoleChange = (userId: number, newRoleId: number) => {
     setRoleChanges((prev) => ({ ...prev, [userId]: newRoleId }));
   };
 
-  // ✅ Save role change (uses `getAuthHeaders()`)
   const saveRoleChange = async (userId: number) => {
-    const headers = getAuthHeaders();
-    if (!headers || !roleChanges[userId]) return;
+    if (!roleChanges[userId]) return;
 
     try {
-      await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-members/${userId}`,
-        { roleId: roleChanges[userId] },
-        { headers }
-      );
-
+      await api.patch(`/farm-members/${userId}`, { roleId: roleChanges[userId] });
       toast.success("Role updated successfully!");
       fetchMembers();
       setRoleChanges((prev) => {
@@ -160,6 +98,19 @@ const FarmMembersPage = () => {
       });
     } catch (error) {
       toast.error("Failed to update role");
+    }
+  };
+
+  const confirmDelete = (userId: number) => {
+    setMemberToDelete(userId);
+    setDeleteDialogVisible(true);
+  };
+
+  const handleDelete = async () => {
+    if (memberToDelete !== null) {
+      await removeMember(memberToDelete);
+      setDeleteDialogVisible(false);
+      setMemberToDelete(null);
     }
   };
 
@@ -203,7 +154,7 @@ const FarmMembersPage = () => {
                         <Button 
                           icon="pi pi-pencil" 
                           className="p-button-sm p-button-text" 
-                          onClick={() => setRoleChanges((prev) => ({ ...prev, [rowData.id]: rowData.roleId }))}
+                          onClick={() => setRoleChanges((prev) => ({ ...prev, [rowData.id]: rowData.roleId }))} 
                         />
                       )}
                     </>
@@ -230,6 +181,7 @@ const FarmMembersPage = () => {
         </DataTable>
       </Card>
 
+      {/* Delete Confirmation Dialog */}
       <Dialog
         header="Confirm Deletion"
         visible={deleteDialogVisible}
@@ -243,7 +195,6 @@ const FarmMembersPage = () => {
       >
         <p>Are you sure you want to remove this member?</p>
       </Dialog>
-
 
       {/* Add Member Dialog */}
       <Dialog header="Add Farm Member" visible={visible} onHide={() => setVisible(false)}>

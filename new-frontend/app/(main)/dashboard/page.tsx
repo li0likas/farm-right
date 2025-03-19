@@ -5,12 +5,11 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Menu } from 'primereact/menu';
 import React, { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { PieChart } from '@mui/x-charts/PieChart';
-import { isLoggedIn } from "@/utils/auth";
+import api from '@/utils/api'; // ✅ Use API instance with interceptor
 
 interface Task {
     id: string;
@@ -29,20 +28,13 @@ const Dashboard = () => {
     const menu2 = useRef<Menu>(null);
 
     useEffect(() => {
-        if (!isLoggedIn()) {
-            toast.error('Unauthorized. Login first.');
-            return;
-        }
-
         fetchTasks();
         fetchFieldData();
     }, []);
+
     const fetchTasks = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/tasks');
 
             const sortedTasks = response.data.sort((a: Task, b: Task) => {
                 const dateA = a.dueDate || a.completionDate;
@@ -58,35 +50,18 @@ const Dashboard = () => {
 
             setCompletedPercentage(percentage);
         } catch (error) {
-            console.error('Error fetching tasks:', error);
             toast.error('Failed to fetch tasks.');
         }
     };
 
     const fetchFieldData = async () => {
         try {
-            const accessToken = localStorage.getItem('accessToken');    
-            const selectedFarmId = localStorage.getItem('x-selected-farm-id'); // ✅ Get farmId    
-            if (!selectedFarmId) {
-                toast.error("No farm selected!");
-                return;
-            }
-            
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
-                headers: { 
-                    Authorization: `Bearer ${accessToken}`,
-                    'x-selected-farm-id': selectedFarmId // ✅ Corrected header key
-                }
-            });
+            const response = await api.get('/fields');
             const totalArea = response.data.reduce((sum: number, field: { area: number }) => sum + field.area, 0);
             setTotalFieldArea(totalArea);
         } catch (error) {
-            if (error.response?.status === 403) {
-                window.location.href = '/pages/unauthorized'; // ✅ Redirect on 403
-            } else {
-                toast.error("Failed to fetch fields.");
-            }
-        }     
+            toast.error("Failed to fetch fields.");
+        }
     };
 
     return (

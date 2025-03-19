@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import axios from "axios";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -10,11 +9,12 @@ import { Tag } from "primereact/tag";
 import { Divider } from "primereact/divider";
 import { ProgressSpinner } from "primereact/progressspinner";
 import GoogleMapComponent from "../../../components/GoogleMapComponent";
-import { isLoggedIn } from "@/utils/auth";
 import ProtectedRoute from "@/utils/ProtectedRoute";
+import api from "@/utils/api";
 
 const FieldViewPage = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const fieldId = Number(pathname.split("/").pop());
   const [fieldInfo, setFieldInfo] = useState<any>(null);
   const [tasks, setTasks] = useState([]);
@@ -22,56 +22,26 @@ const FieldViewPage = () => {
 
   useEffect(() => {
     if (!fieldId) return;
-    
-    if (!isLoggedIn()) {
-      toast.error('Unauthorized. Login first.');
-      return;
-    }
 
     fetchFieldInfo();
     fetchTasks();
   }, [fieldId]);
 
-  const getAuthHeaders = () => {
-    const accessToken = localStorage.getItem("accessToken");
-    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
-
-    if (!accessToken || !selectedFarmId) {
-      toast.error("Missing authentication or farm selection.");
-      return null;
-    }
-
-    return {
-      Authorization: `Bearer ${accessToken}`,
-      'x-selected-farm-id': selectedFarmId,
-    };
-  };
-
   // ✅ Fetch Field Info
   const fetchFieldInfo = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, { headers });
+      const response = await api.get(`/fields/${fieldId}`);
       setFieldInfo(response.data);
     } catch (error) {
-      if (error.response?.status === 403) {
-        window.location.href = "/pages/unauthorized";
-      } else {
-        toast.error("Failed to load field data.");
-      }
+      toast.error("Failed to load field data.");
     } finally {
       setLoading(false);
     }
   };
 
   const fetchTasks = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}/tasks`, { headers });
+      const response = await api.get(`/fields/${fieldId}/tasks`);
       const sortedTasks = response.data.sort((a: any, b: any) =>
         new Date(b.dueDate || b.completionDate) > new Date(a.dueDate || a.completionDate) ? 1 : -1
       );
@@ -83,13 +53,11 @@ const FieldViewPage = () => {
 
   const handleDeleteField = async () => {
     if (!window.confirm("Are you sure you want to delete this field?")) return;
-    const headers = getAuthHeaders();
-    if (!headers) return;
 
     try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${fieldId}`, { headers });
+      await api.delete(`/fields/${fieldId}`);
       toast.success("Field deleted successfully.");
-      window.location.href = "/fields";
+      router.push("/fields");
     } catch (error) {
       toast.error("Failed to delete field.");
     }
@@ -118,7 +86,7 @@ const FieldViewPage = () => {
             <Button
               label="Create Task"
               className="p-button-primary"
-              onClick={() => (window.location.href = `/create-task/${fieldId}`)}
+              onClick={() => router.push(`/create-task/${fieldId}`)}
             />
           </div>
 
@@ -139,7 +107,7 @@ const FieldViewPage = () => {
                   <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <Button label="View" className="p-button-secondary" onClick={() => (window.location.href = `/tasks/${task.id}`)} />
+                  <Button label="View" className="p-button-secondary" onClick={() => router.push(`/tasks/${task.id}`)} />
                 </div>
               </div>
             ))

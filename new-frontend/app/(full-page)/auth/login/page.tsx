@@ -1,7 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState, useContext, useEffect } from 'react';
-import axios from 'axios';
+import api from '@/utils/api';
 import { toast } from 'sonner';
 import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
@@ -22,7 +22,7 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
 
     // Farm Selection State
-    const [farms, setFarms] = useState([]); // Stores farms from API
+    const [farms, setFarms] = useState([]); 
     const [selectedFarm, setSelectedFarm] = useState<number | null>(null);
 
     useEffect(() => {
@@ -44,7 +44,7 @@ const LoginPage = () => {
     
         setLoading(true);
         try {
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signin`, {
+            const response = await api.post('/auth/signin', {
                 username,
                 password
             });
@@ -54,31 +54,27 @@ const LoginPage = () => {
             console.log("🔑 Access Token:", access_token);
             console.log("🏡 Farms Data:", farms);
 
-            // ✅ Call login() function
+            // call login() function
             const success = await handleLogin(access_token);
 
             if (success) {
                 if (farms.length === 1) {
-                    // ✅ Auto-select farm and proceed
+                    // auto-select farm and proceed
                     localStorage.setItem('x-selected-farm-id', farms[0].farmId);
                     toast.success(`Welcome to ${farms[0].farmName}`);
                     router.push('/dashboard');
                 } else {
-                    // ✅ Show farm selection
+                    // show farm selection
                     setFarms(farms);
                 }
             } else {
                 toast.error("Failed to log in.");
             }
         } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 403 && error.response?.data?.message === "Incorrect credentials") {
-                    toast.error('Incorrect credentials');
-                } else {
-                    toast.error(`An error has occurred: ${error.message}`);
-                }
+            if (error.response?.status === 401 && error.response?.data?.message === "Incorrect credentials") {
+                toast.error('Incorrect credentials');
             } else {
-                toast.error('An unexpected error occurred.');
+                toast.error(`An error has occurred: ${error.message}`);
             }
         } finally {
             setLoading(false);

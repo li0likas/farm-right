@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
@@ -11,9 +10,9 @@ import { InputTextarea } from 'primereact/inputtextarea';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Fieldset } from 'primereact/fieldset';
 import { Divider } from 'primereact/divider';
-import { isLoggedIn } from "@/utils/auth";
-import ProtectedRoute from "@/utils/ProtectedRoute";
-import GoogleMapComponent from "../../../components/GoogleMapComponent";
+import ProtectedRoute from '@/utils/ProtectedRoute';
+import GoogleMapComponent from '../../../components/GoogleMapComponent';
+import api from '@/utils/api';
 
 interface Task {
     id: string;
@@ -23,9 +22,9 @@ interface Task {
     field: {
         name: string;
         boundary?: {
-            type: "Feature";
+            type: 'Feature';
             geometry: {
-                type: "Polygon";
+                type: 'Polygon';
                 coordinates: number[][][];
             };
         };
@@ -37,7 +36,6 @@ interface Task {
     isParticipating?: boolean;
     statusId: number;
 }
-
 
 interface Comment {
     id: string;
@@ -55,7 +53,7 @@ interface Equipment {
 
 const TaskPage = () => {
     const pathname = usePathname();
-    const taskId = Number(pathname.split('/').pop()); 
+    const taskId = Number(pathname.split('/').pop());
     const [task, setTask] = useState<Task | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentContent, setCommentContent] = useState('');
@@ -63,12 +61,7 @@ const TaskPage = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!isLoggedIn()) {
-            toast.error('Unauthorized. Login first.');
-            return;
-        }
-        if (taskId) 
-        {
+        if (taskId) {
             fetchTask();
             fetchComments();
             fetchEquipment();
@@ -77,14 +70,9 @@ const TaskPage = () => {
 
     const fetchTask = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
+            const response = await api.get(`/tasks/${taskId}`);
             setTask(response.data);
         } catch (error) {
-            console.error('Error fetching task:', error);
             toast.error('Failed to load task.');
         } finally {
             setLoading(false);
@@ -93,29 +81,19 @@ const TaskPage = () => {
 
     const fetchComments = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
+            const response = await api.get(`/tasks/${taskId}/comments`);
             setComments(response.data);
         } catch (error) {
             toast.error('Failed to fetch comments.');
-            console.error('Error fetching comments:', error);
         }
     };
 
     const fetchEquipment = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/equipment`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
+            const response = await api.get(`/tasks/${taskId}/equipment`);
             setEquipment(response.data);
         } catch (error) {
             toast.error('Failed to fetch equipment.');
-            console.error('Error fetching equipment:', error);
         }
     };
 
@@ -126,49 +104,36 @@ const TaskPage = () => {
         }
 
         try {
-            const token = localStorage.getItem('accessToken');
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments`,
-                { taskId, content: commentContent },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-
+            await api.post(`/tasks/${taskId}/comments`, { taskId, content: commentContent });
             setCommentContent('');
             fetchComments();
         } catch (error) {
-            console.error('Error posting comment:', error);
             toast.error('Failed to post comment.');
         }
     };
 
     const handleDeleteComment = async (commentId: string) => {
         try {
-            const token = localStorage.getItem('accessToken');
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/comments/${commentId}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            setComments(comments.filter(comment => comment.id !== commentId));
+            await api.delete(`/tasks/${taskId}/comments/${commentId}`);
+            setComments((prev) => prev.filter((comment) => comment.id !== commentId));
             toast.success('Comment deleted.');
         } catch (error) {
-            console.error('Error deleting comment:', error);
             toast.error('Failed to delete comment.');
         }
     };
 
     const handleTaskAction = async (action: string) => {
         try {
-            const token = localStorage.getItem('accessToken');
-            let url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}`;
-            let method: 'post' | 'patch' | 'delete' = 'post'; // Default method
+            let url = `/tasks/${taskId}`;
+            let method: 'post' | 'patch' = 'post';
             let payload = {};
-    
+
             switch (action) {
                 case 'participate':
-                    url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/groups/${taskId}/task-participate`;
+                    url = `/groups/${taskId}/task-participate`;
                     break;
                 case 'cancel-participation':
-                    url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/groups/${taskId}/task-cancel-participation`;
+                    url = `/groups/${taskId}/task-cancel-participation`;
                     break;
                 case 'cancel-task':
                     method = 'patch';
@@ -182,23 +147,15 @@ const TaskPage = () => {
                     toast.error('Invalid action.');
                     return;
             }
-    
-            if (method === 'post') {
-                await axios.post(url, payload, { headers: { Authorization: `Bearer ${token}` } });
-            } else if (method === 'patch') {
-                await axios.patch(url, payload, { headers: { Authorization: `Bearer ${token}` } });
-            } else if (method === 'delete') {
-                await axios.delete(url, { headers: { Authorization: `Bearer ${token}` } });
-            }
-    
+
+            await (method === 'post' ? api.post(url, payload) : api.patch(url, payload));
+
             fetchTask();
             toast.success(`Task ${action.replace('-', ' ')} successfully.`);
         } catch (error) {
-            console.error(`Error performing ${action}:`, error);
             toast.error(`Failed to ${action}.`);
         }
     };
-    
 
     if (loading) return <ProgressSpinner />;
     if (!task) return <div className="text-center text-lg">Task not found.</div>;

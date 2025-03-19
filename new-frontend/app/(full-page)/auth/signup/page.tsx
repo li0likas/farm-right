@@ -1,13 +1,14 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
 import { Password } from 'primereact/password';
 import { InputText } from 'primereact/inputtext';
 import { FileUpload } from 'primereact/fileupload';
+import { logout } from "@/utils/auth";
+import api from '@/utils/api';
 
 const RegisterPage = () => {
     const router = useRouter();
@@ -46,8 +47,7 @@ const RegisterPage = () => {
         return true;
     };
     
-
-    // upload profile pic
+    // Upload profile pic
     const onUpload = (event: any) => {
         const file = event.files[0]; // Get the uploaded file
         if (file) {
@@ -58,6 +58,8 @@ const RegisterPage = () => {
 
     // Form submission
     const submit = async () => {
+        logout(); // Clear local storage & session
+
         if (!validate()) return;
 
         setLoading(true);
@@ -68,7 +70,7 @@ const RegisterPage = () => {
         if (profileImage) formData.append('file', profileImage);
 
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/signup`, formData, {
+            await api.post('/auth/signup', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -77,18 +79,14 @@ const RegisterPage = () => {
                 router.push('/auth/login');
             }, 2000);
         } catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 403) {
-                    if (error.response.data.message === "Email is already taken") {
-                        toast.error('Email is already taken');
-                    } else if (error.response.data.message === "Username is already taken") {
-                        toast.error('Username is already taken');
-                    }
-                } else {
-                    toast.error(`An error occurred: ${error.message}`);
+            if (error.response?.status === 403) {
+                if (error.response.data.message === "Email is already taken") {
+                    toast.error('Email is already taken');
+                } else if (error.response.data.message === "Username is already taken") {
+                    toast.error('Username is already taken');
                 }
             } else {
-                toast.error('An unexpected error occurred.');
+                toast.error(`An error occurred: ${error.message}`);
             }
         } finally {
             setLoading(false);

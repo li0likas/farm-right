@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import axios from "axios";
 import { toast } from "sonner";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -10,13 +9,14 @@ import { Dropdown } from "primereact/dropdown";
 import { Calendar } from "primereact/calendar";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
-import { isLoggedIn } from "@/utils/auth";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import { ProgressSpinner } from "primereact/progressspinner";
+import api from "@/utils/api"; // ✅ Use API instance with interceptor
 
 const TaskCreatePage = () => {
   const pathname = usePathname();
   const fieldIdFromUrl = Number(pathname.split("/").pop());
+
   const [taskDescription, setTaskDescription] = useState("");
   const [taskStatus, setTaskStatus] = useState(null);
   const [taskFieldOptions, setTaskFieldOptions] = useState([]);
@@ -33,71 +33,43 @@ const TaskCreatePage = () => {
   const [loadingAI, setLoadingAI] = useState(false);
   const [equipmentList, setEquipmentList] = useState<{ label: string; value: number }[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<number[]>([]);
-  const recognitionRef = React.useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-        toast.error('Unauthorized. Login first.');
-        return;
-    }
     fetchOptions();
     fetchUserEquipment();
   }, []);
 
-
-  const getAuthHeaders = () => {
-    const accessToken = localStorage.getItem("accessToken");
-    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
-
-    if (!accessToken || !selectedFarmId) {
-      toast.error("Missing authentication or farm selection.");
-      return null;
-    }
-
-    return {
-      Authorization: `Bearer ${accessToken}`,
-      "x-selected-farm-id": selectedFarmId
-    };
-  };
-
-  // Fetch options for fields, task types, and statuses
+  // Fetch dropdown options for fields, task types, and statuses
   const fetchOptions = async () => {
-    const token = localStorage.getItem("accessToken");
     try {
       if (!fieldIdFromUrl) {
-        const fieldsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const fieldsResponse = await api.get("/fields");
         setTaskFieldOptions(fieldsResponse.data.map((field: any) => ({ label: field.name, value: field.id })));
       }
 
-      const taskTypesResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-type-options`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setTaskTypeOptions(taskTypesResponse.data.map((type: any) => ({ label: type.name, value: type.id })));
+      const [taskTypesResponse, taskStatusResponse] = await Promise.all([
+        api.get("/task-type-options"),
+        api.get("/task-status-options"),
+      ]);
 
-      const taskStatusResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/task-status-options`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      setTaskTypeOptions(taskTypesResponse.data.map((type: any) => ({ label: type.name, value: type.id })));
       setTaskStatusOptions(
         taskStatusResponse.data
           .filter((option: any) => option.name.toLowerCase() !== "canceled")
           .map((status: any) => ({ label: status.name, value: status.id }))
       );
     } catch (error) {
-      console.error("Error fetching options:", error);
       toast.error("Failed to load options.");
     }
   };
 
-  // Fetch Weather Insights & Optimal Task Time
+  // Fetch weather insights and optimal task time
   const fetchWeatherInsights = async (lat: number, lon: number) => {
-    const token = localStorage.getItem("accessToken");
     setLoading(true);
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/weather/optimal-date`, {
+      const response = await api.get("/weather/optimal-date", {
         params: { lat, lon, dueDate, taskType },
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });
       setOptimalDateTime(response.data.optimalDateTime);
       setInsights(response.data.insights);
@@ -109,47 +81,28 @@ const TaskCreatePage = () => {
   };
 
   const fetchUserEquipment = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-  
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, { headers });
-  
-      const formattedEquipment = response.data.map((equip: any) => ({
-        label: equip.name,
-        value: equip.id,
-      }));
-  
-      setEquipmentList(formattedEquipment);
+      const response = await api.get("/equipment");
+      setEquipmentList(response.data.map((equip: any) => ({ label: equip.name, value: equip.id })));
     } catch (error) {
-      console.error("Error fetching equipment:", error);
       toast.error("Failed to load equipment.");
     }
   };
 
   // Fetch field boundary and get optimal task date
   const fetchOptimalTaskDate = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-  
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields/${taskField}`, { headers });
-  
-      // Ensure `boundary` exists and correctly access `coordinates`
+      const response = await api.get(`/fields/${taskField}`);
       const boundary = response.data.boundary;
-      if (!boundary || !boundary.coordinates || boundary.coordinates.length === 0) {
-        console.log("Boundary data is missing or invalid");
-        return;
+      if (boundary?.coordinates?.length) {
+        const [lon, lat] = boundary.coordinates[0][0];
+        fetchWeatherInsights(lat, lon);
       }
-  
-      const [lon, lat] = boundary.coordinates[0][0];
-      fetchWeatherInsights(lat, lon);
     } catch (error) {
       console.error("Error fetching field boundary:", error);
     }
-  };  
+  };
 
-  // Trigger weather data fetch when needed
   useEffect(() => {
     if (taskType && dueDate && taskField && taskStatus === 2) {
       fetchOptimalTaskDate();
@@ -158,6 +111,7 @@ const TaskCreatePage = () => {
       setInsights("");
     }
   }, [taskType, dueDate, taskField, taskStatus]);
+
 
   // Form Validation
   const validateForm = () => {
@@ -185,13 +139,10 @@ const TaskCreatePage = () => {
   };
 
   const handleCreateTask = async () => {
-    if (!validateForm()) {
+    if (!validateForm) {
       toast.warning("Please fill in all required fields.");
       return;
     }
-
-    const headers = getAuthHeaders();
-    if (!headers) return;
 
     const taskData: any = {
       description: taskDescription,
@@ -205,7 +156,7 @@ const TaskCreatePage = () => {
     if (completionDate) taskData.completionDate = new Date(completionDate);
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks`, taskData, { headers });
+      await api.post("/tasks", taskData);
       toast.success("Task created successfully.");
       window.location.href = `/fields/${taskField}`;
     } catch (error) {
@@ -220,11 +171,11 @@ const TaskCreatePage = () => {
       return;
     }
     const recognition = new window.webkitSpeechRecognition();
-    recognition.lang = "lt-LT"; // Set to Lithuanian
+    recognition.lang = "lt-LT"; // Lithuanian language
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognitionRef.current = recognition; // Store reference
+    recognitionRef.current = recognition;
 
     recognition.onstart = () => setIsRecording(true);
     recognition.onresult = (event) => {
@@ -233,10 +184,9 @@ const TaskCreatePage = () => {
       toast.success("Voice input received. Processing...");
       refineDescriptionWithAI(speechText);
     };
-    recognition.onerror = (event) => {
+    recognition.onerror = () => {
       setIsRecording(false);
       toast.error("Speech recognition error. Try again.");
-      console.error(event);
     };
     recognition.onend = () => setIsRecording(false);
 
@@ -246,24 +196,21 @@ const TaskCreatePage = () => {
   // ⏹️ Stop voice recognition
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop(); // 🛑 Stop recognition
+      recognitionRef.current.stop();
       setIsRecording(false);
       toast.info("Voice recording stopped.");
     }
-  }
+  };
 
   // 🔄 Send raw text to AI for refinement
   const refineDescriptionWithAI = async (rawText: string) => {
     setLoadingAI(true);
     try {
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/ai/task-description`, {
-        rawText,
-      });
+      const response = await api.post("/ai/task-description", { rawText });
       setTaskDescription(response.data.refinedTaskDescription);
       toast.success("AI optimized the description.");
     } catch (error) {
       toast.error("Failed to refine description.");
-      console.error(error);
     }
     setLoadingAI(false);
   };

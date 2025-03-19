@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Card } from 'primereact/card';
@@ -10,6 +9,7 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
 import ProtectedRoute from "@/utils/ProtectedRoute";
+import api from '@/utils/api'; // ✅ Use API instance with interceptor
 
 interface EquipmentType {
     id: number;
@@ -28,27 +28,9 @@ const CreateEquipmentPage = () => {
         fetchEquipmentTypes();
     }, []);
 
-    const getAuthHeaders = () => {
-        const accessToken = localStorage.getItem('accessToken');
-        const selectedFarmId = localStorage.getItem('x-selected-farm-id');
-
-        if (!accessToken || !selectedFarmId) {
-            toast.error('Missing authentication or farm selection.');
-            return null;
-        }
-
-        return {
-            Authorization: `Bearer ${accessToken}`,
-            'x-selected-farm-id': selectedFarmId
-        };
-    };
-
     const fetchEquipmentTypes = async () => {
         try {
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment-type-options`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await api.get('/equipment-type-options');
             setEquipmentTypes(response.data);
         } catch (error) {
             console.error('Error fetching equipment types:', error);
@@ -59,13 +41,10 @@ const CreateEquipmentPage = () => {
     const handleCreateEquipment = async () => {
         if (!name || !type) {
             toast.warning("Please fill in all required fields.");
-          return;
+            return;
         }
 
         setLoading(true);
-      
-        const headers = getAuthHeaders();
-        if (!headers) return;
       
         const formData = {
           name: name,
@@ -74,7 +53,7 @@ const CreateEquipmentPage = () => {
         };
       
         try {
-          await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, formData, { headers });
+          await api.post('/equipment', formData);
           toast.success("Equipment created successfully.");
           router.push('/equipment'); // Redirect to the equipment list
         } catch (error) {
@@ -82,8 +61,7 @@ const CreateEquipmentPage = () => {
         } finally {
             setLoading(false);
         }
-      };
-    
+    };
 
     return (
         <ProtectedRoute>
@@ -92,7 +70,12 @@ const CreateEquipmentPage = () => {
                     {/* Equipment Name */}
                     <div className="mb-4">
                         <label className="block font-bold mb-2">Equipment Name</label>
-                        <InputText value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter equipment name" className="w-full" />
+                        <InputText 
+                            value={name} 
+                            onChange={(e) => setName(e.target.value)} 
+                            placeholder="Enter equipment name" 
+                            className="w-full" 
+                        />
                     </div>
 
                     {/* Equipment Type Selection */}
@@ -110,11 +93,22 @@ const CreateEquipmentPage = () => {
                     {/* Equipment Description */}
                     <div className="mb-4">
                         <label className="block font-bold mb-2">Description (optional)</label>
-                        <InputTextarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Enter equipment description" className="w-full" rows={3} />
+                        <InputTextarea 
+                            value={description} 
+                            onChange={(e) => setDescription(e.target.value)} 
+                            placeholder="Enter equipment description" 
+                            className="w-full" 
+                            rows={3} 
+                        />
                     </div>
 
                     {/* Create Equipment Button */}
-                    <Button label="Create Equipment" className="p-button-success w-full" onClick={handleCreateEquipment} loading={loading} />
+                    <Button 
+                        label="Create Equipment" 
+                        className="p-button-success w-full" 
+                        onClick={handleCreateEquipment} 
+                        loading={loading} 
+                    />
                 </Card>
             </div>
         </ProtectedRoute>

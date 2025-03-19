@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Checkbox } from 'primereact/checkbox';
@@ -9,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
+import api from '@/utils/api'; // ✅ Use API instance with interceptor
 
 const RolesPermissionsPage = () => {
     const [roles, setRoles] = useState([]);
@@ -20,71 +20,35 @@ const RolesPermissionsPage = () => {
         fetchPermissions();
     }, []);
 
-    const getAuthHeaders = () => {
-        const accessToken = localStorage.getItem('accessToken');
-        const selectedFarmId = localStorage.getItem('x-selected-farm-id');
-
-        if (!accessToken || !selectedFarmId) {
-            toast.error('Missing authentication or farm selection.');
-            return null;
-        }
-
-        return {
-            Authorization: `Bearer ${accessToken}`,
-            'x-selected-farm-id': selectedFarmId
-        };
-    };
-
     const fetchRoles = async () => {
-        const headers = getAuthHeaders();
-        if (!headers) return;
-
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles`, { headers });
+            const response = await api.get('/roles');
             setRoles(response.data);
         } catch (error) {
-            if (error.response?.status === 403) {
-                window.location.href = "/pages/unauthorized";
-            } else {
-                toast.error("Failed to fetch roles");
-            }
+            toast.error("Failed to fetch roles");
         }
     };
 
     const fetchPermissions = async () => {
-        const headers = getAuthHeaders();
-        if (!headers) return;
-
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles/permissions`, { headers });
+            const response = await api.get('/roles/permissions');
             setPermissions(response.data);
         } catch (error) {
-            if (error.response?.status === 403) {
-                window.location.href = "/pages/unauthorized";
-            } else {
-                toast.error('Failed to fetch permissions');
-            }
+            toast.error('Failed to fetch permissions');
         }
     };
 
     const togglePermission = async (roleId, permissionId, hasPermission) => {
-        const headers = getAuthHeaders();
-        if (!headers) return;
-
         try {
             if (hasPermission) {
-                await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles/${roleId}/permissions/${permissionId}`, { headers });
+                await api.delete(`/roles/${roleId}/permissions/${permissionId}`);
             } else {
-                await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/roles/${roleId}/permissions`, { permissionId }, { headers });
+                await api.post(`/roles/${roleId}/permissions`, { permissionId });
             }
             toast.success('Permission updated successfully!');
             fetchRoles(); // Refresh roles after update
         } catch (error) {
-            if (error.response?.status === 403) {
-                window.location.href = "/pages/unauthorized";
-            } else {
-                toast.error('Failed to update permission');
-            }
+            toast.error('Failed to update permission');
         }
     };
 

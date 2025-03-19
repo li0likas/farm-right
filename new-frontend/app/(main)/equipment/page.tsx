@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { InputText } from "primereact/inputtext";
@@ -11,16 +10,13 @@ import { Dialog } from "primereact/dialog";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import { isLoggedIn } from "@/utils/auth";
+import api from '@/utils/api'; // ✅ Use API instance with interceptor
 
 interface Equipment {
     id: number;
     name: string;
     typeId: number;
     description: string | null;
-    ownerId: number;
-    createdAt: string;
-    updatedAt: string;
 }
 
 interface EquipmentType {
@@ -35,7 +31,7 @@ const EquipmentPage = () => {
     const [equipmentTypes, setEquipmentTypes] = useState<EquipmentType[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] = useState<number | null>(null);
-    
+
     // 🛠️ Delete Confirmation Dialog
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null);
@@ -45,11 +41,6 @@ const EquipmentPage = () => {
     const [editedEquipment, setEditedEquipment] = useState<Partial<Equipment>>({});
 
     useEffect(() => {
-        if (!isLoggedIn()) {
-            toast.error('Unauthorized. Login first.');
-            return;
-        }
-
         fetchEquipment();
         fetchEquipmentTypes();
     }, []);
@@ -58,27 +49,9 @@ const EquipmentPage = () => {
         filterEquipment();
     }, [searchQuery, selectedType]);
 
-    const getAuthHeaders = () => {
-        const accessToken = localStorage.getItem('accessToken');
-        const selectedFarmId = localStorage.getItem('x-selected-farm-id');
-
-        if (!accessToken || !selectedFarmId) {
-            toast.error('Missing authentication or farm selection.');
-            return null;
-        }
-
-        return {
-            Authorization: `Bearer ${accessToken}`,
-            'x-selected-farm-id': selectedFarmId
-        };
-    };
-
     const fetchEquipment = async () => {
-        const headers = getAuthHeaders(); 
-        if (!headers) return;
-      
         try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment`, { headers });
+            const response = await api.get('/equipment');
             setEquipment(response.data);
             setFilteredEquipment(response.data);
         } catch (error) {
@@ -88,11 +61,7 @@ const EquipmentPage = () => {
 
     const fetchEquipmentTypes = async () => {
         try {
-            const token = localStorage.getItem("accessToken");
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment-type-options`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
+            const response = await api.get('/equipment-type-options');
             setEquipmentTypes(response.data);
         } catch (error) {
             toast.error("Failed to fetch equipment types.");
@@ -127,11 +96,7 @@ const EquipmentPage = () => {
         if (!editedEquipment || !editingEquipmentId) return;
 
         try {
-            const headers = getAuthHeaders();
-            if (!headers) return;
-
-            await axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment/${editingEquipmentId}`, editedEquipment, { headers });
-
+            await api.put(`/equipment/${editingEquipmentId}`, editedEquipment);
             toast.success("Equipment updated successfully.");
             setEditingEquipmentId(null);
             fetchEquipment();
@@ -157,11 +122,7 @@ const EquipmentPage = () => {
         if (!equipmentToDelete) return;
 
         try {
-            const headers = getAuthHeaders();
-            if (!headers) return;
-
-            await axios.delete(`${process.env.NEXT_PUBLIC_API_BASE_URL}/equipment/${equipmentToDelete.id}`, { headers });
-
+            await api.delete(`/equipment/${equipmentToDelete.id}`);
             toast.success(`Deleted equipment: ${equipmentToDelete.name}`);
             setDeleteDialogVisible(false);
             fetchEquipment();

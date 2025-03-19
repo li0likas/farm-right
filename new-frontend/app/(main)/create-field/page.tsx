@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "sonner";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -9,8 +8,8 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import GoogleMapDraw from "../../components/GoogleMapDraw";
 import { useRouter } from "next/navigation";
-import { isLoggedIn } from "@/utils/auth";
 import ProtectedRoute from "@/utils/ProtectedRoute";
+import api from "@/utils/api"; // ✅ Use API instance with interceptor
 
 const CreateFieldPage = () => {
   const router = useRouter();
@@ -22,34 +21,12 @@ const CreateFieldPage = () => {
   const [fieldPerimeter, setFieldPerimeter] = useState("");
 
   useEffect(() => {
-    if (!isLoggedIn()) {
-      toast.error("Unauthorized. Login first.");
-      return;
-    }
     fetchCropOptions();
   }, []);
 
-  const getAuthHeaders = () => {
-    const accessToken = localStorage.getItem("accessToken");
-    const selectedFarmId = localStorage.getItem("x-selected-farm-id");
-
-    if (!accessToken || !selectedFarmId) {
-      toast.error("Missing authentication or farm selection.");
-      return null;
-    }
-
-    return {
-      Authorization: `Bearer ${accessToken}`,
-      "x-selected-farm-id": selectedFarmId,
-    };
-  };
-
   const fetchCropOptions = async () => {
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/field-crop-options`, { headers });
+      const response = await api.get("/field-crop-options");
       setFieldCropOptions(response.data.map((crop: any) => ({ label: crop.name, value: crop.id })));
     } catch (error) {
       toast.error("Failed to load crop options.");
@@ -67,28 +44,20 @@ const CreateFieldPage = () => {
   const createField = async () => {
     if (!validate()) return;
 
-    const headers = getAuthHeaders();
-    if (!headers) return;
-
     const formData = {
       name: fieldName,
       area: parseFloat(fieldArea),
       perimeter: parseFloat(fieldPerimeter),
       cropId: parseInt(fieldCrop),
-      farmId: parseInt(headers["x-selected-farm-id"]),
       boundary: fieldBoundary,
     };
 
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/fields`, formData, { headers });
+      await api.post("/fields", formData);
       toast.success("Field created successfully.");
       router.push("/fields");
     } catch (error) {
-      if (error.response?.status === 403) {
-        window.location.href = "/pages/unauthorized";
-      } else {
-        toast.error("Failed to create field.");
-      }
+      toast.error("Failed to create field.");
     }
   };
 
