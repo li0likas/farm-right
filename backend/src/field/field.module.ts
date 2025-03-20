@@ -8,13 +8,13 @@ import { JwtModule } from "@nestjs/jwt";
 import { JwtStrategy } from "../auth/strategy";
 import { UserService } from 'src/user/user.service';
 import { CommentModule } from 'src/comment/comment.module';
-import { CommentController } from 'src/comment/comment.controller';
+//import { CommentController } from 'src/comment/comment.controller';
 import { CommentService } from 'src/comment/comment.service';
 import { TaskService } from '../task/task.service';
 
 @Module({
   imports: [JwtModule.register({}), AuthModule, CommentModule /*MailModule*/],
-  controllers: [FieldController, CommentController],
+  controllers: [FieldController, /*CommentController*/],
   providers: [FieldService, PrismaService, JwtStrategy, UserService, CommentService, TaskService],
 })
 export class FieldModule {}
