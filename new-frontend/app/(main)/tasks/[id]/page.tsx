@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
-import { toast } from 'sonner';
-import { Card } from 'primereact/card';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { ProgressSpinner } from 'primereact/progressspinner';
-import { Fieldset } from 'primereact/fieldset';
-import { Divider } from 'primereact/divider';
-import ProtectedRoute from '@/utils/ProtectedRoute';
-import GoogleMapComponent from '../../../components/GoogleMapComponent';
-import api from '@/utils/api';
+import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { toast } from "sonner";
+import { Card } from "primereact/card";
+import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
+import { InputTextarea } from "primereact/inputtextarea";
+import { ProgressSpinner } from "primereact/progressspinner";
+import { Fieldset } from "primereact/fieldset";
+import { Divider } from "primereact/divider";
+import ProtectedRoute from "@/utils/ProtectedRoute";
+import GoogleMapComponent from "../../../components/GoogleMapComponent";
+import api from "@/utils/api";
+import { usePermissions } from "@/context/PermissionsContext";
 
 interface Task {
     id: string;
@@ -22,9 +23,9 @@ interface Task {
     field: {
         name: string;
         boundary?: {
-            type: 'Feature';
+            type: "Feature";
             geometry: {
-                type: 'Polygon';
+                type: "Polygon";
                 coordinates: number[][][];
             };
         };
@@ -53,27 +54,36 @@ interface Equipment {
 
 const TaskPage = () => {
     const pathname = usePathname();
-    const taskId = Number(pathname.split('/').pop());
+    const taskId = Number(pathname.split("/").pop());
+    const { hasPermission, permissions } = usePermissions();
+
     const [task, setTask] = useState<Task | null>(null);
     const [comments, setComments] = useState<Comment[]>([]);
-    const [commentContent, setCommentContent] = useState('');
+    const [commentContent, setCommentContent] = useState("");
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const canReadTasks = hasPermission("TASK_READ");
+    const canParticipate = hasPermission("TASK_EQUIPMENT_ASSIGN");
+    const canComment = hasPermission("FIELD_TASK_COMMENT_CREATE");
+    const canDeleteComment = hasPermission("FIELD_TASK_COMMENT_DELETE");
+    const canViewEquipment = hasPermission("TASK_EQUIPMENT_READ");
+    const canReadComments = hasPermission("FIELD_TASK_COMMENT_READ");
+
     useEffect(() => {
-        if (taskId) {
-            fetchTask();
-            fetchComments();
-            fetchEquipment();
-        }
-    }, [taskId]);
+        if (!canReadTasks || !taskId) return;
+
+        fetchTask();
+        if (canReadComments) fetchComments();
+        if (canViewEquipment) fetchEquipment();
+    }, [permissions, taskId]);
 
     const fetchTask = async () => {
         try {
             const response = await api.get(`/tasks/${taskId}`);
             setTask(response.data);
         } catch (error) {
-            toast.error('Failed to load task.');
+            toast.error("Failed to load task.");
         } finally {
             setLoading(false);
         }
@@ -84,7 +94,7 @@ const TaskPage = () => {
             const response = await api.get(`/tasks/${taskId}/comments`);
             setComments(response.data);
         } catch (error) {
-            toast.error('Failed to fetch comments.');
+            toast.error("Failed to fetch comments.");
         }
     };
 
@@ -93,22 +103,22 @@ const TaskPage = () => {
             const response = await api.get(`/tasks/${taskId}/equipment`);
             setEquipment(response.data);
         } catch (error) {
-            toast.error('Failed to fetch equipment.');
+            toast.error("Failed to fetch equipment.");
         }
     };
 
     const handlePostComment = async () => {
         if (!commentContent.trim()) {
-            toast.warning('Comment cannot be empty.');
+            toast.warning("Comment cannot be empty.");
             return;
         }
 
         try {
             await api.post(`/tasks/${taskId}/comments`, { taskId, content: commentContent });
-            setCommentContent('');
+            setCommentContent("");
             fetchComments();
         } catch (error) {
-            toast.error('Failed to post comment.');
+            toast.error("Failed to post comment.");
         }
     };
 
@@ -116,9 +126,9 @@ const TaskPage = () => {
         try {
             await api.delete(`/tasks/${taskId}/comments/${commentId}`);
             setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-            toast.success('Comment deleted.');
+            toast.success("Comment deleted.");
         } catch (error) {
-            toast.error('Failed to delete comment.');
+            toast.error("Failed to delete comment.");
         }
     };
 
@@ -157,19 +167,26 @@ const TaskPage = () => {
         }
     };
 
-    if (loading) return <ProgressSpinner />;
+    if (!canReadTasks) {
+        return (
+            <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+                🚫 You do not have permission to view tasks.
+            </div>
+        );
+    }
+
+   if (loading) return <ProgressSpinner />;
     if (!task) return <div className="text-center text-lg">Task not found.</div>;
 
     const fieldCenter = task.field?.boundary?.geometry?.coordinates?.[0]?.[0]
-    ? { lat: task.field?.boundary?.geometry?.coordinates[0][0][1], lng: task.field?.boundary?.geometry?.coordinates[0][0][0] }
-    : { lat: 55.1694, lng: 23.8813 };
+        ? { lat: task.field?.boundary?.geometry?.coordinates[0][0][1], lng: task.field?.boundary?.geometry?.coordinates[0][0][0] }
+        : { lat: 55.1694, lng: 23.8813 };
 
     return (
         <ProtectedRoute>
             <div className="container">
                 <Card title={task.title} className="mb-4 shadow-md border-round">
-                   
-                   <Divider />
+                    <Divider />
 
                     {/* Google Map Component */}
                     <Card>
@@ -179,29 +196,42 @@ const TaskPage = () => {
                     <Divider />
 
                     <div className="flex align-items-center justify-content-between">
-                        <Tag value={task.status.name} severity={task.status.name === 'Pending' ? 'warning' : task.status.name === 'Completed' ? 'success' : 'danger'} />
+                        <Tag
+                            value={task.status.name}
+                            severity={
+                                task.status.name === "Pending" ? "warning" :
+                                task.status.name === "Completed" ? "success" :
+                                "danger"
+                            }
+                        />
                     </div>
+
                     <p className="text-lg font-semibold text-primary">
-                        <i className="pi pi-map-marker text-green-500"></i> Field: <span className="text-xl font-bold text-green-700">{task.field.name}</span>
+                        <i className="pi pi-map-marker text-green-500"></i> Field:{" "}
+                        <span className="text-xl font-bold text-green-700">{task.field.name}</span>
                     </p>
                     <p><strong>Type:</strong> {task.type.name}</p>
                     <p>{task.description}</p>
-                    <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-CA') : 'N/A'}</p>
-                    <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString('en-CA') : 'N/A'}</p>
+                    <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}</p>
+                    <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString("en-CA") : "N/A"}</p>
 
                     <Divider />
+
                     {/* 🏗️ Equipment Section */}
-                    <Fieldset legend="Equipment Used">
-                        {equipment.length > 0 ? (
-                            equipment.map((equip) => (
-                                <div key={equip.id} className="border p-2 mb-2 rounded">
-                                    <p><strong>Name:</strong> {equip.name}</p>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-gray-500">No equipment assigned to this task.</p>
-                        )}
-                    </Fieldset>
+                    {canViewEquipment && (
+                        <Fieldset legend="Equipment Used">
+                            {equipment.length > 0 ? (
+                                equipment.map((equip) => (
+                                    <div key={equip.id} className="border p-2 mb-2 rounded">
+                                        <p><strong>Name:</strong> {equip.name}</p>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No equipment assigned to this task.</p>
+                            )}
+                        </Fieldset>
+                    )}
+
                     <Divider />
 
                     {/* 👥 Participants */}
@@ -224,23 +254,37 @@ const TaskPage = () => {
                         {task.statusId === 2 && <Button label="Cancel Task" className="p-button-warning" onClick={() => handleTaskAction('cancel-task')} />}
                         {task.statusId === 3 && <Button label="Uncancel Task" className="p-button-success" onClick={() => handleTaskAction('uncancel-task')} />}
                     </div>
-                </Card>
 
-                {/* 💬 Comments Section */}
-                <Card title="Comments" className="shadow-md border-round">
-                    {comments.length > 0 ? (
-                        comments.map(comment => (
-                            <div key={comment.id} className="border p-2 mb-2 rounded">
-                                <p>{comment.content}</p>
-                                <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
-                                <Button icon="pi pi-trash" className="p-button-text p-button-danger" onClick={() => handleDeleteComment(comment.id)} />
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-gray-500">No comments yet.</p>
+                    <Divider />
+
+                    {/* 💬 Comments Section */}
+                    {canReadComments && (
+                        <Card title="Comments" className="shadow-md border-round">
+                            {comments.length > 0 ? (
+                                comments.map(comment => (
+                                    <div key={comment.id} className="border p-2 mb-2 rounded">
+                                        <p>{comment.content}</p>
+                                        <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
+                                        {canDeleteComment && (
+                                            <Button
+                                                icon="pi pi-trash"
+                                                className="p-button-text p-button-danger"
+                                                onClick={() => handleDeleteComment(comment.id)}
+                                            />
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-gray-500">No comments yet.</p>
+                            )}
+                            {canComment && (
+                                <>
+                                    <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
+                                    <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
+                                </>
+                            )}
+                        </Card>
                     )}
-                    <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
-                    <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
                 </Card>
             </div>
         </ProtectedRoute>

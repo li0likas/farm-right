@@ -22,6 +22,17 @@ export class TaskController {
     private readonly equipmentService: EquipmentService,
   ) {}
 
+  @Get('/stats')
+  @Permissions('TASK_STATS_READ')
+  @ApiOperation({ summary: 'Get completed tasks count and total tasks count' })
+  @ApiResponse({ status: 200, description: 'Completed tasks count retrieved successfully.' })
+  async getCompletedTasks(@Request() req): Promise<{ completedTasks: number; totalTasks: number }> {
+      const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+      if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');
+
+      return this.taskService.getCompletedTasks(farmId);
+  }
+
   @Post()
   @Permissions('TASK_CREATE')
   @ApiOperation({ summary: 'Create a new task' })
@@ -102,7 +113,7 @@ export class TaskController {
   }
 
   @Get(':id/comments')
-  @Permissions('COMMENT_READ')
+  @Permissions('FIELD_TASK_COMMENT_READ')
   @ApiOperation({ summary: 'Get all comments for a task' })
   @ApiResponse({ status: 200, description: 'Comments retrieved successfully.' })
   @ApiResponse({ status: 404, description: 'Task not found.' })
@@ -114,7 +125,7 @@ export class TaskController {
   }
 
   @Post(':id/comments')
-  @Permissions('COMMENT_CREATE')
+  @Permissions('FIELD_TASK_COMMENT_CREATE')
   @ApiOperation({ summary: 'Create a new comment for a task' })
   @ApiResponse({ status: 201, description: 'Comment successfully created.' })
   @ApiResponse({ status: 404, description: 'Task not found.' })
@@ -127,7 +138,7 @@ export class TaskController {
   }
 
   @Delete(':id/comments/:commentId')
-  @Permissions('COMMENT_DELETE')
+  @Permissions('FIELD_TASK_COMMENT_DELETE')
   @ApiOperation({ summary: 'Delete a comment for a task' })
   @ApiResponse({ status: 204, description: 'Comment successfully deleted.' })
   @ApiResponse({ status: 404, description: 'Comment not found.' })

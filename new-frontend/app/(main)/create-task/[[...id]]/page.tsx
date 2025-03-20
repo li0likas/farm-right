@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -12,10 +12,14 @@ import { MultiSelect } from "primereact/multiselect";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import { ProgressSpinner } from "primereact/progressspinner";
 import api from "@/utils/api"; // ✅ Use API instance with interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
 
 const TaskCreatePage = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const fieldIdFromUrl = Number(pathname.split("/").pop());
+
+  const { hasPermission, permissions } = usePermissions();
 
   const [taskDescription, setTaskDescription] = useState("");
   const [taskStatus, setTaskStatus] = useState(null);
@@ -36,9 +40,10 @@ const TaskCreatePage = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   useEffect(() => {
+    if (!hasPermission("TASK_CREATE")) return;
     fetchOptions();
     fetchUserEquipment();
-  }, []);
+}, [permissions]);
 
   // Fetch dropdown options for fields, task types, and statuses
   const fetchOptions = async () => {
@@ -139,28 +144,29 @@ const TaskCreatePage = () => {
   };
 
   const handleCreateTask = async () => {
+    if (!hasPermission("TASK_CREATE")) return;
     if (!validateForm) {
       toast.warning("Please fill in all required fields.");
       return;
     }
 
     const taskData: any = {
-      description: taskDescription,
-      statusId: taskStatus,
-      fieldId: taskField,
-      typeId: parseInt(taskType),
-      equipmentIds: selectedEquipment,
+        description: taskDescription,
+        statusId: taskStatus,
+        fieldId: taskField,
+        typeId: parseInt(taskType),
+        equipmentIds: selectedEquipment,
     };
 
     if (dueDate) taskData.dueDate = new Date(dueDate);
     if (completionDate) taskData.completionDate = new Date(completionDate);
 
     try {
-      await api.post("/tasks", taskData);
-      toast.success("Task created successfully.");
-      window.location.href = `/fields/${taskField}`;
+        await api.post("/tasks", taskData);
+        toast.success("Task created successfully.");
+        router.push(`/fields/${taskField}`);
     } catch (error) {
-      toast.error("Failed to create task.");
+        toast.error("Failed to create task.");
     }
   };
 
@@ -214,6 +220,16 @@ const TaskCreatePage = () => {
     }
     setLoadingAI(false);
   };
+
+  if (!hasPermission("TASK_CREATE")) {
+      return (
+          <ProtectedRoute>
+              <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+                  🚫 You do not have permission to create tasks.
+              </div>
+          </ProtectedRoute>
+      );
+  }
 
   return (
     <ProtectedRoute>

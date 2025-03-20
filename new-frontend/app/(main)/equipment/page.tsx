@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from '@/utils/api'; // ✅ Use API instance with interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
 
 interface Equipment {
     id: number;
@@ -26,30 +27,40 @@ interface EquipmentType {
 
 const EquipmentPage = () => {
     const router = useRouter();
+    const { hasPermission, permissions } = usePermissions();
+
+    // ✅ Permission checks
+    const canRead = hasPermission("EQUIPMENT_READ");
+    const canCreate = hasPermission("EQUIPMENT_CREATE");
+    const canEdit = hasPermission("EQUIPMENT_UPDATE");
+    const canDelete = hasPermission("EQUIPMENT_DELETE");
+
+    // ✅ Hide "Actions" column if the user can't edit or delete
+    const showActionsColumn = canEdit || canDelete;
+
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [filteredEquipment, setFilteredEquipment] = useState<Equipment[]>([]);
     const [equipmentTypes, setEquipmentTypes] = useState<EquipmentType[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedType, setSelectedType] = useState<number | null>(null);
-
-    // 🛠️ Delete Confirmation Dialog
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [equipmentToDelete, setEquipmentToDelete] = useState<Equipment | null>(null);
-
-    // ✏️ Track Editing
     const [editingEquipmentId, setEditingEquipmentId] = useState<number | null>(null);
     const [editedEquipment, setEditedEquipment] = useState<Partial<Equipment>>({});
 
     useEffect(() => {
-        fetchEquipment();
-        fetchEquipmentTypes();
-    }, []);
+        if (canRead) {
+            fetchEquipment();
+            fetchEquipmentTypes();
+        }
+    }, [permissions]);
 
     useEffect(() => {
         filterEquipment();
     }, [searchQuery, selectedType]);
 
     const fetchEquipment = async () => {
+        if (!canRead) return;
         try {
             const response = await api.get('/equipment');
             setEquipment(response.data);
@@ -85,16 +96,14 @@ const EquipmentPage = () => {
         return type ? type.name : "Unknown";
     };
 
-    // ✏️ Enable Edit Mode for a row
     const enableEdit = (equip: Equipment) => {
+        if (!canEdit) return;
         setEditingEquipmentId(equip.id);
         setEditedEquipment({ ...equip });
     };
 
-    // ✅ Save Edited Equipment
     const saveEquipment = async () => {
-        if (!editedEquipment || !editingEquipmentId) return;
-
+        if (!editedEquipment || !editingEquipmentId || !canEdit) return;
         try {
             await api.put(`/equipment/${editingEquipmentId}`, editedEquipment);
             toast.success("Equipment updated successfully.");
@@ -105,22 +114,19 @@ const EquipmentPage = () => {
         }
     };
 
-    // ❌ Cancel Edit Mode
     const cancelEdit = () => {
         setEditingEquipmentId(null);
         setEditedEquipment({});
     };
 
-    // ❌ Confirm Delete
     const confirmDeleteEquipment = (equip: Equipment) => {
+        if (!canDelete) return;
         setEquipmentToDelete(equip);
         setDeleteDialogVisible(true);
     };
 
-    // ❌ Handle Delete Equipment
     const handleDelete = async () => {
-        if (!equipmentToDelete) return;
-
+        if (!equipmentToDelete || !canDelete) return;
         try {
             await api.delete(`/equipment/${equipmentToDelete.id}`);
             toast.success(`Deleted equipment: ${equipmentToDelete.name}`);
@@ -130,6 +136,11 @@ const EquipmentPage = () => {
             toast.error("Failed to delete equipment.");
         }
     };
+
+    // ✅ Hide entire table if user lacks "EQUIPMENT_READ"
+    if (!canRead) {
+        return <p className="text-center text-gray-600">You do not have permission to view equipment.</p>;
+    }
 
     return (
         <ProtectedRoute>
@@ -152,12 +163,14 @@ const EquipmentPage = () => {
                                 placeholder="Filter by Type"
                                 className="w-full md:w-20rem"
                             />
-                            <Button
-                                label="Create Equipment"
-                                icon="pi pi-plus"
-                                className="p-button-success"
-                                onClick={() => router.push('/create-equipment')} 
-                            />
+                            {canCreate && (
+                                <Button
+                                    label="Create Equipment"
+                                    icon="pi pi-plus"
+                                    className="p-button-success"
+                                    onClick={() => router.push('/create-equipment')}
+                                />
+                            )}
                         </div>
 
                         {/* 📋 Equipment Table */}
@@ -196,24 +209,32 @@ const EquipmentPage = () => {
                                 )
                             )} />
 
-                            <Column
-                                header="Actions"
-                                body={(data) => (
-                                    <div className="flex gap-2">
-                                        {editingEquipmentId === data.id ? (
-                                            <>
-                                                <Button label="Save" className="p-button-success p-button-sm" onClick={saveEquipment} />
-                                                <Button label="Cancel" className="p-button-secondary p-button-sm" onClick={cancelEdit} />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Button icon="pi pi-pencil" className="p-button-warning p-button-sm" onClick={() => enableEdit(data)} />
-                                                <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => confirmDeleteEquipment(data)} />
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            />
+                            {showActionsColumn && (
+                                <Column
+                                    header="Actions"
+                                    body={(data) => (
+                                        <div className="flex gap-2">
+                                            {editingEquipmentId === data.id ? (
+                                                <>
+                                                    {canEdit && (
+                                                        <Button label="Save" className="p-button-success p-button-sm" onClick={saveEquipment} />
+                                                    )}
+                                                    <Button label="Cancel" className="p-button-secondary p-button-sm" onClick={cancelEdit} />
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {canEdit && (
+                                                        <Button icon="pi pi-pencil" className="p-button-warning p-button-sm" onClick={() => enableEdit(data)} />
+                                                    )}
+                                                    {canDelete && (
+                                                        <Button icon="pi pi-trash" className="p-button-danger p-button-sm" onClick={() => confirmDeleteEquipment(data)} />
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+                                />
+                            )}
                         </DataTable>
                     </div>
                 </div>
@@ -227,7 +248,14 @@ const EquipmentPage = () => {
                 footer={
                     <div>
                         <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
-                        <Button label="Delete" icon="pi pi-check" className="p-button-danger" onClick={handleDelete} />
+                        {hasPermission("EQUIPMENT_DELETE") && (
+                                <Button
+                                label="Delete"
+                                icon="pi pi-check"
+                                className="p-button-danger"
+                                onClick={handleDelete}
+                            />
+                        )}
                     </div>
                 }
             >

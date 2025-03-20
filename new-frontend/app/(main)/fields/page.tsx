@@ -9,7 +9,8 @@ import { InputText } from "primereact/inputtext";
 import { centroid } from "@turf/turf";
 import GoogleMapComponent from "../../components/GoogleMapComponent";
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import api from "@/utils/api";
+import api from "@/utils/api"; // ✅ Use API interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
 
 interface Field {
   id: string;
@@ -21,14 +22,20 @@ interface Field {
 
 const Fields = () => {
   const router = useRouter();
+  const { hasPermission, permissions } = usePermissions();
+
   const [fields, setFields] = useState<Field[]>([]);
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [layout, setLayout] = useState<"grid" | "list">("grid");
 
+  const canRead = hasPermission("FIELD_READ");
+  const canCreate = hasPermission("FIELD_CREATE");
+  const canViewDetails = hasPermission("FIELD_TASK_READ"); // Example: Only allow viewing details if task reading is allowed
+
   useEffect(() => {
-    fetchFields();
-  }, []);
+    if (canRead) fetchFields();
+  }, [permissions]);
 
   const fetchFields = async () => {
     try {
@@ -50,10 +57,25 @@ const Fields = () => {
     }
   };
 
+  if (!canRead) {
+    return (
+      <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+        🚫 You do not have permission to view fields.
+      </div>
+    );
+  }
+
   const dataViewHeader = (
     <div className="flex flex-column md:flex-row md:justify-content-between gap-2">
       <InputText value={searchQuery} onChange={handleSearch} placeholder="Search fields by name" />
-      <Button label="Create Field" icon="pi pi-plus" className="p-button-success" onClick={() => router.push("/create-field")} />
+      {canCreate && (
+        <Button
+          label="Create Field"
+          icon="pi pi-plus"
+          className="p-button-success"
+          onClick={() => router.push("/create-field")}
+        />
+      )}
       <DataViewLayoutOptions layout={layout} onChange={(e) => setLayout(e.value as "grid" | "list")} />
     </div>
   );
@@ -72,7 +94,13 @@ const Fields = () => {
             <GoogleMapComponent center={center} boundary={field.boundary} />
           </div>
           <div className="flex flex-row md:flex-column justify-content-between w-full md:w-auto align-items-center md:align-items-end mt-5 md:mt-0">
-            <Button label="More Info" className="p-button-primary" onClick={() => router.push(`/fields/${field.id}`)} />
+            {canViewDetails && (
+              <Button
+                label="More Info"
+                className="p-button-primary"
+                onClick={() => router.push(`/fields/${field.id}`)}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -91,7 +119,13 @@ const Fields = () => {
           <p>Perimeter: {field.perimeter} meters</p>
           <GoogleMapComponent center={center} boundary={field.boundary} />
           <div className="mt-3">
-            <Button label="More Info" className="p-button-primary" onClick={() => router.push(`/fields/${field.id}`)} />
+            {canViewDetails && (
+              <Button
+                label="More Info"
+                className="p-button-primary"
+                onClick={() => router.push(`/fields/${field.id}`)}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -109,7 +143,14 @@ const Fields = () => {
         <div className="col-12">
           <div className="card">
             <h5>My Fields</h5>
-            <DataView value={filteredFields} layout={layout} paginator rows={9} itemTemplate={itemTemplate} header={dataViewHeader}></DataView>
+            <DataView
+              value={filteredFields}
+              layout={layout}
+              paginator
+              rows={9}
+              itemTemplate={itemTemplate}
+              header={dataViewHeader}
+            />
           </div>
         </div>
       </div>

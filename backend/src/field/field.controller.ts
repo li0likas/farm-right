@@ -21,6 +21,21 @@ export class FieldController {
     private readonly taskService: TaskService,
   ) {}
 
+  @Get('/total-area')
+  @Permissions('FIELD_TOTAL_AREA_READ')
+  @ApiOperation({ summary: 'Get total field area' })
+  @ApiResponse({ status: 200, description: 'Total field area retrieved successfully.' })
+  async getTotalFieldArea(@Request() req): Promise<{ totalArea: number }> {
+      const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+
+      if (!selectedFarmId) {
+          throw new HttpException('Selected farm ID is required', HttpStatus.BAD_REQUEST);
+      }
+
+      const totalArea = await this.fieldsService.getTotalFieldArea(selectedFarmId);
+      return { totalArea };
+  }
+
   @Post()
   @Permissions('FIELD_CREATE')
   @ApiOperation({ summary: 'Create a new field' })
@@ -40,7 +55,7 @@ export class FieldController {
       };
 
       return this.fieldsService.create(createFieldDto);
-  }  
+  }
 
   @Get()
   @Permissions('FIELD_READ')

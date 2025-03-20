@@ -10,24 +10,33 @@ import { Column } from "primereact/column";
 import { toast } from "sonner";
 import { Dialog } from "primereact/dialog";
 import { getUser } from "@/utils/user";
-import api from "@/utils/api";
+import api from "@/utils/api"; // ✅ Use API interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
 
-type Role = {
+type Member = {
   id: number;
-  name: string;
+  username: string;
+  email: string;
+  role: string;
+  roleId: number;
 };
 
 const FarmMembersPage = () => {
   const router = useRouter();
-  const [members, setMembers] = useState([]);
+  const { hasPermission, permissions } = usePermissions(); // ✅ Get user permissions
+
+  const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<{ label: string; value: number }[]>([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [selectedRole, setSelectedRole] = useState(null);
-  const [visible, setVisible] = useState(false);
   const [roleChanges, setRoleChanges] = useState<{ [key: number]: number }>({});
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  // ✅ Permission Helpers
+  const canRead = hasPermission("FARM_MEMBER_READ");
+  const canInvite = hasPermission("FARM_MEMBER_INVITE");
+  const canUpdate = hasPermission("FARM_MEMBER_UPDATE_ROLE");
+  const canDelete = hasPermission("FARM_MEMBER_REMOVE");
 
   useEffect(() => {
     const user = getUser();
@@ -35,9 +44,9 @@ const FarmMembersPage = () => {
       setCurrentUserId(parseInt(user.id, 10));
     }
 
-    fetchMembers();
-    fetchRoles();
-  }, []);
+    if (canRead) fetchMembers();
+    if (canUpdate) fetchRoles();
+  }, [permissions]); // ✅ Fetch only after permissions load
 
   const fetchMembers = async () => {
     try {
@@ -51,32 +60,9 @@ const FarmMembersPage = () => {
   const fetchRoles = async () => {
     try {
       const response = await api.get("/roles");
-      setRoles(response.data.map((role: Role) => ({ label: role.name, value: role.id })));
+      setRoles(response.data.map((role: { name: any; id: any; }) => ({ label: role.name, value: role.id })));
     } catch (error) {
       toast.error("Failed to load roles");
-    }
-  };
-
-  const addMember = async () => {
-    if (!selectedUser || !selectedRole) return;
-
-    try {
-      await api.post("/farm-members", { userId: selectedUser, roleId: selectedRole });
-      toast.success("Member added successfully!");
-      setVisible(false);
-      fetchMembers();
-    } catch (error) {
-      toast.error("Failed to add member");
-    }
-  };
-
-  const removeMember = async (userId: number) => {
-    try {
-      await api.delete(`/farm-members/${userId}`);
-      toast.success("Member removed!");
-      fetchMembers();
-    } catch (error) {
-      toast.error("Failed to remove member");
     }
   };
 
@@ -108,27 +94,47 @@ const FarmMembersPage = () => {
 
   const handleDelete = async () => {
     if (memberToDelete !== null) {
-      await removeMember(memberToDelete);
+      try {
+        await api.delete(`/farm-members/${memberToDelete}`);
+        toast.success("Member removed!");
+        fetchMembers();
+      } catch (error) {
+        toast.error("Failed to remove member.");
+      }
       setDeleteDialogVisible(false);
       setMemberToDelete(null);
     }
   };
 
+  // ✅ Hide entire page if user lacks `FARM_MEMBER_READ`
+  if (!canRead) {
+    return (
+      <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+        🚫 You do not have permission to view farm members.
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto p-6">
       <Card title="Farm Members" className="mb-6">
-        <Button label="Add Member" className="p-button-success mb-4" onClick={() => setVisible(true)} />
+
+        {/* ✅ Show "Add Member" Button Only If User Has `FARM_MEMBER_INVITE` */}
+        {canInvite && (
+          <Button label="Add Member" className="p-button-success mb-4" onClick={() => setVisible(true)} />
+        )}
 
         {/* Members Table */}
         <DataTable value={members} responsiveLayout="scroll">
           <Column field="username" header="Name" />
           <Column field="email" header="Email" />
 
+          {/* ✅ Role Column (Always Visible) */}
           <Column
             header="Role"
-            body={(rowData) => {
+            body={(rowData: Member) => {
               const isEditing = roleChanges[rowData.id] !== undefined;
-              const isCurrentUser = rowData.id === currentUserId; // check if this row is the logged-in user
+              const isCurrentUser = rowData.id === currentUserId; // Prevent editing own role
 
               return (
                 <div className="flex align-items-center gap-2">
@@ -149,8 +155,8 @@ const FarmMembersPage = () => {
                     </>
                   ) : (
                     <>
-                      <span>{roles.find(role => role.value === rowData.roleId)?.label || "Unknown Role"}</span>
-                      {!isCurrentUser && (
+                      <span>{rowData.role || "Unknown Role"}</span>
+                      {canUpdate && !isCurrentUser && (
                         <Button 
                           icon="pi pi-pencil" 
                           className="p-button-sm p-button-text" 
@@ -164,24 +170,26 @@ const FarmMembersPage = () => {
             }}
           />
 
-          <Column
-            header="Remove"
-            body={(rowData) => {
-              const isCurrentUser = rowData.id === currentUserId; // check if this row is the logged-in user
-
-              return isCurrentUser ? null : (
-                <Button
-                  icon="pi pi-trash"
-                  className="p-button-danger"
-                  onClick={() => confirmDelete(rowData.id)}
-                />
-              );
-            }}
-          />
+          {/* ✅ Remove Member Column - Only If `FARM_MEMBER_REMOVE` */}
+          {canDelete && (
+            <Column
+              header="Remove"
+              body={(rowData: Member) => {
+                const isCurrentUser = rowData.id === currentUserId; // Prevent self-removal
+                return isCurrentUser ? null : (
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-danger"
+                    onClick={() => confirmDelete(rowData.id)}
+                  />
+                );
+              }}
+            />
+          )}
         </DataTable>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ✅ Delete Confirmation Dialog */}
       <Dialog
         header="Confirm Deletion"
         visible={deleteDialogVisible}
@@ -194,26 +202,6 @@ const FarmMembersPage = () => {
         }
       >
         <p>Are you sure you want to remove this member?</p>
-      </Dialog>
-
-      {/* Add Member Dialog */}
-      <Dialog header="Add Farm Member" visible={visible} onHide={() => setVisible(false)}>
-        <div className="p-fluid">
-          <Dropdown
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.value)}
-            placeholder="Select User"
-            className="w-full mb-3"
-          />
-          <Dropdown
-            value={selectedRole}
-            options={roles}
-            onChange={(e) => setSelectedRole(e.value)}
-            placeholder="Select Role"
-            className="w-full mb-3"
-          />
-          <Button label="Add" className="p-button-success" onClick={addMember} disabled={!selectedUser || !selectedRole} />
-        </div>
       </Dialog>
     </div>
   );

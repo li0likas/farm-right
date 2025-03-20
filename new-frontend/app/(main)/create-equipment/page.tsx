@@ -10,6 +10,7 @@ import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from '@/utils/api'; // ✅ Use API instance with interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
 
 interface EquipmentType {
     id: number;
@@ -18,6 +19,8 @@ interface EquipmentType {
 
 const CreateEquipmentPage = () => {
     const router = useRouter();
+    const { hasPermission, permissions } = usePermissions();
+
     const [name, setName] = useState('');
     const [type, setType] = useState<number | null>(null);
     const [description, setDescription] = useState('');
@@ -25,8 +28,9 @@ const CreateEquipmentPage = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        if (!hasPermission("EQUIPMENT_CREATE")) return;
         fetchEquipmentTypes();
-    }, []);
+    }, [permissions]);
 
     const fetchEquipmentTypes = async () => {
         try {
@@ -39,6 +43,8 @@ const CreateEquipmentPage = () => {
     };
 
     const handleCreateEquipment = async () => {
+        if (!hasPermission("EQUIPMENT_CREATE")) return; 
+
         if (!name || !type) {
             toast.warning("Please fill in all required fields.");
             return;
@@ -55,13 +61,23 @@ const CreateEquipmentPage = () => {
         try {
           await api.post('/equipment', formData);
           toast.success("Equipment created successfully.");
-          router.push('/equipment'); // Redirect to the equipment list
+          router.push('/equipment');
         } catch (error) {
           toast.error("Failed to create equipment.");
         } finally {
             setLoading(false);
         }
     };
+
+    if (!hasPermission("EQUIPMENT_CREATE")) {
+        return (
+            <ProtectedRoute>
+                <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+                    🚫 You do not have permission to create equipment on this farm.
+                </div>
+            </ProtectedRoute>
+        );
+    }
 
     return (
         <ProtectedRoute>

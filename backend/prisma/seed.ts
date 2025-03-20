@@ -38,11 +38,11 @@ async function main() {
       { name: 'FIELD_TASK_READ' },
       { name: 'FIELD_TASK_UPDATE' },
       { name: 'FIELD_TASK_DELETE' },
+      { name: 'FIELD_TOTAL_AREA_READ' },
       
       // Field task comment permissions
       { name: 'FIELD_TASK_COMMENT_CREATE' },
       { name: 'FIELD_TASK_COMMENT_READ' },
-      { name: 'FIELD_TASK_COMMENT_UPDATE' },
       { name: 'FIELD_TASK_COMMENT_DELETE' },
       
       // User management permissions
@@ -79,12 +79,7 @@ async function main() {
       { name: 'TASK_READ' },
       { name: 'TASK_UPDATE' },
       { name: 'TASK_DELETE' },
-      
-      // Comment permissions
-      { name: 'COMMENT_CREATE' },
-      { name: 'COMMENT_READ' },
-      { name: 'COMMENT_UPDATE' },
-      { name: 'COMMENT_DELETE' },
+      { name: 'TASK_STATS_READ' },
 
       // Permission permissions
       { name: 'PERMISSION_READ' },

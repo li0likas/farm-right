@@ -199,4 +199,16 @@ export class TaskService {
     await this.prisma.task.delete({ where: { id: taskId, fieldId } });
     return task;
   }
+
+  async getCompletedTasks(farmId: number): Promise<{ completedTasks: number; totalTasks: number }> {
+    const tasks = await this.prisma.task.findMany({
+        where: { field: { farmId } },
+        select: { status: true },
+    });
+
+    const completedTasks = tasks.filter(task => task.status.name === 'Completed').length;
+    const totalTasks = tasks.length;
+
+    return { completedTasks, totalTasks };
+  }
 }

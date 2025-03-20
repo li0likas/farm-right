@@ -1,4 +1,4 @@
-import {Injectable} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from "src/prisma/prisma.service";
 import { User } from '.prisma/client';
 
@@ -127,6 +127,28 @@ export class UserService {
         }
       });
     }
+
+    async getUserPermissions(userId: number, farmId: number) {
+      const farmMember = await this.prisma.farmMember.findUnique({
+          where: { userId_farmId: { userId, farmId } },
+          include: {
+              role: {
+                  include: {
+                      farmPermissions: {
+                          where: { farmId },
+                          include: { permission: true }
+                      }
+                  }
+              }
+          }
+      });
+  
+      if (!farmMember) {
+          throw new HttpException('User does not belong to the selected farm.', HttpStatus.FORBIDDEN);
+      }
+  
+      return farmMember.role.farmPermissions.map(fp => fp.permission.name);
+  }  
 
     // async getTop10UsersByPoints(userId: number) {
     //   const usersWithPoints = await this.prisma.user.findMany({

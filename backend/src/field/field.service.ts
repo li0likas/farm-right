@@ -75,5 +75,14 @@ export class FieldService {
         farm: true,
       },
     });
-  } 
+  }
+  
+  async getTotalFieldArea(farmId: number): Promise<number> {
+    const fields = await this.prisma.field.findMany({
+        where: { farmId },
+        select: { area: true },
+    });
+
+    return fields.reduce((sum, field) => sum + field.area, 0);
+  }
 }

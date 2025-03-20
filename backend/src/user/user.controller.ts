@@ -27,6 +27,18 @@ export class UserController {
     return this.userService.getUserFarms(userId);
   }
 
+  @Get('permissions')
+async getUserPermissions(@Request() req) {
+    const userId = req.user.id;
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
+
+    if (isNaN(selectedFarmId)) {
+        throw new HttpException('Invalid selected farm ID', HttpStatus.BAD_REQUEST);
+    }
+
+    return this.userService.getUserPermissions(userId, selectedFarmId);
+}
+
   // @UseGuards(AuthGuard('jwt'))
   // @Get('users/:userId/last-seen')
   // async getLastSeenLocation(@Param('userId') userId: number) {

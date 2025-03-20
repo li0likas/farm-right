@@ -11,21 +11,30 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import GoogleMapComponent from "../../../components/GoogleMapComponent";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
 
 const FieldViewPage = () => {
   const pathname = usePathname();
   const router = useRouter();
   const fieldId = Number(pathname.split("/").pop());
+  const { hasPermission, permissions } = usePermissions();
+
   const [fieldInfo, setFieldInfo] = useState<any>(null);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!fieldId) return;
+  // ✅ Permission Helpers
+  const canRead = hasPermission("FIELD_READ");
+  const canCreateTask = hasPermission("FIELD_TASK_CREATE");
+  const canDeleteField = hasPermission("FIELD_DELETE");
+  const canViewTasks = hasPermission("FIELD_TASK_READ");
+  const canViewTaskDetails = hasPermission("TASK_READ");
 
+  useEffect(() => {
+    if (!canRead || !fieldId) return;
     fetchFieldInfo();
-    fetchTasks();
-  }, [fieldId]);
+    if (canViewTasks) fetchTasks();
+  }, [fieldId, permissions]);
 
   // ✅ Fetch Field Info
   const fetchFieldInfo = async () => {
@@ -63,6 +72,14 @@ const FieldViewPage = () => {
     }
   };
 
+  if (!canRead) {
+    return (
+      <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
+        🚫 You do not have permission to view this field.
+      </div>
+    );
+  }
+
   if (loading) return <ProgressSpinner />;
   if (!fieldInfo) return <div className="text-center text-lg">Field not found.</div>;
 
@@ -81,38 +98,44 @@ const FieldViewPage = () => {
         <Divider />
 
         {/* Tasks Section */}
-        <Card title="Tasks" className="mb-6">
-          <div className="text-right">
-            <Button
-              label="Create Task"
-              className="p-button-primary"
-              onClick={() => router.push(`/create-task/${fieldId}`)}
-            />
-          </div>
+        {canViewTasks && (
+          <Card title="Tasks" className="mb-6">
+            <div className="text-right">
+              {canCreateTask && (
+                <Button
+                  label="Create Task"
+                  className="p-button-primary"
+                  onClick={() => router.push(`/create-task/${fieldId}`)}
+                />
+              )}
+            </div>
 
-          {tasks.length === 0 ? (
-            <div className="text-center text-gray-500 mt-4">No tasks available.</div>
-          ) : (
-            tasks.map((task) => (
-              <div key={task.id} className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-lg">
-                  <i className="pi pi-check-circle text-green-600 text-2xl"></i>
+            {tasks.length === 0 ? (
+              <div className="text-center text-gray-500 mt-4">No tasks available.</div>
+            ) : (
+              tasks.map((task) => (
+                <div key={task.id} className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-lg">
+                    <i className="pi pi-check-circle text-green-600 text-2xl"></i>
+                  </div>
+                  <div className="flex-1 ml-4">
+                    <p className="font-bold">{task.type.name}</p>
+                    <p className="text-sm text-gray-500">{task.description}</p>
+                    <p className="text-xs text-gray-400">
+                      Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
+                    </p>
+                    <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
+                  </div>
+                  <div className="ml-auto flex gap-2">
+                    {canViewTaskDetails && (
+                      <Button label="View" className="p-button-secondary" onClick={() => router.push(`/tasks/${task.id}`)} />
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1 ml-4">
-                  <p className="font-bold">{task.type.name}</p>
-                  <p className="text-sm text-gray-500">{task.description}</p>
-                  <p className="text-xs text-gray-400">
-                    Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
-                  </p>
-                  <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
-                </div>
-                <div className="ml-auto flex gap-2">
-                  <Button label="View" className="p-button-secondary" onClick={() => router.push(`/tasks/${task.id}`)} />
-                </div>
-              </div>
-            ))
-          )}
-        </Card>
+              ))
+            )}
+          </Card>
+        )}
 
         <Divider />
 
@@ -124,9 +147,11 @@ const FieldViewPage = () => {
         <Divider />
 
         {/* Delete Field Button at the Bottom */}
-        <div className="text-center mt-4">
-          <Button label="Delete Field" className="p-button-danger" onClick={handleDeleteField} />
-        </div>
+        {canDeleteField && (
+          <div className="text-center mt-4">
+            <Button label="Delete Field" className="p-button-danger" onClick={handleDeleteField} />
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );

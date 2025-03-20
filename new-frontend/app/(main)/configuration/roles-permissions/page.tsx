@@ -5,20 +5,25 @@ import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Checkbox } from 'primereact/checkbox';
 import { toast } from 'sonner';
-import { Button } from 'primereact/button';
-import { Dialog } from 'primereact/dialog';
-import { InputText } from 'primereact/inputtext';
 import api from '@/utils/api'; // ✅ Use API instance with interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
 
 const RolesPermissionsPage = () => {
+    const { hasPermission } = usePermissions();
+
+    const canRead = hasPermission("PERMISSION_READ");
+    const canAssign = hasPermission("PERMISSION_ASSIGN");
+    const canRemove = hasPermission("PERMISSION_REMOVE");
+
     const [roles, setRoles] = useState([]);
     const [permissions, setPermissions] = useState([]);
-    const [dialogVisible, setDialogVisible] = useState(false);
 
     useEffect(() => {
-        fetchRoles();
-        fetchPermissions();
-    }, []);
+        if (canRead) {
+            fetchRoles();
+            fetchPermissions();
+        }
+    }, [canRead]);
 
     const fetchRoles = async () => {
         try {
@@ -39,6 +44,8 @@ const RolesPermissionsPage = () => {
     };
 
     const togglePermission = async (roleId, permissionId, hasPermission) => {
+        if (!canAssign && !canRemove) return;
+
         try {
             if (hasPermission) {
                 await api.delete(`/roles/${roleId}/permissions/${permissionId}`);
@@ -51,6 +58,10 @@ const RolesPermissionsPage = () => {
             toast.error('Failed to update permission');
         }
     };
+
+    if (!canRead) {
+        return <p className="text-center text-gray-600">You do not have permission to view roles and permissions.</p>;
+    }
 
     return (
         <div className="container mx-auto p-6">
@@ -69,6 +80,7 @@ const RolesPermissionsPage = () => {
                                 <Checkbox
                                     checked={hasPermission}
                                     onChange={() => togglePermission(rowData.id, perm.id, hasPermission)}
+                                    disabled={!canAssign && !canRemove} // Hide interaction if user lacks permission
                                 />
                             );
                         }}
