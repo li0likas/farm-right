@@ -26,7 +26,7 @@ const Dashboard = () => {
     // ✅ Permission checks
     const canReadTasks = hasPermission("TASK_READ");
     const canReadTaskStats = hasPermission("TASK_STATS_READ");
-    const canReadFields = hasPermission("FIELD_READ");
+    const canReadFields = hasPermission("FIELD_TOTAL_AREA_READ");
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [totalFieldArea, setTotalFieldArea] = useState(0);

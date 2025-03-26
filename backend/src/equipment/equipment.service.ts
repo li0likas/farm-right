@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -98,6 +98,13 @@ export class EquipmentService {
 
     if (!equipment) {
       throw new NotFoundException(`Equipment with ID ${equipmentId} not found in the selected farm`);
+    }
+
+    const existing = await this.prisma.taskEquipment.findFirst({
+      where: { taskId, equipmentId },
+    });
+    if (existing) {
+      throw new ConflictException("This equipment is already assigned to the task.");
     }
 
     return this.prisma.taskEquipment.create({

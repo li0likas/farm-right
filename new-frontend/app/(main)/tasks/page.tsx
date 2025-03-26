@@ -77,10 +77,13 @@ const TasksPage = () => {
                             <i className="pi pi-map-marker text-green-500"></i> Field:{" "}
                             <span className="text-xl font-bold text-green-700">{task.field.name}</span>
                         </p>
-                        <p className="text-sm text-gray-700">
-                            <i className="pi pi-calendar"></i> Due:{" "}
-                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
-                        </p>
+                        {task.dueDate && (
+                            <p className="text-sm text-gray-700">
+                                <i className="pi pi-calendar"></i> Due:{" "}
+                                {new Date(task.dueDate).toLocaleDateString("en-CA")}
+                            </p>
+                        )}
+
                         {task.completionDate && (
                             <p className="text-sm text-gray-700">
                                 <i className="pi pi-check-circle"></i> Completed:{" "}

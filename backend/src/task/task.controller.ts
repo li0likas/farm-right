@@ -130,11 +130,12 @@ export class TaskController {
   @ApiResponse({ status: 201, description: 'Comment successfully created.' })
   @ApiResponse({ status: 404, description: 'Task not found.' })
   async createComment(@Request() req, @Param('id') taskId: string, @Body() createCommentDto: CreateCommentDto): Promise<Comment> {
+    const userId = req.user.id;
     const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
     if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');
-
+  
     createCommentDto.taskId = parseInt(taskId);
-    return this.commentService.create(createCommentDto, farmId);
+    return this.commentService.create(createCommentDto, farmId, userId);
   }
 
   @Delete(':id/comments/:commentId')
@@ -178,10 +179,10 @@ export class TaskController {
   @ApiOperation({ summary: 'Remove equipment from a task' })
   @ApiResponse({ status: 204, description: 'Equipment removed from task successfully.' })
   @ApiResponse({ status: 404, description: 'Task or equipment not found.' })
-  async removeEquipmentFromTask(@Request() req, @Param('id') taskId: string, @Param('equipmentId') equipmentId: number) {
+  async removeEquipmentFromTask(@Request() req, @Param('id') taskId: string, @Param('equipmentId') equipmentId: string) {
     const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
     if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');
 
-    return this.equipmentService.removeEquipmentFromTask(parseInt(taskId), equipmentId, farmId);
+    return this.equipmentService.removeEquipmentFromTask(parseInt(taskId), parseInt(equipmentId), farmId);
   }
 }

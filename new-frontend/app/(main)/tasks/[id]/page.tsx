@@ -14,6 +14,8 @@ import ProtectedRoute from "@/utils/ProtectedRoute";
 import GoogleMapComponent from "../../../components/GoogleMapComponent";
 import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
+import { Dialog } from "primereact/dialog";
+import { Dropdown } from "primereact/dropdown";
 
 interface Task {
     id: string;
@@ -62,12 +64,18 @@ const TaskPage = () => {
     const [commentContent, setCommentContent] = useState("");
     const [equipment, setEquipment] = useState<Equipment[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+    const [availableEquipment, setAvailableEquipment] = useState<{ label: string; value: number }[]>([]);
+    const [selectedEquipmentId, setSelectedEquipmentId] = useState<number | null>(null);
+    const [isEditingEquipment, setIsEditingEquipment] = useState(false);
 
     const canReadTasks = hasPermission("TASK_READ");
-    const canParticipate = hasPermission("TASK_EQUIPMENT_ASSIGN");
     const canComment = hasPermission("FIELD_TASK_COMMENT_CREATE");
     const canDeleteComment = hasPermission("FIELD_TASK_COMMENT_DELETE");
     const canViewEquipment = hasPermission("TASK_EQUIPMENT_READ");
+    const canAssignEquipment = hasPermission("TASK_EQUIPMENT_ASSIGN");
+    const canRemoveEquipment = hasPermission("TASK_EQUIPMENT_REMOVE");
     const canReadComments = hasPermission("FIELD_TASK_COMMENT_READ");
 
     useEffect(() => {
@@ -76,6 +84,7 @@ const TaskPage = () => {
         fetchTask();
         if (canReadComments) fetchComments();
         if (canViewEquipment) fetchEquipment();
+        if (canAssignEquipment) fetchAvailableEquipment();
     }, [permissions, taskId]);
 
     const fetchTask = async () => {
@@ -107,6 +116,55 @@ const TaskPage = () => {
         }
     };
 
+    const fetchAvailableEquipment = async (existingEquipmentList?: Equipment[]) => {
+        try {
+            const allEquipmentRes = await api.get("/equipment");
+    
+            // Exclude already assigned
+            const assignedIds = new Set((existingEquipmentList || equipment).map((e) => e.id));
+            const available = allEquipmentRes.data
+                .filter((equip: any) => !assignedIds.has(equip.id))
+                .map((equip: any) => ({ label: equip.name, value: equip.id }));
+    
+            setAvailableEquipment(available);
+        } catch (error) {
+            toast.error("Failed to load available equipment.");
+        }
+    };
+
+    const handleAssignEquipment = async () => {
+        if (!selectedEquipmentId) {
+            toast.warning("Please select equipment to assign.");
+            return;
+        }
+
+        if (equipment.some(e => e.id === selectedEquipmentId)) {
+            toast.warning("This equipment is already assigned.");
+            return;
+        }        
+    
+        try {
+            await api.post(`/tasks/${taskId}/equipment`, { equipmentId: selectedEquipmentId });
+            toast.success("Equipment assigned.");
+            setSelectedEquipmentId(null);
+            const updatedEquipment = await fetchEquipment();
+            await fetchAvailableEquipment(updatedEquipment);
+        } catch (error) {
+            toast.error("Failed to assign equipment.");
+        }
+    };
+    
+    const handleRemoveEquipment = async (equipmentId: number) => {
+        try {
+            await api.delete(`/tasks/${taskId}/equipment/${equipmentId}`);
+            toast.success("Equipment removed.");
+            fetchEquipment();
+            fetchAvailableEquipment();
+        } catch (error) {
+            toast.error("Failed to remove equipment.");
+        }
+    };  
+
     const handlePostComment = async () => {
         if (!commentContent.trim()) {
             toast.warning("Comment cannot be empty.");
@@ -122,15 +180,25 @@ const TaskPage = () => {
         }
     };
 
-    const handleDeleteComment = async (commentId: string) => {
+    const confirmDeleteComment = (commentId: string) => {
+        setCommentToDelete(commentId);
+        setShowDeleteDialog(true);
+      };
+      
+      const handleDeleteConfirmed = async () => {
+        if (!commentToDelete) return;
         try {
-            await api.delete(`/tasks/${taskId}/comments/${commentId}`);
-            setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-            toast.success("Comment deleted.");
+          await api.delete(`/tasks/${taskId}/comments/${commentToDelete}`);
+          setComments((prev) => prev.filter((comment) => comment.id !== commentToDelete));
+          toast.success("Comment deleted.");
         } catch (error) {
-            toast.error("Failed to delete comment.");
+          toast.error("Failed to delete comment.");
+        } finally {
+          setShowDeleteDialog(false);
+          setCommentToDelete(null);
         }
-    };
+      };
+      
 
     const handleTaskAction = async (action: string) => {
         try {
@@ -212,25 +280,73 @@ const TaskPage = () => {
                     </p>
                     <p><strong>Type:</strong> {task.type.name}</p>
                     <p>{task.description}</p>
-                    <p><strong>Due Date:</strong> {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}</p>
-                    <p><strong>Completion Date:</strong> {task.completionDate ? new Date(task.completionDate).toLocaleDateString("en-CA") : "N/A"}</p>
+                    {task.dueDate && (
+                    <p><strong>Due Date:</strong> {new Date(task.dueDate).toLocaleDateString("en-CA")}</p>
+                    )}
+
+                    {task.completionDate && (
+                    <p><strong>Completion Date:</strong> {new Date(task.completionDate).toLocaleDateString("en-CA")}</p>
+                    )}
 
                     <Divider />
 
-                    {/* 🏗️ Equipment Section */}
-                    {canViewEquipment && (
-                        <Fieldset legend="Equipment Used">
-                            {equipment.length > 0 ? (
-                                equipment.map((equip) => (
-                                    <div key={equip.id} className="border p-2 mb-2 rounded">
-                                        <p><strong>Name:</strong> {equip.name}</p>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-gray-500">No equipment assigned to this task.</p>
-                            )}
-                        </Fieldset>
+                    <Fieldset legend="Equipment Used">
+    {equipment.length > 0 ? (
+        <div className="grid gap-3">
+            {equipment.map((equip) => (
+                <div
+                    key={equip.id}
+                    className="flex justify-between items-center border border-gray-300 p-3 rounded shadow-sm bg-white"
+                >
+                    <p className="font-semibold text-gray-800">
+                        <i className="pi pi-cog text-purple-500 mr-2"></i>
+                        {equip.name}
+                    </p>
+                    {isEditingEquipment && canRemoveEquipment && (
+                        <Button
+                            icon="pi pi-trash"
+                            className="p-button-text p-button-danger"
+                            onClick={() => handleRemoveEquipment(equip.id)}
+                            tooltip="Remove Equipment"
+                        />
                     )}
+                </div>
+            ))}
+        </div>
+    ) : (
+        <p className="text-gray-500">No equipment assigned to this task.</p>
+    )}
+
+    {isEditingEquipment && canAssignEquipment && (
+        <div className="mt-4 flex gap-2">
+            <Dropdown
+                value={selectedEquipmentId}
+                options={availableEquipment}
+                onChange={(e) => setSelectedEquipmentId(e.value)}
+                placeholder="Select Equipment"
+                className="w-full"
+            />
+            <Button
+                label="Assign"
+                icon="pi pi-plus"
+                onClick={handleAssignEquipment}
+                disabled={!selectedEquipmentId}
+            />
+        </div>
+    )}
+
+    {(canAssignEquipment || canRemoveEquipment) && (
+        <div className="flex justify-end mt-4">
+            <Button
+                label={isEditingEquipment ? "Cancel Editing" : "Edit Equipment"}
+                icon={isEditingEquipment ? "pi pi-times" : "pi pi-pencil"}
+                className="p-button-outlined p-button-primary"
+                onClick={() => setIsEditingEquipment(!isEditingEquipment)}
+            />
+        </div>
+    )}
+</Fieldset>
+
 
                     <Divider />
 
@@ -260,23 +376,34 @@ const TaskPage = () => {
                     {/* 💬 Comments Section */}
                     {canReadComments && (
                         <Card title="Comments" className="shadow-md border-round">
-                            {comments.length > 0 ? (
+                           {comments.length > 0 ? (
                                 comments.map(comment => (
-                                    <div key={comment.id} className="border p-2 mb-2 rounded">
-                                        <p>{comment.content}</p>
-                                        <p className="text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</p>
-                                        {canDeleteComment && (
-                                            <Button
-                                                icon="pi pi-trash"
-                                                className="p-button-text p-button-danger"
-                                                onClick={() => handleDeleteComment(comment.id)}
-                                            />
-                                        )}
+                                    <div key={comment.id} className="border p-2 mb-2 rounded flex justify-between items-start gap-3">
+                                    {canDeleteComment && (
+                                        <Button
+                                        icon="pi pi-trash"
+                                        className="p-button-text p-button-danger mt-1"
+                                        onClick={() => confirmDeleteComment(comment.id)}
+                                        />
+                                    )}
+                                    <div className="flex-1">
+                                        <p className="font-bold">{comment.createdBy?.username ?? "Unknown"}</p>
+                                        <p className="whitespace-pre-wrap">{comment.content}</p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                        {new Date(comment.createdAt).toLocaleString('lt-LT', {
+                                            year: 'numeric',
+                                            month: '2-digit',
+                                            day: '2-digit',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                        })}
+                                        </p>
+                                    </div>
                                     </div>
                                 ))
-                            ) : (
+                                ) : (
                                 <p className="text-gray-500">No comments yet.</p>
-                            )}
+                                )}
                             {canComment && (
                                 <>
                                     <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
@@ -287,6 +414,19 @@ const TaskPage = () => {
                     )}
                 </Card>
             </div>
+            <Dialog
+                visible={showDeleteDialog}
+                onHide={() => setShowDeleteDialog(false)}
+                header="Confirm Deletion"
+                footer={
+                    <>
+                    <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setShowDeleteDialog(false)} />
+                    <Button label="Delete" icon="pi pi-check" className="p-button-danger" onClick={handleDeleteConfirmed} />
+                    </>
+                }
+                >
+                <p>Are you sure you want to delete this comment?</p>
+            </Dialog>
         </ProtectedRoute>
     );
 };

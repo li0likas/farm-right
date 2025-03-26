@@ -67,7 +67,7 @@ api.interceptors.response.use(
       // Handle 403 Forbidden (Redirect to /pages/access)
       if (status === 403) {
         console.warn("Forbidden! Redirecting to access page...");
-        toast.error("You do not have permission to access this page.");
+        toast.error("You do not have permission to do this.");
         //window.location.href = "/auth/access"; // Forbidden page
       }
     }
