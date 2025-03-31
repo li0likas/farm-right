@@ -1,5 +1,8 @@
-import { Controller, Post, Body, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, UseInterceptors, UploadedFile, ForbiddenException, Request, UseGuards } from '@nestjs/common';
 import { AiService } from './ai.service';
+import { PermissionsGuard } from '../guards/permissions.guard';
+import { Permissions } from '../decorators/permissions.decorator';
+import { AuthGuard } from '@nestjs/passport';
 //import { FileInterceptor } from '@nestjs/platform-express';
 // import { Express } from 'express';
 // import type { Multer } from 'multer'; // ✅ Correct import for Multer types
@@ -8,6 +11,7 @@ import { AiService } from './ai.service';
 
 
 @Controller('ai')
+@UseGuards(AuthGuard('jwt'), PermissionsGuard)
 export class AiController {
   constructor(private aiService: AiService) {}
 
@@ -26,6 +30,22 @@ export class AiController {
     return { refinedTaskDescription };
   }
 
+  @Post('farm-summary')
+  @Permissions('DASHBOARD_AI_SUMMARY')
+  async generateFarmSummary(@Request() req) {
+    const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    if (isNaN(farmId)) throw new ForbiddenException("Invalid farm selection.");
+  
+    const insight = await this.aiService.generateCurrentFarmInsight(farmId);
+    return { insights: insight };
+  }
+
+  @Post('crop-health-task-description')
+  async generateTaskDescription(@Body() body: { rawText: string }) {
+    const { rawText } = body;
+    const result = await this.aiService.generateTaskDescription(rawText);
+    return { refinedTaskDescription: result };
+  }
 
   // @Post('generate-description-from-audio')
   // @UseInterceptors(

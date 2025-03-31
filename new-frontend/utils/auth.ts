@@ -46,6 +46,8 @@ const logout = (): void => {
     removeToken();
     removeUser();
     localStorage.removeItem("x-selected-farm-id");
+    console.log("aaaaaa");
+    sessionStorage.removeItem("aiInsight");
 };
 
 export { isLoggedIn, login, logout };

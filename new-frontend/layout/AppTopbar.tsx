@@ -87,6 +87,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 localStorage.removeItem('accessToken');
                 localStorage.removeItem('x-selected-farm-id');
                 localStorage.removeItem('user');
+                sessionStorage.removeItem("aiInsight");
     
                 router.push('/auth/login');
                 toast.success("Logged out successfully");

@@ -37,6 +37,7 @@ model User {
   equipments     Equipment[]
   farms          Farm[]    @relation("OwnerFarms")
   memberships    FarmMember[]
+  comments       Comment[] @relation("UserComments")
 
   @@map("users")
 }
@@ -153,11 +154,14 @@ model TaskEquipment {
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
-  content   String
-  createdAt DateTime  @default(now())
-  task      Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  taskId    Int       // Foreign key to Task
+  id         Int       @id @default(autoincrement())
+  content    String
+  createdAt  DateTime  @default(now())
+  taskId     Int
+  task       Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  createdById Int
+  createdBy   User     @relation("UserComments", fields: [createdById], references: [id])
 }
 
 model FieldCropOptions {

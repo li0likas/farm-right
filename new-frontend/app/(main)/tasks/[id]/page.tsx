@@ -83,8 +83,19 @@ const TaskPage = () => {
 
         fetchTask();
         if (canReadComments) fetchComments();
-        if (canViewEquipment) fetchEquipment();
-        if (canAssignEquipment) fetchAvailableEquipment();
+
+        // if (canViewEquipment) fetchEquipment();
+        // if (canAssignEquipment) fetchAvailableEquipment();
+
+        const initEquipment = async () => {
+            const eq = await fetchEquipment();
+            if (canAssignEquipment) {
+                await fetchAvailableEquipment(eq);
+            }
+        };
+    
+        if (canViewEquipment) initEquipment();
+
     }, [permissions, taskId]);
 
     const fetchTask = async () => {
@@ -107,12 +118,23 @@ const TaskPage = () => {
         }
     };
 
+    // const fetchEquipment = async () => {
+    //     try {
+    //         const response = await api.get(`/tasks/${taskId}/equipment`);
+    //         setEquipment(response.data);
+    //     } catch (error) {
+    //         toast.error("Failed to fetch equipment.");
+    //     }
+    // };
+
     const fetchEquipment = async () => {
         try {
             const response = await api.get(`/tasks/${taskId}/equipment`);
             setEquipment(response.data);
+            return response.data;
         } catch (error) {
             toast.error("Failed to fetch equipment.");
+            return [];
         }
     };
 
@@ -147,8 +169,10 @@ const TaskPage = () => {
             await api.post(`/tasks/${taskId}/equipment`, { equipmentId: selectedEquipmentId });
             toast.success("Equipment assigned.");
             setSelectedEquipmentId(null);
+
             const updatedEquipment = await fetchEquipment();
             await fetchAvailableEquipment(updatedEquipment);
+
         } catch (error) {
             toast.error("Failed to assign equipment.");
         }
@@ -158,8 +182,10 @@ const TaskPage = () => {
         try {
             await api.delete(`/tasks/${taskId}/equipment/${equipmentId}`);
             toast.success("Equipment removed.");
-            fetchEquipment();
-            fetchAvailableEquipment();
+
+            const updatedEquipment = await fetchEquipment();
+            await fetchAvailableEquipment(updatedEquipment);
+            
         } catch (error) {
             toast.error("Failed to remove equipment.");
         }
@@ -290,64 +316,65 @@ const TaskPage = () => {
 
                     <Divider />
 
-                    <Fieldset legend="Equipment Used">
-    {equipment.length > 0 ? (
-        <div className="grid gap-3">
-            {equipment.map((equip) => (
-                <div
-                    key={equip.id}
-                    className="flex justify-between items-center border border-gray-300 p-3 rounded shadow-sm bg-white"
-                >
-                    <p className="font-semibold text-gray-800">
-                        <i className="pi pi-cog text-purple-500 mr-2"></i>
-                        {equip.name}
-                    </p>
-                    {isEditingEquipment && canRemoveEquipment && (
-                        <Button
-                            icon="pi pi-trash"
-                            className="p-button-text p-button-danger"
-                            onClick={() => handleRemoveEquipment(equip.id)}
-                            tooltip="Remove Equipment"
-                        />
-                    )}
-                </div>
-            ))}
-        </div>
-    ) : (
-        <p className="text-gray-500">No equipment assigned to this task.</p>
-    )}
+                    {canViewEquipment && (
 
-    {isEditingEquipment && canAssignEquipment && (
-        <div className="mt-4 flex gap-2">
-            <Dropdown
-                value={selectedEquipmentId}
-                options={availableEquipment}
-                onChange={(e) => setSelectedEquipmentId(e.value)}
-                placeholder="Select Equipment"
-                className="w-full"
-            />
-            <Button
-                label="Assign"
-                icon="pi pi-plus"
-                onClick={handleAssignEquipment}
-                disabled={!selectedEquipmentId}
-            />
-        </div>
-    )}
+                        <Fieldset legend="Equipment Used">
+                            {equipment.length > 0 ? (
+                                <div className="grid gap-3">
+                                    {equipment.map((equip) => (
+                                        <div
+                                            key={equip.id}
+                                            className="flex justify-between items-center border border-gray-300 p-3 rounded shadow-sm bg-white"
+                                        >
+                                            <p className="font-semibold text-gray-800">
+                                                <i className="pi pi-cog text-purple-500 mr-2"></i>
+                                                {equip.name}
+                                            </p>
+                                            {isEditingEquipment && canRemoveEquipment && (
+                                                <Button
+                                                    icon="pi pi-trash"
+                                                    className="p-button-text p-button-danger"
+                                                    onClick={() => handleRemoveEquipment(equip.id)}
+                                                    tooltip="Remove Equipment"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">No equipment assigned to this task.</p>
+                            )}
 
-    {(canAssignEquipment || canRemoveEquipment) && (
-        <div className="flex justify-end mt-4">
-            <Button
-                label={isEditingEquipment ? "Cancel Editing" : "Edit Equipment"}
-                icon={isEditingEquipment ? "pi pi-times" : "pi pi-pencil"}
-                className="p-button-outlined p-button-primary"
-                onClick={() => setIsEditingEquipment(!isEditingEquipment)}
-            />
-        </div>
-    )}
-</Fieldset>
+                            {isEditingEquipment && canAssignEquipment && (
+                                <div className="mt-4 flex gap-2">
+                                    <Dropdown
+                                        value={selectedEquipmentId}
+                                        options={availableEquipment}
+                                        onChange={(e) => setSelectedEquipmentId(e.value)}
+                                        placeholder="Select Equipment"
+                                        className="w-full"
+                                    />
+                                    <Button
+                                        label="Assign"
+                                        icon="pi pi-plus"
+                                        onClick={handleAssignEquipment}
+                                        disabled={!selectedEquipmentId}
+                                    />
+                                </div>
+                            )}
 
-
+                            {(canAssignEquipment || canRemoveEquipment) && (
+                                <div className="flex justify-end mt-4">
+                                    <Button
+                                        label={isEditingEquipment ? "Cancel Editing" : "Edit Equipment"}
+                                        icon={isEditingEquipment ? "pi pi-times" : "pi pi-pencil"}
+                                        className="p-button-outlined p-button-primary"
+                                        onClick={() => setIsEditingEquipment(!isEditingEquipment)}
+                                    />
+                                </div>
+                            )}
+                        </Fieldset>
+                        )}
                     <Divider />
 
                     {/* 👥 Participants */}

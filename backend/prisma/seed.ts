@@ -80,6 +80,10 @@ async function main() {
       { name: 'TASK_UPDATE' },
       { name: 'TASK_DELETE' },
       { name: 'TASK_STATS_READ' },
+      { name: 'TASK_CHANGE_STATUS' },
+
+      // AI permissions
+      { name: 'DASHBOARD_AI_SUMMARY' },
 
       // Permission permissions
       { name: 'PERMISSION_READ' },
@@ -394,7 +398,7 @@ async function main() {
       { userId: workerUser1.id, farmId: farm.id, roleId: farmerRole.id },
       { userId: workerUser2.id, farmId: farm.id, roleId: workerRole.id },
       { userId: agronomistUser.id, farmId: farm.id, roleId: agronomistRole.id },
-      { userId: gvidasUser.id, farmId: farm.id, roleId: farmerRole.id },
+      { userId: gvidasUser.id, farmId: farm.id, roleId: adminRole.id },
     ],
     skipDuplicates: true
   });
@@ -650,21 +654,25 @@ await prisma.comment.createMany({
       content: 'Buvo šlapia, išsivertė dideli luitai.',
       taskId: fieldTask1.id,
       createdAt: new Date(),
+      createdById: gvidasUser.id
     },
     {
       content: 'Taip pat beariant kažkur pamečiau vieną kaltą.',
       taskId: fieldTask1.id,
       createdAt: new Date(),
+      createdById: gvidasUser.id
     },
     {
       content: 'Normą taikiausi 150 kg/ha, bet dėl barstyklės netikslumo išsibarstė 200 kg/ha.',
       taskId: fieldTask2.id,
       createdAt: new Date(),
+      createdById: gvidasUser.id
     },
     {
       content: 'Sėja pavyko puikiai, gylis gavosi apie 3-4 cm, drėgmės sočiai.',
       taskId: fieldTask3.id,
       createdAt: new Date(),
+      createdById: gvidasUser.id
     },
   ],
   skipDuplicates: true,

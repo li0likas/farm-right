@@ -43,7 +43,31 @@ const TaskCreatePage = () => {
     if (!hasPermission("TASK_CREATE")) return;
     fetchOptions();
     fetchUserEquipment();
-}, [permissions]);
+  }, [permissions]);
+
+  useEffect(() => {
+    if (taskTypeOptions.length && taskStatusOptions.length) {
+      const stored = localStorage.getItem("pendingTaskData");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+  
+        setTaskDescription(parsed.description || "");
+  
+        if (parsed.fieldId) setTaskField(parsed.fieldId);
+  
+        // ✅ Set "Spraying" task type if available
+        const spraying = taskTypeOptions.find(t => t.label.toLowerCase().includes("purškimas"));
+        if (spraying) setTaskType(spraying.value);
+  
+        // ✅ Set "Pending" task status if available
+        const pending = taskStatusOptions.find(s => s.label.toLowerCase() === "pending");
+        if (pending) setTaskStatus(pending.value);
+  
+        localStorage.removeItem("pendingTaskData");
+      }
+    }
+  }, [taskTypeOptions, taskStatusOptions]);
+  
 
   // Fetch dropdown options for fields, task types, and statuses
   const fetchOptions = async () => {

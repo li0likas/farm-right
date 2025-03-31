@@ -27,10 +27,14 @@ const Dashboard = () => {
     const canReadTasks = hasPermission("TASK_READ");
     const canReadTaskStats = hasPermission("TASK_STATS_READ");
     const canReadFields = hasPermission("FIELD_TOTAL_AREA_READ");
+    const canReadAiSummary = hasPermission("DASHBOARD_AI_SUMMARY");
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [totalFieldArea, setTotalFieldArea] = useState(0);
     const [completedPercentage, setCompletedPercentage] = useState(0);
+
+    const [aiInsight, setAiInsight] = useState<string | null>(null);
+    const [loadingInsight, setLoadingInsight] = useState(false);
 
     useEffect(() => {
         if (canReadFields) fetchFieldData();
@@ -39,8 +43,17 @@ const Dashboard = () => {
         } else if (canReadTaskStats) {
             fetchTaskStats();
         }
-    }, [canReadTasks, canReadTaskStats, canReadFields]);
-
+    
+        if (canReadAiSummary) {
+            const storedInsight = sessionStorage.getItem("aiInsight");
+            if (storedInsight) {
+                setAiInsight(storedInsight);
+            } else {
+                fetchAiInsight(); // Generate it on first visit
+            }
+        }
+    }, [canReadTasks, canReadTaskStats, canReadFields, canReadAiSummary]);
+    
     const fetchTasks = async () => {
         try {
             const response = await api.get("/tasks");
@@ -85,10 +98,56 @@ const Dashboard = () => {
         }
     };
 
+    const fetchAiInsight = async () => {
+        setLoadingInsight(true);
+        try {
+            const response = await api.post("/ai/farm-summary");
+            const insight = response.data.insights;
+            setAiInsight(insight);
+            sessionStorage.setItem("aiInsight", insight); // <-- Store in session
+        } catch (error) {
+            toast.error("Failed to load AI insight.");
+        } finally {
+            setLoadingInsight(false);
+        }
+    };
+
     return (
         <ProtectedRoute>
             <div className="grid">
-                
+
+                {/* AI Summary */}
+                {canReadAiSummary && (
+                    <div className="col-12 lg:col-6 xl:col-6">
+                        <div className="card mb-0">
+                            <div className="flex justify-content-between mb-3">
+                                <div>
+                                    <span className="block text-500 font-medium mb-3">AI Summary</span>
+                                    <div className="text-900 font-medium text-base whitespace-pre-wrap">
+                                        {loadingInsight ? "Generating summary..." : aiInsight || "No summary available."}
+                                    </div>
+                                </div>
+
+                                <div className="flex align-items-center justify-content-center bg-purple-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
+                                    <i className="pi pi-comments text-purple-500 text-xl" />
+                                </div>
+                            </div>
+
+                            {aiInsight && (
+                                <div className="text-right">
+                                    <Button
+                                        icon={loadingInsight ? "pi pi-spin pi-spinner" : "pi pi-refresh"}
+                                        className="p-button-text p-button-sm"
+                                        onClick={fetchAiInsight}
+                                        disabled={loadingInsight}
+                                        tooltip="Regenerate insight"
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+    
                 {/* 📌 Task Completion */}
                 {(canReadTaskStats || canReadTasks) && (
                     <div className="col-12 lg:col-6 xl:col-3">
@@ -142,16 +201,29 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                {/* 📌 Recent Tasks */}
+                {/* 📌 Tasks timeline */}
                 {canReadTasks && (
                     <div className="col-12">
                         <div className="card">
-                            <h5>Recent Tasks</h5>
+                            <h5>Tasks timeline</h5>
                             <DataTable value={tasks} responsiveLayout="scroll">
                                 <Column field="type.name" header="Task" />
                                 <Column field="field.name" header="Field" />
                                 <Column field="status.name" header="Status" />
-                                <Column field="dueDate" header="Due Date" body={(data) => (data.dueDate ? new Date(data.dueDate).toLocaleDateString() : "N/A")} />
+                                <Column
+                                    header="Date"
+                                    body={(data) => {
+                                        const isDue = !!data.dueDate;
+                                        const date = isDue ? data.dueDate : data.completionDate;
+                                        return date ? (
+                                            <>
+                                                <span className="text-sm text-gray-700">{isDue ? "Due:" : "Completed:"}</span>
+                                                <br />
+                                                {new Date(date).toLocaleDateString("en-CA")}
+                                            </>
+                                        ) : "N/A";
+                                    }}
+                                />
                                 <Column
                                     header="View"
                                     body={(data) => (
