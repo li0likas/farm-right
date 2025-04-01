@@ -19,6 +19,9 @@ export class CreateTaskDto {
   @IsNumber()
   fieldId: number;
 
+  @IsNumber()
+  seasonId: number;
+
   @IsArray()
   @IsNumber({}, { each: true })
   equipmentIds?: number[];

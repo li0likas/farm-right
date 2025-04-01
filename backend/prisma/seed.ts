@@ -21,6 +21,7 @@ async function main() {
     await prisma.user.deleteMany({});
     await prisma.role.deleteMany({});
     await prisma.permission.deleteMany({});
+    await prisma.season.deleteMany({});
 
   console.log("✅ Existing data cleared.");
 
@@ -44,6 +45,12 @@ async function main() {
       { name: 'FIELD_TASK_COMMENT_CREATE' },
       { name: 'FIELD_TASK_COMMENT_READ' },
       { name: 'FIELD_TASK_COMMENT_DELETE' },
+
+      // Season
+      { name: 'SEASON_CREATE' },
+      { name: 'SEASON_READ' },
+      { name: 'SEASON_UPDATE' },
+      { name: 'SEASON_DELETE' },
       
       // User management permissions
       { name: 'USER_MANAGE' },
@@ -81,6 +88,10 @@ async function main() {
       { name: 'TASK_DELETE' },
       { name: 'TASK_STATS_READ' },
       { name: 'TASK_CHANGE_STATUS' },
+      
+      { name: 'TASK_READ_PARTICIPANTS' },
+      { name: 'TASK_ASSIGN_PARTICIPANTS' },
+      { name: 'TASK_REMOVE_PARTICIPANTS' },  
 
       // AI permissions
       { name: 'DASHBOARD_AI_SUMMARY' },
@@ -596,6 +607,62 @@ async function main() {
     },
   });
 
+  // Create seasons
+  const season2023_garadauskas = await prisma.season.create({
+    data: {
+      name: '2023-2024',
+      startDate: new Date('2023-09-01'),
+      endDate: new Date('2024-08-31'),
+      farmId: farm.id,
+    },
+  });
+
+  const season2024_garadauskas = await prisma.season.create({
+    data: {
+      name: '2024-2025',
+      startDate: new Date('2024-09-01'),
+      endDate: new Date('2025-08-31'),
+      farmId: farm.id,
+    },
+  });
+
+  const season2025_garadauskas = await prisma.season.create({
+    data: {
+      name: '2025-2026',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2026-08-31'),
+      farmId: farm.id,
+    },
+  });
+
+  // Another farm's seasons
+  const season2023_other = await prisma.season.create({
+    data: {
+      name: '2023-2024',
+      startDate: new Date('2023-09-01'),
+      endDate: new Date('2024-08-31'),
+      farmId: farm2.id,
+    },
+  });
+
+  const season2024_other = await prisma.season.create({
+    data: {
+      name: '2024-2025',
+      startDate: new Date('2024-09-01'),
+      endDate: new Date('2025-08-31'),
+      farmId: farm2.id,
+    },
+  });
+
+  const season2025_other = await prisma.season.create({
+    data: {
+      name: '2025-2026',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2026-08-31'),
+      farmId: farm2.id,
+    },
+  });
+
   // Create field tasks
   const fieldTask1 = await prisma.task.create({
     data: {
@@ -604,6 +671,7 @@ async function main() {
         statusId: 1,
         fieldId: field1.id,
         completionDate: new Date('2024-11-15'),
+        seasonId: season2024_garadauskas.id,
       }
   });
 
@@ -614,6 +682,7 @@ async function main() {
         statusId: 1,
         fieldId: field1.id,
         completionDate: new Date('2024-10-10'),
+        seasonId: season2024_garadauskas.id,
       }
     });
     
@@ -624,6 +693,7 @@ async function main() {
         statusId: 1,
         fieldId: field2.id,
         completionDate: new Date('2024-11-15'),
+        seasonId: season2024_garadauskas.id,
       }
     });
     
@@ -633,7 +703,8 @@ async function main() {
       description: 'Reikia nupurkšti piktžoles, kad neužgožtų pagrindinės kultūros.',
       statusId: 2,
       fieldId: field2.id,
-      dueDate: new Date('2025-03-01'),
+      dueDate: new Date('2023-10-01'),
+      seasonId: season2024_garadauskas.id,
     }
   })
 
@@ -643,7 +714,8 @@ async function main() {
       description: 'Derliaus nuėmimas su javų kombainu.',
       statusId: 3,
       fieldId: field3.id,
-      dueDate: new Date('2025-09-01'),
+      dueDate: new Date('2010-11-01'),
+      seasonId: season2023_other.id,
     }   
   });
 
@@ -678,14 +750,64 @@ await prisma.comment.createMany({
   skipDuplicates: true,
 });
 
-// Assign equipment to tasks
-await prisma.taskEquipment.createMany({
-  data: [
-    { taskId: fieldTask1.id, equipmentId: tractor.id },
-    { taskId: fieldTask4.id, equipmentId: sprayer.id },
-  ],
-  skipDuplicates: true
-});
+  // Assign equipment to tasks
+  await prisma.taskEquipment.createMany({
+    data: [
+      { taskId: fieldTask1.id, equipmentId: tractor.id },
+      { taskId: fieldTask4.id, equipmentId: sprayer.id },
+    ],
+    skipDuplicates: true
+  });
+
+
+  // Assign task particiapnts
+
+  const allFarmMembers = await prisma.farmMember.findMany();
+
+  const findFarmMemberId = (userId: number, farmId: number) => {
+    const member = allFarmMembers.find((m) => m.userId === userId && m.farmId === farmId);
+    return member?.id;
+  };
+  
+
+  await prisma.taskParticipant.createMany({
+    data: [
+      // Task 1: Arimas
+      {
+        taskId: fieldTask1.id,
+        farmMemberId: findFarmMemberId(workerUser1.id, farm.id)
+      },
+      {
+        taskId: fieldTask1.id,
+        farmMemberId: findFarmMemberId(agronomistUser.id, farm.id)
+      },
+  
+      // Task 2: Tręšimas
+      {
+        taskId: fieldTask2.id,
+        farmMemberId: findFarmMemberId(workerUser2.id, farm.id)
+      },
+  
+      // Task 3: Sėjimas
+      {
+        taskId: fieldTask3.id,
+        farmMemberId: findFarmMemberId(workerUser1.id, farm.id)
+      },
+  
+      // Task 4: Purškimas
+      {
+        taskId: fieldTask4.id,
+        farmMemberId: findFarmMemberId(agronomistUser.id, farm.id)
+      },
+      {
+        taskId: fieldTask4.id,
+        farmMemberId: findFarmMemberId(workerUser2.id, farm.id)
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+
   console.log('Seeding completed successfully!');
 }
 

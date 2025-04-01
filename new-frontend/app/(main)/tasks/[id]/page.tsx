@@ -16,6 +16,7 @@ import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
+import { MultiSelect } from "primereact/multiselect";
 
 interface Task {
     id: string;
@@ -23,22 +24,25 @@ interface Task {
     description: string;
     status: { name: string };
     field: {
-        name: string;
-        boundary?: {
-            type: "Feature";
-            geometry: {
-                type: "Polygon";
-                coordinates: number[][][];
-            };
+      name: string;
+      boundary?: {
+        type: "Feature";
+        geometry: {
+          type: "Polygon";
+          coordinates: number[][][];
         };
+      };
     };
     type: { name: string };
+    season?: { name: string };
     dueDate?: string;
     completionDate?: string;
-    participants?: { id: string; username: string }[];
+    participants?: { id: number; farmMember: { user: {
+        id: any; username: string 
+} } }[];
     isParticipating?: boolean;
     statusId: number;
-}
+  }
 
 interface Comment {
     id: string;
@@ -69,6 +73,9 @@ const TaskPage = () => {
     const [availableEquipment, setAvailableEquipment] = useState<{ label: string; value: number }[]>([]);
     const [selectedEquipmentId, setSelectedEquipmentId] = useState<number | null>(null);
     const [isEditingEquipment, setIsEditingEquipment] = useState(false);
+    const [isEditingParticipants, setIsEditingParticipants] = useState(false);
+    const [farmMembers, setFarmMembers] = useState<{ label: string; value: number }[]>([]);
+    const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
 
     const canReadTasks = hasPermission("TASK_READ");
     const canComment = hasPermission("FIELD_TASK_COMMENT_CREATE");
@@ -77,37 +84,46 @@ const TaskPage = () => {
     const canAssignEquipment = hasPermission("TASK_EQUIPMENT_ASSIGN");
     const canRemoveEquipment = hasPermission("TASK_EQUIPMENT_REMOVE");
     const canReadComments = hasPermission("FIELD_TASK_COMMENT_READ");
+    const canAssignParticipants = hasPermission("TASK_ASSIGN_PARTICIPANTS");
+    const canRemoveParticipants = hasPermission("TASK_REMOVE_PARTICIPANTS");
+    const canReadParticipants = hasPermission("TASK_READ_PARTICIPANTS");
 
     useEffect(() => {
         if (!canReadTasks || !taskId) return;
-
-        fetchTask();
-        if (canReadComments) fetchComments();
-
-        // if (canViewEquipment) fetchEquipment();
-        // if (canAssignEquipment) fetchAvailableEquipment();
-
-        const initEquipment = async () => {
-            const eq = await fetchEquipment();
-            if (canAssignEquipment) {
-                await fetchAvailableEquipment(eq);
-            }
+      
+        const load = async () => {
+          const updatedTask = await fetchTask();
+          if (canReadComments) fetchComments();
+          if (canReadParticipants || canAssignParticipants) await fetchFarmMembers(updatedTask);
+          if (canViewEquipment) initEquipment();
         };
-    
-        if (canViewEquipment) initEquipment();
+      
+        load();
+    }, [permissions, taskId]);      
 
-    }, [permissions, taskId]);
-
-    const fetchTask = async () => {
-        try {
-            const response = await api.get(`/tasks/${taskId}`);
-            setTask(response.data);
-        } catch (error) {
-            toast.error("Failed to load task.");
-        } finally {
-            setLoading(false);
+    const initEquipment = async () => {
+        const eq = await fetchEquipment();
+        if (canAssignEquipment) {
+            await fetchAvailableEquipment(eq);
         }
     };
+
+    const refreshTaskAndMembers = async () => {
+        const updatedTask = await fetchTask();
+        await fetchFarmMembers(updatedTask);
+      };
+      
+    const fetchTask = async (): Promise<Task | undefined> => {
+        try {
+          const response = await api.get(`/tasks/${taskId}`);
+          setTask(response.data);
+          return response.data;
+        } catch (error) {
+          toast.error("Failed to load task.");
+        } finally {
+          setLoading(false);
+        }
+    };   
 
     const fetchComments = async () => {
         try {
@@ -118,14 +134,22 @@ const TaskPage = () => {
         }
     };
 
-    // const fetchEquipment = async () => {
-    //     try {
-    //         const response = await api.get(`/tasks/${taskId}/equipment`);
-    //         setEquipment(response.data);
-    //     } catch (error) {
-    //         toast.error("Failed to fetch equipment.");
-    //     }
-    // };
+    const fetchFarmMembers = async (currentTask?: Task) => {
+        try {
+          const res = await api.get("/farm-members");
+          const participantIds = new Set(
+            (currentTask ?? task)?.participants?.map(p => p.farmMember.user.id)
+          );
+      
+          const filtered = res.data
+            .filter((m: any) => !participantIds.has(m.id))
+            .map((m: any) => ({ label: m.username, value: m.id }));
+      
+          setFarmMembers(filtered);
+        } catch (err) {
+          toast.error("Failed to load farm members");
+        }
+    };  
 
     const fetchEquipment = async () => {
         try {
@@ -177,6 +201,31 @@ const TaskPage = () => {
             toast.error("Failed to assign equipment.");
         }
     };
+
+    const handleAddParticipants = async () => {
+        try {
+          await Promise.all(
+            selectedParticipants.map((userId) =>
+              api.post(`/tasks/${taskId}/participants`, { userId })
+            )
+          );
+          toast.success("Participants added");
+          setSelectedParticipants([]);
+          await refreshTaskAndMembers();
+        } catch (err) {
+          toast.error("Failed to assign participants");
+        }
+    };
+      
+      const handleRemoveParticipant = async (userId: number) => {
+        try {
+          await api.delete(`/tasks/${taskId}/participants/${userId}`);
+          toast.success("Participant removed");
+          await refreshTaskAndMembers();
+        } catch (err) {
+          toast.error("Failed to remove participant");
+        }
+    };  
     
     const handleRemoveEquipment = async (equipmentId: number) => {
         try {
@@ -301,17 +350,26 @@ const TaskPage = () => {
                     </div>
 
                     <p className="text-lg font-semibold text-primary">
-                        <i className="pi pi-map-marker text-green-500"></i> Field:{" "}
-                        <span className="text-xl font-bold text-green-700">{task.field.name}</span>
+                    <i className="pi pi-map-marker text-green-500"></i> Field:{" "}
+                    <span className="text-xl font-bold text-green-700">{task.field.name}</span>
                     </p>
+
                     <p><strong>Type:</strong> {task.type.name}</p>
-                    <p>{task.description}</p>
+
+                    {task.season && (
+                    <p><strong>Season:</strong> {task.season.name}</p>
+                    )}
+
                     {task.dueDate && (
                     <p><strong>Due Date:</strong> {new Date(task.dueDate).toLocaleDateString("en-CA")}</p>
                     )}
 
                     {task.completionDate && (
                     <p><strong>Completion Date:</strong> {new Date(task.completionDate).toLocaleDateString("en-CA")}</p>
+                    )}
+
+                    {task.description && (
+                    <p><strong>Description:</strong> {task.description}</p>
                     )}
 
                     <Divider />
@@ -377,14 +435,59 @@ const TaskPage = () => {
                         )}
                     <Divider />
 
-                    {/* 👥 Participants */}
                     <Fieldset legend="Participants">
                         {task.participants && task.participants.length > 0 ? (
-                            task.participants.map(participant => (
-                                <span key={participant.id} className="mr-2">{participant.username} <i className="pi pi-user text-gray-500"></i></span>
-                            ))
+                            <div className="flex flex-wrap gap-2">
+                            {task.participants.map((p) => (
+                                <div
+                                key={p.id}
+                                className="flex items-center bg-gray-100 px-2 py-1 rounded-md shadow-sm"
+                                >
+                                <span className="mr-2 text-sm">{p.farmMember.user.username}</span>
+                                {isEditingParticipants && canRemoveParticipants && (
+                                    <Button
+                                    icon="pi pi-times"
+                                    className="p-button-rounded p-button-text p-button-danger"
+                                    onClick={() => handleRemoveParticipant(p.farmMember.user.id)}
+                                    tooltip="Remove participant"
+                                    />
+                                )}
+                                </div>
+                            ))}
+                            </div>
                         ) : (
                             <p className="text-gray-500">No participants yet.</p>
+                        )}
+
+                        {isEditingParticipants && canAssignParticipants && (
+                            <div className="mt-4 flex flex-col md:flex-row gap-2">
+                            <MultiSelect
+                                value={selectedParticipants}
+                                options={farmMembers}
+                                onChange={(e) => setSelectedParticipants(e.value)}
+                                placeholder="Select users to assign"
+                                display="chip"
+                                className="w-full md:w-2/3"
+                            />
+                            <Button
+                                label="Assign"
+                                icon="pi pi-user-plus"
+                                className="p-button-success"
+                                onClick={handleAddParticipants}
+                                disabled={!selectedParticipants.length}
+                            />
+                            </div>
+                        )}
+
+                        {(canAssignParticipants || canRemoveParticipants) && (
+                            <div className="flex justify-end mt-4">
+                            <Button
+                                label={isEditingParticipants ? "Cancel Editing" : "Edit Participants"}
+                                icon={isEditingParticipants ? "pi pi-times" : "pi pi-pencil"}
+                                className="p-button-outlined p-button-primary"
+                                onClick={() => setIsEditingParticipants((prev) => !prev)}
+                            />
+                            </div>
                         )}
                     </Fieldset>
 

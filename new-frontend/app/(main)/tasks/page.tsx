@@ -12,7 +12,7 @@ import Image from "next/image";
 import taskImage from "@/public/images/taskImage.png";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
+import { usePermissions } from "@/context/PermissionsContext";
 
 interface Task {
     id: string;
@@ -21,6 +21,7 @@ interface Task {
     field: { name: string };
     dueDate?: string;
     completionDate?: string;
+    season?: { id: number };
 }
 
 const TasksPage = () => {
@@ -29,9 +30,10 @@ const TasksPage = () => {
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
-    const [activeTab, setActiveTab] = useState<string>("Pending");
+    const [activeTab, setActiveTab] = useState<string>("All");
+    const [seasons, setSeasons] = useState<{ id: number | null; name: string }[]>([]);
+    const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
-    // ✅ Permission Helpers
     const canReadTasks = hasPermission("TASK_READ");
     const canCreateTask = hasPermission("TASK_CREATE");
     const canViewTaskDetails = hasPermission("TASK_READ");
@@ -39,29 +41,51 @@ const TasksPage = () => {
     useEffect(() => {
         if (!canReadTasks) return;
         fetchTasks();
+        fetchSeasons();
     }, [permissions]);
+
+    useEffect(() => {
+        filterTasks(tasks, activeTab, selectedSeasonId);
+    }, [tasks, activeTab, selectedSeasonId]);
 
     const fetchTasks = async () => {
         try {
             const response = await api.get("/tasks");
             setTasks(response.data);
-            filterTasks(response.data, activeTab);
         } catch (error) {
             toast.error("Failed to fetch tasks.");
         }
     };
 
-    const filterTasks = (taskList: Task[], status: string) => {
-        setFilteredTasks(taskList.filter((task) => task.status.name === status));
+    const fetchSeasons = async () => {
+        try {
+            const res = await api.get("/seasons");
+            setSeasons([{ id: null, name: "All seasons" }, ...res.data]);
+        } catch {
+            toast.error("Failed to load seasons.");
+        }
+    };
+
+    const filterTasks = (all: Task[], status: string, seasonId: number | null) => {
+        let result = status === "All" ? all : all.filter(t => t.status.name === status);
+        if (seasonId !== null) result = result.filter(t => t.season?.id === seasonId);
+
+        result.sort((a, b) => {
+            const dateA = new Date(a.dueDate ?? a.completionDate ?? 0).getTime();
+            const dateB = new Date(b.dueDate ?? b.completionDate ?? 0).getTime();
+            return dateB - dateA;
+        });
+
+        setFilteredTasks(result);
     };
 
     const handleTabChange = (e: any) => {
         const newStatus = e.value.label;
         setActiveTab(newStatus);
-        filterTasks(tasks, newStatus);
     };
 
     const tabItems = [
+        { label: "All", icon: "pi pi-list" },
         { label: "Pending", icon: "pi pi-clock" },
         { label: "Completed", icon: "pi pi-check" },
         { label: "Canceled", icon: "pi pi-times" },
@@ -74,20 +98,12 @@ const TasksPage = () => {
                     <Image src={taskImage} alt="Task Image" width={100} height={100} className="rounded-lg" />
                     <div className="ml-4">
                         <p className="text-lg font-semibold text-primary">
-                            <i className="pi pi-map-marker text-green-500"></i> Field:{" "}
+                            <i className="pi pi-map-marker text-green-500"></i> Field: {" "}
                             <span className="text-xl font-bold text-green-700">{task.field.name}</span>
                         </p>
-                        {task.dueDate && (
+                        {(task.dueDate || task.completionDate) && (
                             <p className="text-sm text-gray-700">
-                                <i className="pi pi-calendar"></i> Due:{" "}
-                                {new Date(task.dueDate).toLocaleDateString("en-CA")}
-                            </p>
-                        )}
-
-                        {task.completionDate && (
-                            <p className="text-sm text-gray-700">
-                                <i className="pi pi-check-circle"></i> Completed:{" "}
-                                {new Date(task.completionDate).toLocaleDateString("en-CA")}
+                                <i className="pi pi-calendar"></i> Date: {new Date(task.dueDate ?? task.completionDate!).toLocaleDateString("en-CA")}
                             </p>
                         )}
                         <Tag
@@ -127,14 +143,28 @@ const TasksPage = () => {
             <div className="grid">
                 <div className="col-12">
                     <div className="card">
-                        <div className="flex justify-end mb-3">
+                        <div className="flex justify-between items-center mb-3">
+                            <div className="flex flex-wrap gap-2">
+                                {seasons.map((season) => (
+                                    <Button
+                                        key={season.id ?? "all"}
+                                        label={season.name}
+                                        className={`p-button-sm ${
+                                            selectedSeasonId === season.id ? "p-button-info" : "p-button-outlined"
+                                        }`}
+                                        onClick={() => setSelectedSeasonId(season.id)}
+                                    />
+                                ))}
+                            </div>
                             {canCreateTask && (
-                                <Button
-                                    label="Create Task"
-                                    icon="pi pi-plus"
-                                    className="p-button-success"
-                                    onClick={() => router.push("/create-task")}
-                                />
+                                <div className="ml-auto">
+                                    <Button
+                                        label="Create Task"
+                                        icon="pi pi-plus"
+                                        className="p-button-success"
+                                        onClick={() => router.push("/create-task")}
+                                    />
+                                </div>
                             )}
                         </div>
 

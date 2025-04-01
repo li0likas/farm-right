@@ -8,7 +8,7 @@ export class TaskService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateTaskDto, farmId: number): Promise<Task> {
-    const { fieldId, typeId, description, dueDate, completionDate, statusId, equipmentIds } = data;
+    const { fieldId, typeId, description, dueDate, completionDate, statusId, seasonId, equipmentIds } = data;
   
     // Ensure the field belongs to the selected farm
     const fieldExists = await this.prisma.field.findFirst({
@@ -41,6 +41,7 @@ export class TaskService {
         field: { connect: { id: fieldId } },
         type: { connect: { id: typeId } },
         status: { connect: { id: statusId } },
+        season: { connect: { id: seasonId } },
         equipments: equipmentIds && equipmentIds.length > 0
           ? {
               createMany: {
@@ -63,10 +64,20 @@ export class TaskService {
         field: true,
         type: true,
         status: true,
+        season: true,
         comments: true,
+        participants: {
+          include: {
+            farmMember: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
       },
     });
-  }
+  } 
 
   async findOne(id: number, farmId: number): Promise<Task> {
     const task = await this.prisma.task.findFirst({
@@ -75,13 +86,23 @@ export class TaskService {
         field: true,
         type: true,
         status: true,
+        season: true,
         comments: true,
+        participants: {
+          include: {
+            farmMember: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
       },
     });
-
+  
     if (!task) throw new NotFoundException(`Task with id ${id} not found in this farm`);
     return task;
-  }
+  }   
 
   async update(id: number, data: Partial<CreateTaskDto>, farmId: number): Promise<Task> {
     const task = await this.prisma.task.findFirst({ where: { id, field: { farmId } } });
@@ -139,6 +160,7 @@ export class TaskService {
       include: {
         type: true,
         status: true,
+        season: true,
       },
     });
   }
@@ -210,5 +232,64 @@ export class TaskService {
     const totalTasks = tasks.length;
 
     return { completedTasks, totalTasks };
+  }
+
+  async getTaskParticipants(taskId: number, farmId: number) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, field: { farmId } },
+      include: {
+        participants: {
+          include: {
+            farmMember: {
+              include: { user: true }
+            }
+          }
+        }
+      }
+    });
+  
+    if (!task) throw new NotFoundException("Task not found in selected farm");
+  
+    return task.participants.map(p => ({
+      id: p.farmMember.user.id,
+      username: p.farmMember.user.username
+    }));
+  }
+
+  async addParticipant(taskId: number, userId: number, farmId: number) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, field: { farmId } },
+    });
+    if (!task) throw new NotFoundException("Task not found in selected farm");
+  
+    const farmMember = await this.prisma.farmMember.findFirst({
+      where: { userId, farmId }
+    });
+    if (!farmMember) throw new BadRequestException("User is not a member of the farm");
+  
+    return this.prisma.taskParticipant.create({
+      data: {
+        taskId,
+        farmMemberId: farmMember.id
+      }
+    });
+  }
+
+  async removeParticipant(taskId: number, userId: number, farmId: number) {
+    const task = await this.prisma.task.findFirst({
+      where: { id: taskId, field: { farmId } },
+    });
+    if (!task) throw new NotFoundException("Task not found in selected farm");
+  
+    const farmMember = await this.prisma.farmMember.findFirst({
+      where: { userId, farmId }
+    });
+    if (!farmMember) throw new NotFoundException("Farm member not found");
+  
+    return this.prisma.taskParticipant.delete({
+      where: {
+        taskId_farmMemberId: { taskId, farmMemberId: farmMember.id }
+      }
+    });
   }
 }

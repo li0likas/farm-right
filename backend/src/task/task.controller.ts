@@ -33,6 +33,35 @@ export class TaskController {
       return this.taskService.getCompletedTasks(farmId);
   }
 
+  @Get(':id/participants')
+  @Permissions('TASK_READ_PARTICIPANTS')
+  async getParticipants(@Request() req, @Param('id') taskId: string) {
+    const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    return this.taskService.getTaskParticipants(parseInt(taskId), farmId);
+  }
+
+  @Post(':id/participants')
+  @Permissions('TASK_ASSIGN_PARTICIPANTS')
+  async addParticipant(
+    @Request() req,
+    @Param('id') taskId: string,
+    @Body('userId') userId: number
+  ) {
+    const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    return this.taskService.addParticipant(parseInt(taskId), userId, farmId);
+  }
+
+  @Delete(':id/participants/:userId')
+  @Permissions('TASK_REMOVE_PARTICIPANTS')
+  async removeParticipant(
+    @Request() req,
+    @Param('id') taskId: string,
+    @Param('userId') userId: string
+  ) {
+    const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    return this.taskService.removeParticipant(parseInt(taskId), parseInt(userId), farmId);
+  }
+
   @Post()
   @Permissions('TASK_CREATE')
   @ApiOperation({ summary: 'Create a new task' })

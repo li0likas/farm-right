@@ -20,8 +20,21 @@ const FieldViewPage = () => {
   const { hasPermission, permissions } = usePermissions();
 
   const [fieldInfo, setFieldInfo] = useState<any>(null);
-  const [tasks, setTasks] = useState([]);
+  interface Task {
+    completionDate?: any;
+    id: number;
+    type: { name: string };
+    description: string;
+    dueDate?: string;
+    season?: { id: number };
+    status: { name: string };
+  }
+
+  const [allTasks, setAllTasks] = useState<Task[]>([]); // all fetched from server
+  const [tasks, setTasks] = useState<Task[]>([]); // filtered by season
   const [loading, setLoading] = useState(true);
+  const [seasons, setSeasons] = useState<{ id: number | null; name: string }[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
   // ✅ Permission Helpers
   const canRead = hasPermission("FIELD_READ");
@@ -33,10 +46,14 @@ const FieldViewPage = () => {
   useEffect(() => {
     if (!canRead || !fieldId) return;
     fetchFieldInfo();
+    fetchSeasons();
     if (canViewTasks) fetchTasks();
   }, [fieldId, permissions]);
-
-  // ✅ Fetch Field Info
+  
+  useEffect(() => {
+    filterTasksBySeason(allTasks, selectedSeasonId);
+  }, [selectedSeasonId, allTasks]);
+  
   const fetchFieldInfo = async () => {
     try {
       const response = await api.get(`/fields/${fieldId}`);
@@ -50,16 +67,40 @@ const FieldViewPage = () => {
 
   const fetchTasks = async () => {
     try {
-      const response = await api.get(`/fields/${fieldId}/tasks`);
-      const sortedTasks = response.data.sort((a: any, b: any) =>
+      const res = await api.get(`/fields/${fieldId}/tasks`);
+      const sorted = res.data.sort((a: { dueDate: any; completionDate: any; }, b: { dueDate: any; completionDate: any; }) =>
         new Date(b.dueDate || b.completionDate) > new Date(a.dueDate || a.completionDate) ? 1 : -1
       );
-      setTasks(sortedTasks);
+      setAllTasks(sorted);
+      filterTasksBySeason(sorted, selectedSeasonId); // do initial filter
     } catch (error) {
-      toast.error("Failed to load tasks.");
+      toast.error("Failed to fetch tasks.");
     }
   };
-
+  
+  const fetchSeasons = async () => {
+    try {
+      const res = await api.get("/seasons");
+      const seasonOptions = [
+        { id: null, name: "All seasons" },
+        ...res.data,
+      ];
+      setSeasons(seasonOptions);
+      setSelectedSeasonId(null);
+    } catch (err) {
+      toast.error("Failed to load seasons.");
+    }
+  };
+  
+  const filterTasksBySeason = (all: any[], seasonId: number | null) => {
+    if (!seasonId) {
+      setTasks(all);
+    } else {
+      const filtered = all.filter(task => task.season?.id === seasonId);
+      setTasks(filtered);
+    }
+  };
+  
   const handleDeleteField = async () => {
     if (!window.confirm("Are you sure you want to delete this field?")) return;
 
@@ -97,24 +138,43 @@ const FieldViewPage = () => {
 
         <Divider />
 
-        {/* Tasks Section */}
         {canViewTasks && (
           <Card title="Tasks" className="mb-6">
-            <div className="text-right">
-              {canCreateTask && (
+            {/* Season filter buttons */}
+            <div className="relative mb-4">
+            {/* Create Task button absolutely positioned to the top right */}
+            {canCreateTask && (
+              <div className="absolute right-0 top-0">
                 <Button
                   label="Create Task"
                   className="p-button-primary"
                   onClick={() => router.push(`/create-task/${fieldId}`)}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
+            {/* Season buttons with right padding to avoid overlapping button */}
+            <div className="flex flex-wrap gap-2 pr-[150px]">
+              {seasons.map((season) => (
+                <Button
+                  key={season.id ?? "all"}
+                  label={season.name}
+                  className={`p-button-sm ${selectedSeasonId === season.id ? "p-button-info" : "p-button-outlined"}`}
+                  onClick={() => setSelectedSeasonId(season.id)}
+                />
+              ))}
+            </div>
+          </div>
+
+            {/* Tasks list */}
             {tasks.length === 0 ? (
               <div className="text-center text-gray-500 mt-4">No tasks available.</div>
             ) : (
               tasks.map((task) => (
-                <div key={task.id} className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div
+                  key={task.id}
+                  className="flex flex-col md:flex-row mb-4 p-4 bg-gray-50 rounded-xl border border-gray-100"
+                >
                   <div className="w-16 h-16 flex items-center justify-center bg-green-100 rounded-lg">
                     <i className="pi pi-check-circle text-green-600 text-2xl"></i>
                   </div>
@@ -122,13 +182,25 @@ const FieldViewPage = () => {
                     <p className="font-bold">{task.type.name}</p>
                     <p className="text-sm text-gray-500">{task.description}</p>
                     <p className="text-xs text-gray-400">
-                      Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-CA") : "N/A"}
-                    </p>
-                    <Tag value={task.status.name} severity={task.status.name === "Pending" ? "warning" : "success"} />
+                    {task.dueDate
+                      ? `Due: ${new Date(task.dueDate).toLocaleDateString("en-CA")}`
+                      : task.completionDate
+                      ? `Completed: ${new Date(task.completionDate).toLocaleDateString("en-CA")}`
+                      : "No date available"}
+                  </p>
+
+                    <Tag
+                      value={task.status.name}
+                      severity={task.status.name === "Pending" ? "warning" : "success"}
+                    />
                   </div>
                   <div className="ml-auto flex gap-2">
                     {canViewTaskDetails && (
-                      <Button label="View" className="p-button-secondary" onClick={() => router.push(`/tasks/${task.id}`)} />
+                      <Button
+                        label="View"
+                        className="p-button-secondary"
+                        onClick={() => router.push(`/tasks/${task.id}`)}
+                      />
                     )}
                   </div>
                 </div>
