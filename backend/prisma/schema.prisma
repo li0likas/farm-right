@@ -164,6 +164,10 @@ model TaskEquipment {
   id          Int  @id @default(autoincrement())
   taskId      Int
   equipmentId Int
+
+  fuelUsed     Float?     // in liters
+  minutesUsed  Int?       // total minutes used
+
   task        Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
   equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   
@@ -175,6 +179,8 @@ model TaskParticipant {
   taskId        Int
   farmMemberId  Int
 
+  minutesWorked  Int?
+  
   task          Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   farmMember    FarmMember  @relation(fields: [farmMemberId], references: [id], onDelete: Cascade)
 

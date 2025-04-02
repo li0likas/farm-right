@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Task } from '@prisma/client';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -292,4 +292,50 @@ export class TaskService {
       }
     });
   }
+
+  async markAsCompleted(
+    taskId: number,
+    farmId: number,
+    minutesWorked: number,
+    equipmentData: { [equipmentId: number]: number }
+  ) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        participants: true,
+        equipments: true,
+      },
+    });
+  
+    if (!task) throw new NotFoundException("Task not found in selected farm");
+  
+    await this.prisma.task.update({
+      where: { id: taskId, field: { farmId } },
+      data: {
+        statusId: 1, // 1 = Completed
+        completionDate: new Date(),
+      },
+    });
+  
+    for (const participant of task.participants) {
+      await this.prisma.taskParticipant.update({
+        where: { taskId_farmMemberId: { taskId, farmMemberId: participant.farmMemberId } },
+        data: { minutesWorked },
+      });
+    }
+  
+    for (const equipment of task.equipments) {
+      const fuel = equipmentData[equipment.equipmentId] ?? null;
+      await this.prisma.taskEquipment.update({
+        where: { taskId_equipmentId: { taskId, equipmentId: equipment.equipmentId } },
+        data: {
+          minutesUsed: minutesWorked,
+          fuelUsed: fuel,
+        },
+      });
+    }
+  
+    return { message: 'Task marked as completed' };
+  }
+  
 }

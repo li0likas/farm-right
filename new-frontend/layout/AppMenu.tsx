@@ -30,7 +30,16 @@ const AppMenu = () => {
                     items: [
                         { label: 'Roles & Permissions', icon: 'pi pi-fw pi-shield', to: '/configuration/roles-permissions' }
                     ]
-                }                
+                },
+                {
+                    label: 'Reports',
+                    icon: 'pi pi-fw pi-cog',
+                    items: [
+                        { label: 'Task Summary', icon: 'pi pi-fw pi-shield', to: '/reports/task-summary' },
+                        { label: 'Equipment Usage', icon: 'pi pi-fw pi-shield', to: '/reports/equipment-usage' },
+                        { label: 'Farm Members Activity', icon: 'pi pi-fw pi-shield', to: '/reports/farm-members-activity' }
+                    ]
+                }                 
             ]
         },
         {

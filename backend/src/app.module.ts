@@ -16,6 +16,7 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { EquipmentTypeOptionsModule } from './equipment/equipmentTypeOptions/equipmentTypeOptions.module';
 import { RolesModule } from './roles/roles.module';
 import { SeasonModule } from './season/season.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SeasonModule } from './season/season.module';
     FarmMembersModule,
     RolesModule,
     SeasonModule,
+    ReportModule
   ],
   controllers: [],
   providers: [],

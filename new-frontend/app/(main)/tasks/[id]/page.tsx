@@ -52,6 +52,7 @@ interface Comment {
 }
 
 interface Equipment {
+    type: any;
     id: number;
     name: string;
     typeId: number;
@@ -76,6 +77,13 @@ const TaskPage = () => {
     const [isEditingParticipants, setIsEditingParticipants] = useState(false);
     const [farmMembers, setFarmMembers] = useState<{ label: string; value: number }[]>([]);
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
+    const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+    const [minutesWorked, setMinutesWorked] = useState<number | null>(null);
+    const [equipmentFuelData, setEquipmentFuelData] = useState<{ [key: number]: number }>({});
+
+    const isCompleted = task?.status.name === "Completed";
+    const isCanceled = task?.status.name === "Canceled";
+    const isPending = task?.status.name === "Pending";
 
     const canReadTasks = hasPermission("TASK_READ");
     const canComment = hasPermission("FIELD_TASK_COMMENT_CREATE");
@@ -310,6 +318,26 @@ const TaskPage = () => {
         }
     };
 
+    const handleMarkCompleted = async () => {
+        if (!minutesWorked) {
+          toast.warning("Please enter minutes worked.");
+          return;
+        }
+      
+        try {
+            await api.patch(`/tasks/${taskId}/complete`, {
+            minutesWorked,
+            equipmentData: equipmentFuelData,
+        });
+      
+          toast.success("Task marked as completed.");
+          setShowCompleteDialog(false);
+          fetchTask();
+        } catch (error) {
+          toast.error("Failed to mark task as completed.");
+        }
+    };      
+
     if (!canReadTasks) {
         return (
             <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
@@ -421,16 +449,17 @@ const TaskPage = () => {
                                 </div>
                             )}
 
-                            {(canAssignEquipment || canRemoveEquipment) && (
-                                <div className="flex justify-end mt-4">
-                                    <Button
-                                        label={isEditingEquipment ? "Cancel Editing" : "Edit Equipment"}
-                                        icon={isEditingEquipment ? "pi pi-times" : "pi pi-pencil"}
-                                        className="p-button-outlined p-button-primary"
-                                        onClick={() => setIsEditingEquipment(!isEditingEquipment)}
-                                    />
-                                </div>
+                            {(canAssignEquipment || canRemoveEquipment) && isPending && (
+                            <div className="flex justify-end mt-4">
+                                <Button
+                                label={isEditingEquipment ? "Cancel Editing" : "Edit Equipment"}
+                                icon={isEditingEquipment ? "pi pi-times" : "pi pi-pencil"}
+                                className="p-button-outlined p-button-primary"
+                                onClick={() => setIsEditingEquipment(!isEditingEquipment)}
+                                />
+                            </div>
                             )}
+
                         </Fieldset>
                         )}
                     <Divider />
@@ -479,7 +508,7 @@ const TaskPage = () => {
                             </div>
                         )}
 
-                        {(canAssignParticipants || canRemoveParticipants) && (
+                        {(canAssignParticipants || canRemoveParticipants) && isPending && (
                             <div className="flex justify-end mt-4">
                             <Button
                                 label={isEditingParticipants ? "Cancel Editing" : "Edit Participants"}
@@ -492,13 +521,41 @@ const TaskPage = () => {
                     </Fieldset>
 
                     <div className="flex gap-3 mt-3">
+                    {isPending && (
+                        <>
                         {task.isParticipating ? (
-                            <Button label="Cancel Participation" className="p-button-danger" onClick={() => handleTaskAction('cancel-participation')} />
+                            <Button
+                            label="Cancel Participation"
+                            className="p-button-danger"
+                            onClick={() => handleTaskAction("cancel-participation")}
+                            />
                         ) : (
-                            <Button label="Participate" className="p-button-primary" onClick={() => handleTaskAction('participate')} />
+                            <Button
+                            label="Participate"
+                            className="p-button-primary"
+                            onClick={() => handleTaskAction("participate")}
+                            />
                         )}
-                        {task.statusId === 2 && <Button label="Cancel Task" className="p-button-warning" onClick={() => handleTaskAction('cancel-task')} />}
-                        {task.statusId === 3 && <Button label="Uncancel Task" className="p-button-success" onClick={() => handleTaskAction('uncancel-task')} />}
+                        <Button
+                            label="Cancel Task"
+                            className="p-button-warning"
+                            onClick={() => handleTaskAction("cancel-task")}
+                        />
+                        <Button
+                            label="Mark as Completed"
+                            className="p-button-success"
+                            onClick={() => setShowCompleteDialog(true)}
+                        />
+                        </>
+                    )}
+
+                    {isCanceled && (
+                        <Button
+                        label="Uncancel Task"
+                        className="p-button-success"
+                        onClick={() => handleTaskAction("uncancel-task")}
+                        />
+                    )}
                     </div>
 
                     <Divider />
@@ -509,7 +566,7 @@ const TaskPage = () => {
                            {comments.length > 0 ? (
                                 comments.map(comment => (
                                     <div key={comment.id} className="border p-2 mb-2 rounded flex justify-between items-start gap-3">
-                                    {canDeleteComment && (
+                                    {canDeleteComment && isPending && (
                                         <Button
                                         icon="pi pi-trash"
                                         className="p-button-text p-button-danger mt-1"
@@ -534,12 +591,18 @@ const TaskPage = () => {
                                 ) : (
                                 <p className="text-gray-500">No comments yet.</p>
                                 )}
-                            {canComment && (
+                                {canComment && isPending && (
                                 <>
-                                    <InputTextarea value={commentContent} onChange={(e) => setCommentContent(e.target.value)} rows={3} placeholder="Write a comment..." className="mt-2 w-full" />
+                                    <InputTextarea
+                                    value={commentContent}
+                                    onChange={(e) => setCommentContent(e.target.value)}
+                                    rows={3}
+                                    placeholder="Write a comment..."
+                                    className="mt-2 w-full"
+                                    />
                                     <Button label="Post Comment" className="mt-2" onClick={handlePostComment} />
                                 </>
-                            )}
+                                )}
                         </Card>
                     )}
                 </Card>
@@ -557,6 +620,58 @@ const TaskPage = () => {
                 >
                 <p>Are you sure you want to delete this comment?</p>
             </Dialog>
+            <Dialog
+                visible={showCompleteDialog}
+                onHide={() => setShowCompleteDialog(false)}
+                header="Mark Task as Completed"
+                footer={
+                    <>
+                    <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setShowCompleteDialog(false)} />
+                    <Button
+                        label="Submit"
+                        icon="pi pi-check"
+                        className="p-button-success"
+                        disabled={!minutesWorked}
+                        onClick={handleMarkCompleted}
+                    />
+                    </>
+                }
+                >
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                    <div>
+                    <label className="font-bold mb-1 block">Minutes Worked (for all participants):</label>
+                    <input
+                        type="number"
+                        value={minutesWorked ?? ''}
+                        onChange={(e) => setMinutesWorked(parseInt(e.target.value))}
+                        className="p-inputtext w-full"
+                        placeholder="e.g., 90"
+                    />
+                    </div>
+
+                    {equipment
+                    .filter((e) => ["Tractor", "Combine Harvester"].includes(e.type?.name))
+                    .map((equip) => (
+                        <div key={equip.id}>
+                        <label className="font-bold mb-1 block">
+                            Fuel Used for {equip.name} (liters):
+                        </label>
+                        <input
+                            type="number"
+                            value={equipmentFuelData[equip.id] ?? ''}
+                            onChange={(e) =>
+                            setEquipmentFuelData((prev) => ({
+                                ...prev,
+                                [equip.id]: parseFloat(e.target.value),
+                            }))
+                            }
+                            className="p-inputtext w-full"
+                            placeholder="e.g., 12.5"
+                        />
+                        </div>
+                    ))}
+                </div>
+                </Dialog>
         </ProtectedRoute>
     );
 };

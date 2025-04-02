@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Put, Patch, UseGuards, Request, Delete, NotFoundException, UnprocessableEntityException, ForbiddenException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Put, Patch, UseGuards, Request, Delete, NotFoundException, UnprocessableEntityException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { TaskService } from './task.service';
 import { CommentService } from '../comment/comment.service';
 import { CreateTaskDto } from './dto/create-task.dto';
@@ -31,6 +31,22 @@ export class TaskController {
       if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');
 
       return this.taskService.getCompletedTasks(farmId);
+  }
+
+  @Patch(':id/complete')
+  @Permissions('TASK_UPDATE')
+  async completeTask(
+    @Param('id') id: string,
+    @Body() body: {
+      minutesWorked: number;
+      equipmentData: { [equipmentId: number]: number }; // fuelUsed
+    },
+    @Request() req,
+  ) {
+    const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');
+
+    return this.taskService.markAsCompleted(parseInt(id), farmId, body.minutesWorked, body.equipmentData);
   }
 
   @Get(':id/participants')

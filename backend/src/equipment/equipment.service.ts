@@ -70,21 +70,27 @@ export class EquipmentService {
       include: {
         equipments: {
           include: {
-            equipment: true,
+            equipment: {
+              include: {
+                type: true,
+              },
+            },
           },
         },
       },
     });
-
+  
     if (!task) {
       throw new NotFoundException(`Task with ID ${taskId} not found`);
     }
-
+  
     // Ensure that all equipment belongs to the selected farm
-    const equipmentInFarm = task.equipments.filter(te => te.equipment.farmId === farmId).map(te => te.equipment);
-
+    const equipmentInFarm = task.equipments
+      .filter((te) => te.equipment.farmId === farmId)
+      .map((te) => te.equipment);
+  
     return equipmentInFarm;
-  }
+  }  
 
   async addEquipmentToTask(taskId: number, equipmentId: number, farmId: number) {
     const task = await this.prisma.task.findUnique({ where: { id: taskId } });
