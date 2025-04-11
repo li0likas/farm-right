@@ -37,6 +37,7 @@ ehthumbs.db
 Thumbs.db
 #ignore node_modules
 /farm-right/node_modules
+/farm-right/.VSCodeCounter
 /farm-right/backend/uploads/bannerimages/*
 /farm-right/backend/uploads/groupimages/*
 
