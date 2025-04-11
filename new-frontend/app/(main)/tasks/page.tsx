@@ -9,7 +9,7 @@ import { TabMenu } from "primereact/tabmenu";
 import { Card } from "primereact/card";
 import { Tag } from "primereact/tag";
 import Image from "next/image";
-import taskImage from "@/public/images/taskImage.png";
+import taskImage from "@/public/demo/images/avatar/bernardodominic.png";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";

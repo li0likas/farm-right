@@ -9,7 +9,18 @@ import { MailService } from './mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwt: JwtService, private config: ConfigService, private mailService: MailService) {}
+  private readonly jwtSecret: string;
+  private readonly jwtExpiresIn: string;
+
+  constructor(
+    private prisma: PrismaService, 
+    private jwt: JwtService, 
+    private configService: ConfigService,
+    private mailService: MailService
+  ) {
+    this.jwtSecret = this.configService.get<string>('jwt.secret');
+    this.jwtExpiresIn = this.configService.get<string>('jwt.expiresIn') || '60m';
+  }
 
   async signin(dto: AuthlogDto) {
     const user = await this.prisma.user.findUnique({
@@ -111,11 +122,13 @@ export class AuthService {
     const payload = {
       sub: userId,
       email,
-      farms // Include farms in the JWT payload
+      farms
     };
   
-    const secret = this.config.get('JWT_SECRET');
-    return this.jwt.signAsync(payload, { expiresIn: '60m', secret });
+    return this.jwt.signAsync(payload, { 
+      expiresIn: this.jwtExpiresIn, 
+      secret: this.jwtSecret 
+    });
   }
 
   async sendForgot(dto: AuthForgDto) {
@@ -173,10 +186,16 @@ export class AuthService {
       data: { hash: newHash, resetPassToken: '', isResetValid: false },
     });
   }
-
+  
   async resetToken(userId: number, email: string) {
-    const payload = { sub: userId, email };
-    const secret = this.config.get('JWT_SECRET');
-    return this.jwt.signAsync(payload, { expiresIn: '30m', secret });
+    const payload = {
+      sub: userId,
+      email,
+    };
+  
+    return this.jwt.signAsync(payload, { 
+      expiresIn: this.jwtExpiresIn, 
+      secret: this.jwtSecret 
+    });
   }
 }

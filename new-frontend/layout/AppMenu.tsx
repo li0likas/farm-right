@@ -19,7 +19,8 @@ const AppMenu = () => {
                     label: "Crop Health",
                     icon: "pi pi-heart", // or use something like "pi pi-search" or "pi pi-eye"
                     to: "/crop-health"
-                },                  
+                },
+                { label: 'Map', icon: 'pi pi-map', to: '/fields/map' },                  
                 { label: 'Fields', icon: 'pi pi-fw pi-check-square', to: '/fields' },
                 { label: 'Tasks', icon: 'pi pi-fw pi-check-square', to: '/tasks' },
                 { label: 'Equipment', icon: 'pi pi-fw pi-check-square', to: '/equipment' },

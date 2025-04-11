@@ -1,28 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { TaskTypeOptionsService } from '../task/taskTypeOptions/taskTypeOptions.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-// import * as FormData from 'form-data';
-// import * as fs from 'fs';
 
 @Injectable()
 export class AiService {
-  private readonly openAiApiKey = process.env.OPENAI_API_KEY;
-  private readonly chatGptApiUrl = 'https://api.openai.com/v1/chat/completions';
-  // private readonly whisperApiUrl = 'https://api.openai.com/v1/audio/transcriptions';
+  private readonly openAiApiKey: string;
+  private readonly chatGptApiUrl: string;
+  private readonly model: string;
 
   constructor(
     private httpService: HttpService,
     private taskTypeOptionsService: TaskTypeOptionsService,
     private prisma: PrismaService,
-  ) {}
+    private configService: ConfigService
+  ) {
+    this.openAiApiKey = this.configService.get<string>('ai.openaiApiKey');
+    this.chatGptApiUrl = this.configService.get<string>('ai.chatGptApiUrl');
+    this.model = this.configService.get<string>('ai.model') || 'gpt-4o';
+  }
 
   async getOptimalDateInsights(weatherData: any, dueDate: string, taskType: number, optimalDateTime: string): Promise<string> {
     const taskTypeName = await this.taskTypeOptionsService.getTaskTypeNameById(taskType);
-
-    //console.log("taskTypeName: " + taskTypeName + " optimalDateTime: " + optimalDateTime);
-    //return taskTypeName;
 
     const prompt = `Trumpai paaiškinkite, kodėl ${optimalDateTime} yra optimaliausia suplanuota data ir laikas žemės ūkio užduočiai/darbui ${taskTypeName}, 
     remiantis gautais ateities orų duomenimis: ${JSON.stringify(weatherData)}`;
@@ -32,12 +33,12 @@ export class AiService {
         this.httpService.post(
           this.chatGptApiUrl,
           {
-            model: 'gpt-4o',
+            model: this.model,
+            //model: 'gpt-4o',
             messages: [
               { role: 'system', content: 'You are a helpful assistant / agriculture agronomist.' },
               { role: 'user', content: prompt },
             ],
-            //max_tokens: 150,
           },
           {
             headers: {
@@ -53,8 +54,7 @@ export class AiService {
       console.error('Error fetching insights from OpenAI:', error.response?.data || error.message);
       throw new Error('Error fetching insights from OpenAI: ' + error.message);
     }
-  }
-  
+  } 
 
   async generateCurrentFarmInsight(farmId: number): Promise<string> {
     const now = new Date();
@@ -134,7 +134,7 @@ export class AiService {
       this.httpService.post(
         this.chatGptApiUrl,
         {
-          model: 'gpt-4o',
+          model: this.model,
           messages: [
             { role: 'system', content: 'Esi žemės ūkio patarėjas ir agronomas.' },
             { role: 'user', content: prompt },
@@ -171,7 +171,7 @@ Aprašymas turi būti:
         this.httpService.post(
           this.chatGptApiUrl,
           {
-            model: 'gpt-4o',
+            model: this.model,
             messages: [
               { role: 'system', content: 'You are an expert Lithuanian farm assistant.' },
               { role: 'user', content: prompt },
@@ -235,7 +235,7 @@ Aprašymas turi būti:
 //         this.httpService.post(
 //           this.chatGptApiUrl,
 //           {
-//             model: 'gpt-4o',
+//             model: this.model,
 //             messages: [{ role: 'user', content: prompt }],
 //           },
 //           {
@@ -265,7 +265,7 @@ Aprašymas turi būti:
         this.httpService.post(
           this.chatGptApiUrl,
           {
-            model: 'gpt-4o',
+            model: this.model,
             messages: [
               { role: 'system', content: 'You are an expert in farm task descriptions.' },
               { role: 'user', content: prompt },

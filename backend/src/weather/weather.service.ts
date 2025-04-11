@@ -1,27 +1,82 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class WeatherService {
-  private readonly apiKey = process.env.OPENWEATHER_API_KEY;
-  private readonly baseUrl = 'https://api.openweathermap.org/data/2.5/forecast';
+  private readonly apiKey: string;
+  private readonly forecastUrl: string;
+  private readonly currentWeatherUrl: string;
+  private readonly units: string;
 
+  constructor(
+    private httpService: HttpService,
+    private aiService: AiService,
+    private configService: ConfigService
+  ) {
+    // Get all weather-related config in constructor
+    this.apiKey = this.configService.get<string>('weather.apiKey');
+    this.forecastUrl = this.configService.get<string>('weather.forecastUrl');
+    this.currentWeatherUrl = this.configService.get<string>('weather.currentWeatherUrl');
+    this.units = this.configService.get<string>('weather.units');
 
-/// !!!
-// https://api.openweathermap.org/data/2.5/forecast?lat=56.3450718&lon=23.7284381&appid=1dfdc6c0848d4dd795cd1326ec7d86f7&units=metric
-// {"cod":401, "message": "Invalid API key. Please see https://openweathermap.org/faq#error401 for more info."}
-
-constructor(private httpService: HttpService, private aiService: AiService) {}
+    if (!this.apiKey) {
+      console.warn('Weather API key not configured in environment variables!');
+    }
+  }
 
   async getWeatherForecast(lat: number, lon: number): Promise<any> {
-    const apiUrl = `${this.baseUrl}?lat=${lat}&lon=${lon}&appid=${this.apiKey}&units=metric`;
+    if (!this.apiKey) {
+      throw new HttpException('Weather API key not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    
     try {
-      const response = await firstValueFrom(this.httpService.get(apiUrl));
+      const response = await firstValueFrom(
+        this.httpService.get(this.forecastUrl, {
+          params: {
+            lat,
+            lon,
+            appid: this.apiKey,
+            units: this.units,
+          },
+        })
+      );
       return response.data;
     } catch (error) {
-      throw new Error('Error fetching weather data');
+      console.error('Weather API error:', error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        throw new HttpException('Invalid API key for weather service', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      throw new HttpException('Failed to fetch weather forecast data', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  async getForecast(lat: number, lng: number): Promise<any> {
+    if (!this.apiKey) {
+      throw new HttpException('Weather API key not configured', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(this.currentWeatherUrl, {
+          params: {
+            lat,
+            lon: lng,
+            appid: this.apiKey,
+            units: this.units,
+          },
+        })
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Weather API error:', error.response?.data || error.message);
+      if (error.response?.status === 401) {
+        throw new HttpException('Invalid API key for weather service', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+      throw new HttpException('Failed to fetch current weather data', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
