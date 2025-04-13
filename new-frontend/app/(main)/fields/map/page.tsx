@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
-import { Dropdown } from "primereact/dropdown";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Dialog } from "primereact/dialog";
@@ -29,9 +28,13 @@ const FieldsMapView = () => {
   const [cropOptions, setCropOptions] = useState([]);
   const [selectedCrops, setSelectedCrops] = useState([]);
   const [showWeatherLayer, setShowWeatherLayer] = useState(false);
-  const [weatherData, setWeatherData] = useState(null);
+  const [weatherData, setWeatherData] = useState({});
+  const [loadingWeather, setLoadingWeather] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [mapBounds, setMapBounds] = useState(null);
+  const [googleApiLoaded, setGoogleApiLoaded] = useState(false);
+  const googleMapsRef = useRef(null);
 
   const canReadFields = hasPermission("FIELD_READ");
 
@@ -55,15 +58,26 @@ const FieldsMapView = () => {
   }, [canReadFields]);
 
   useEffect(() => {
-    if (showWeatherLayer) {
-      fetchWeatherData();
-    }
-  }, [showWeatherLayer, mapCenter]);
-
-  useEffect(() => {
     // Apply filtering whenever selected crops change
     filterFields();
   }, [selectedCrops, fields]);
+
+  useEffect(() => {
+    if (showWeatherLayer && filteredFields.length > 0) {
+      fetchWeatherForFields();
+    } else {
+      setWeatherData({});
+    }
+  }, [showWeatherLayer, filteredFields]);
+
+  useEffect(() => {
+    if (!googleApiLoaded || !mapRef.current) return;
+  
+    const validFields = filteredFields.filter(field => isValidBoundary(field.boundary));
+    if (validFields.length > 0) {
+      calculateMapBounds(validFields, mapRef.current);
+    }
+  }, [filteredFields, googleApiLoaded]);  
 
   const fetchFields = async () => {
     try {
@@ -73,16 +87,7 @@ const FieldsMapView = () => {
       setFields(response.data);
       setFilteredFields(response.data);
       
-      // Center map on the first field with valid coordinates if available
-      if (response.data.length > 0) {
-        const validField = response.data.find(field => isValidBoundary(field.boundary));
-        if (validField) {
-          const centerPoint = extractCenterPoint(validField.boundary);
-          if (centerPoint) {
-            setMapCenter(centerPoint);
-          }
-        }
-      }
+      // We'll calculate bounds after Google Maps API is loaded
     } catch (error) {
       console.error("Error fetching fields:", error);
       toast.error("Failed to fetch fields.");
@@ -90,6 +95,27 @@ const FieldsMapView = () => {
       setLoading(false);
     }
   };
+
+  const calculateMapBounds = (fieldsToFit, map) => {
+    if (!googleApiLoaded || !googleMapsRef.current || !map) return;
+  
+    const bounds = new googleMapsRef.current.maps.LatLngBounds();
+  
+    fieldsToFit.forEach(field => {
+      const paths = extractPolygonPaths(field.boundary);
+      if (paths.length > 0) {
+        paths.forEach(path => {
+          bounds.extend(path);
+        });
+      }
+    });
+  
+    // ✅ Apply bounds immediately
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds);
+    }
+  };
+  
 
   const fetchCropOptions = async () => {
     try {
@@ -104,21 +130,37 @@ const FieldsMapView = () => {
     }
   };
 
-// In the FieldsMapView component
-
-const fetchWeatherData = async () => {
+  const fetchWeatherForFields = async () => {
+    setLoadingWeather(true);
+    const weatherResults = {};
+    
     try {
-      const response = await api.get("/weather/forecast", {
-        headers: {
-          'x-coordinates-lat': mapCenter.lat.toString(),
-          'x-coordinates-lng': mapCenter.lng.toString(),
+      // Get weather data for each field
+      for (const field of filteredFields) {
+        if (!isValidBoundary(field.boundary)) continue;
+        
+        const centerPoint = extractCenterPoint(field.boundary);
+        if (!centerPoint) continue;
+        
+        try {
+          const response = await api.get("/weather/forecast", {
+            headers: {
+              'x-coordinates-lat': centerPoint.lat.toString(),
+              'x-coordinates-lng': centerPoint.lng.toString(),
+            }
+          });
+          weatherResults[field.id] = response.data;
+        } catch (error) {
+          console.error(`Failed to get weather for field ${field.id}:`, error);
         }
-      });
-      setWeatherData(response.data);
+      }
+      
+      setWeatherData(weatherResults);
     } catch (error) {
       console.error("Error fetching weather data:", error);
       toast.error("Failed to load weather data.");
-      setShowWeatherLayer(false);
+    } finally {
+      setLoadingWeather(false);
     }
   };
 
@@ -282,6 +324,30 @@ const fetchWeatherData = async () => {
     );
   };
 
+  const renderWeatherInfo = (fieldId, position) => {
+    const weather = weatherData[fieldId];
+    if (!weather) return null;
+    
+    return (
+      <div 
+        className="bg-white p-2 rounded shadow-lg text-center"
+        style={{ minWidth: "120px" }}
+      >
+        <h4 className="text-sm font-bold">{weather.name}</h4>
+        <div className="flex items-center justify-center">
+          <span className="text-xl">{Math.round(weather.main.temp)}°C</span>
+          <img 
+            src={`https://openweathermap.org/img/w/${weather.weather[0].icon}.png`} 
+            alt={weather.weather[0].description}
+            className="w-8 h-8"
+          />
+        </div>
+        <p className="text-xs capitalize">{weather.weather[0].description}</p>
+        <p className="text-xs">Wind: {weather.wind.speed} m/s</p>
+      </div>
+    );
+  };
+
   const containerStyle = {
     width: "100%",
     height: "75vh",
@@ -293,6 +359,18 @@ const fetchWeatherData = async () => {
     mapTypeControl: true,
     zoomControl: true,
     fullscreenControl: true,
+  };
+
+  // Handle Google Maps API Load
+  const handleGoogleApiLoaded = (google) => {
+    googleMapsRef.current = google;
+    setGoogleApiLoaded(true);
+    
+    // Now that Google Maps is loaded, we can calculate bounds
+    const validFields = filteredFields.filter(field => isValidBoundary(field.boundary));
+    if (validFields.length > 0) {
+      calculateMapBounds(validFields, mapRef.current);
+    }
   };
 
   if (!canReadFields) {
@@ -330,7 +408,9 @@ const fetchWeatherData = async () => {
                     onIcon="pi pi-cloud"
                     offIcon="pi pi-cloud"
                     className="mr-2"
+                    disabled={loadingWeather}
                   />
+                  {loadingWeather && <ProgressSpinner style={{ width: '20px', height: '20px' }} />}
                 </div>
                 
                 <Button
@@ -363,27 +443,24 @@ const fetchWeatherData = async () => {
                     onClick={() => setSelectedField(null)}
                     onLoad={(map) => {
                       mapRef.current = map;
-                      
-                      // Add weather layer if enabled
-                      if (showWeatherLayer) {
-                        const weatherLayer = new google.maps.weather.WeatherLayer({
-                          temperatureUnits: google.maps.weather.TemperatureUnit.CELSIUS,
-                          windSpeedUnits: google.maps.weather.WindSpeedUnit.KILOMETERS_PER_HOUR
-                        });
-                        weatherLayer.setMap(map);
-                        
-                        const cloudLayer = new google.maps.weather.CloudLayer();
-                        cloudLayer.setMap(map);
+                      handleGoogleApiLoaded({ maps: window.google.maps });
+                    
+                      const validFields = filteredFields.filter(field => isValidBoundary(field.boundary));
+                    
+                      if (validFields.length > 0) {
+                        calculateMapBounds(validFields, map);
                       }
                     }}
+                    
                   >
-                    {filteredFields.map((field) => {
+                    {googleApiLoaded && filteredFields.map((field) => {
                       if (!isValidBoundary(field.boundary)) return null;
                       
                       const polygonPaths = extractPolygonPaths(field.boundary);
                       if (polygonPaths.length < 3) return null; // Need at least 3 points for a polygon
                       
                       const fieldColor = getRandomColor(field.id);
+                      const centerPoint = extractCenterPoint(field.boundary);
                       
                       return (
                         <React.Fragment key={field.id}>
@@ -398,6 +475,33 @@ const fetchWeatherData = async () => {
                             }}
                             onClick={() => handleFieldClick(field)}
                           />
+                          
+                          {/* Field name marker */}
+                          {centerPoint && (
+                            <Marker
+                              position={centerPoint}
+                              label={{
+                                text: field.name,
+                                color: "#FFFFFF",
+                                fontWeight: "bold",
+                                fontSize: "12px",
+                              }}
+                              icon={{
+                                url: "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3C%2Fsvg%3E",
+                                scaledSize: new googleMapsRef.current.maps.Size(1, 1),
+                              }}
+                            />
+                          )}
+                          
+                          {/* Show weather info if enabled */}
+                          {showWeatherLayer && centerPoint && weatherData[field.id] && (
+                            <InfoWindow
+                              position={centerPoint}
+                              options={{ pixelOffset: new googleMapsRef.current.maps.Size(0, -20) }}
+                            >
+                              {renderWeatherInfo(field.id, centerPoint)}
+                            </InfoWindow>
+                          )}
                           
                           {selectedField && selectedField.id === field.id && (
                             <InfoWindow
@@ -421,11 +525,11 @@ const fetchWeatherData = async () => {
                     })}
                     
                     {/* User location marker */}
-                    {userLocation && (
+                    {googleApiLoaded && userLocation && (
                       <Marker
                         position={userLocation}
                         icon={{
-                          path: google.maps.SymbolPath.CIRCLE,
+                          path: googleMapsRef.current.maps.SymbolPath.CIRCLE,
                           scale: 10,
                           fillColor: "#4285F4",
                           fillOpacity: 1,
@@ -434,28 +538,6 @@ const fetchWeatherData = async () => {
                         }}
                         title="Your Location"
                       />
-                    )}
-                    
-                    {/* Weather data display */}
-                    {showWeatherLayer && weatherData && (
-                      <InfoWindow
-                        position={mapCenter}
-                        options={{ pixelOffset: new google.maps.Size(0, -40) }}
-                      >
-                        <div className="p-2 text-center">
-                          <h4 className="font-bold">{weatherData.name}</h4>
-                          <p className="text-lg">
-                            {weatherData.main.temp}°C
-                            <img 
-                              src={`http://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`} 
-                              alt={weatherData.weather[0].description}
-                              className="inline ml-2"
-                            />
-                          </p>
-                          <p>{weatherData.weather[0].description}</p>
-                          <p>Wind: {weatherData.wind.speed} m/s</p>
-                        </div>
-                      </InfoWindow>
                     )}
                   </GoogleMap>
                 </LoadScript>
@@ -511,6 +593,24 @@ const fetchWeatherData = async () => {
                   <p><strong>Current Crop:</strong> {
                     selectedField.crop ? selectedField.crop.name : "Not specified"
                   }</p>
+                  
+                  {showWeatherLayer && weatherData[selectedField.id] && (
+                    <div className="mt-4 p-3 bg-gray-100 rounded">
+                      <h5>Weather Conditions</h5>
+                      <div className="flex items-center">
+                        <img 
+                          src={`https://openweathermap.org/img/w/${weatherData[selectedField.id].weather[0].icon}.png`} 
+                          alt="Weather icon"
+                        />
+                        <div>
+                          <p><strong>Temperature:</strong> {Math.round(weatherData[selectedField.id].main.temp)}°C</p>
+                          <p><strong>Conditions:</strong> {weatherData[selectedField.id].weather[0].description}</p>
+                          <p><strong>Wind:</strong> {weatherData[selectedField.id].wind.speed} m/s</p>
+                          <p><strong>Humidity:</strong> {weatherData[selectedField.id].main.humidity}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="col-6">
                   <h5>Recent Activity</h5>

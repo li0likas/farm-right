@@ -22,11 +22,13 @@ const CreateFieldPage = () => {
     const [fieldBoundary, setFieldBoundary] = useState(null);
     const [fieldArea, setFieldArea] = useState("");
     const [fieldPerimeter, setFieldPerimeter] = useState("");
+    const [existingFields, setExistingFields] = useState([]);
 
     useEffect(() => {
         if (!hasPermission("FIELD_CREATE")) return;
         fetchCropOptions();
-    }, [permissions]);
+        fetchExistingFields(); // ✅ Add this line
+      }, [permissions]);      
 
     const fetchCropOptions = async () => {
         try {
@@ -44,6 +46,15 @@ const CreateFieldPage = () => {
         }
         return true;
     };
+
+    const fetchExistingFields = async () => {
+        try {
+          const response = await api.get("/fields");
+          setExistingFields(response.data);
+        } catch (error) {
+          toast.error("Failed to load existing fields.");
+        }
+      };      
 
     const createField = async () => {
         if (!hasPermission("FIELD_CREATE")) return;
@@ -95,7 +106,12 @@ const CreateFieldPage = () => {
                     {/* Field Boundary Drawing */}
                     <div className="mb-4">
                         <label className="block font-bold mb-2">Draw Field Boundary</label>
-                        <GoogleMapDraw setBoundary={setFieldBoundary} setFieldArea={setFieldArea} setFieldPerimeter={setFieldPerimeter} />
+                        <GoogleMapDraw
+                        setBoundary={setFieldBoundary}
+                        setFieldArea={setFieldArea}
+                        setFieldPerimeter={setFieldPerimeter}
+                        existingFields={existingFields}
+                        />
                     </div>
 
                     {/* Field Area & Perimeter */}
