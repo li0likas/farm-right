@@ -28,4 +28,20 @@ export class MailService {
       },
     });
   }
+
+  async sendFarmInvitation(user: User, token: string, farmName: string) {
+    const baseUrl = this.configService.get<string>('app.baseUrl') || 'http://localhost:3000';
+    const url = `${baseUrl}/invitation/${token}`;
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: `You're invited to join ${farmName}`,
+      template: './farmInvitation',
+      context: {
+        name: user.username || user.email.split('@')[0],
+        farmName,
+        url,
+      },
+    });
+  }
 }

@@ -75,6 +75,14 @@ const RegisterPage = () => {
             });
 
             toast.success('Successful registration');
+            
+            // Check if there's a pending invitation
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+                toast.info('Please log in to accept your invitation');
+            }
+            
+            // Redirect to login page
             setTimeout(() => {
                 router.push('/auth/login');
             }, 2000);

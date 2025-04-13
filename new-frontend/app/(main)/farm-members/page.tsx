@@ -10,20 +10,30 @@ import { Column } from "primereact/column";
 import { toast } from "sonner";
 import { Dialog } from "primereact/dialog";
 import { getUser } from "@/utils/user";
-import api from "@/utils/api"; // ✅ Use API interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
+import api from '@/utils/api'; // ✅ Use API instance with interceptor
+import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
+import InvitationForm from "@/app/components/InvitationForm"; // Import the InvitationForm component
 
-type Member = {
+interface Member {
   id: number;
   username: string;
   email: string;
   role: string;
   roleId: number;
-};
+}
 
 const FarmMembersPage = () => {
   const router = useRouter();
   const { hasPermission, permissions } = usePermissions(); // ✅ Get user permissions
+
+  // ✅ Permission checks
+  const canRead = hasPermission("FARM_MEMBER_READ");
+  const canInvite = hasPermission("FARM_MEMBER_INVITE");
+  const canUpdateRole = hasPermission("FARM_MEMBER_UPDATE_ROLE");
+  const canDelete = hasPermission("FARM_MEMBER_REMOVE");
+
+  // ✅ Hide "Actions" column if the user can't edit or delete
+  const showActionsColumn = canUpdateRole || canDelete;
 
   const [members, setMembers] = useState<Member[]>([]);
   const [roles, setRoles] = useState<{ label: string; value: number }[]>([]);
@@ -31,12 +41,7 @@ const FarmMembersPage = () => {
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<number | null>(null);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-
-  // ✅ Permission Helpers
-  const canRead = hasPermission("FARM_MEMBER_READ");
-  const canInvite = hasPermission("FARM_MEMBER_INVITE");
-  const canUpdate = hasPermission("FARM_MEMBER_UPDATE_ROLE");
-  const canDelete = hasPermission("FARM_MEMBER_REMOVE");
+  const [inviteDialogVisible, setInviteDialogVisible] = useState(false);
 
   useEffect(() => {
     const user = getUser();
@@ -45,7 +50,7 @@ const FarmMembersPage = () => {
     }
 
     if (canRead) fetchMembers();
-    if (canUpdate) fetchRoles();
+    if (canUpdateRole) fetchRoles();
   }, [permissions]); // ✅ Fetch only after permissions load
 
   const fetchMembers = async () => {
@@ -106,6 +111,10 @@ const FarmMembersPage = () => {
     }
   };
 
+  const handleInviteMember = () => {
+    setInviteDialogVisible(true);
+  };
+
   // ✅ Hide entire page if user lacks `FARM_MEMBER_READ`
   if (!canRead) {
     return (
@@ -119,9 +128,11 @@ const FarmMembersPage = () => {
     <div className="container mx-auto p-6">
       <Card title="Farm Members" className="mb-6">
 
-        {/* ✅ Show "Add Member" Button Only If User Has `FARM_MEMBER_INVITE` */}
+        {/* ✅ Show "Invite Member" Button If User Has `FARM_MEMBER_INVITE` */}
         {canInvite && (
-          <Button label="Add Member" className="p-button-success mb-4" onClick={() => setVisible(true)} />
+          <div className="flex gap-2 mb-4">
+            <Button label="Invite by Email" className="p-button-info" onClick={handleInviteMember} icon="pi pi-envelope" />
+          </div>
         )}
 
         {/* Members Table */}
@@ -156,7 +167,7 @@ const FarmMembersPage = () => {
                   ) : (
                     <>
                       <span>{rowData.role || "Unknown Role"}</span>
-                      {canUpdate && !isCurrentUser && (
+                      {canUpdateRole && !isCurrentUser && (
                         <Button 
                           icon="pi pi-pencil" 
                           className="p-button-sm p-button-text" 
@@ -203,6 +214,13 @@ const FarmMembersPage = () => {
       >
         <p>Are you sure you want to remove this member?</p>
       </Dialog>
+
+      {/* Invitation Form Dialog */}
+      <InvitationForm 
+        visible={inviteDialogVisible} 
+        onHide={() => setInviteDialogVisible(false)} 
+        onSuccess={fetchMembers}
+      />
     </div>
   );
 };

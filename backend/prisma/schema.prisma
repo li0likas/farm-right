@@ -47,6 +47,7 @@ model Role {
   name            String          @unique
   farmMembers     FarmMember[]
   farmPermissions FarmRolePermission[]
+  invitations     FarmInvitation[]
 }
 
 model Permission {
@@ -77,6 +78,22 @@ model Farm {
   rolePermissions FarmRolePermission[]
   equipments      Equipment[]
   seasons         Season[]
+  invitations     FarmInvitation[]
+}
+
+model FarmInvitation {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  farmId    Int
+  roleId    Int
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  farm      Farm     @relation(fields: [farmId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@index([email])
 }
 
 model FarmMember {

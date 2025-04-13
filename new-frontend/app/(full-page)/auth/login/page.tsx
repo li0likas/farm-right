@@ -27,7 +27,14 @@ const LoginPage = () => {
 
     useEffect(() => {
         if (isLoggedIn()) {
-            router.push('/dashboard');
+            const pendingInvitation = localStorage.getItem('pendingInvitation');
+            if (pendingInvitation) {
+                // User is logged in and has a pending invitation
+                toast.info("Processing your invitation...");
+                router.push(`/invitation/${pendingInvitation}`);
+            } else {
+                router.push('/dashboard');
+            }
         }
     }, []);
 

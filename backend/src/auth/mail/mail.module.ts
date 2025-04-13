@@ -5,6 +5,12 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
 import { MailService } from './mail.service';
 import { join } from 'path';
 
+// 🔥 Add this
+const isProd = process.env.NODE_ENV === 'production';
+const templatesDir = isProd
+  ? join(__dirname, 'templates')
+  : join(process.cwd(), 'src', 'auth', 'mail', 'templates');
+
 @Module({
   imports: [
     ConfigModule,
@@ -25,7 +31,7 @@ import { join } from 'path';
           from: config.get<string>('email.from') || '"No Reply" <noreply@gmail.com>',
         },
         template: {
-          dir: join(__dirname, 'templates'),
+          dir: templatesDir, // 🔥 Use the dynamic path here
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
