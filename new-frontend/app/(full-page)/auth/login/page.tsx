@@ -51,40 +51,56 @@ const LoginPage = () => {
     
         setLoading(true);
         try {
-            const response = await api.post('/auth/signin', {
-                username,
-                password
-            });
-
-            const { access_token, farms } = response.data;
-
-            console.log("🔑 Access Token:", access_token);
-            console.log("🏡 Farms Data:", farms);
-
-            // call login() function
-            const success = await handleLogin(access_token);
-
-            if (success) {
-                if (farms.length === 1) {
-                    // auto-select farm and proceed
-                    localStorage.setItem('x-selected-farm-id', farms[0].farmId);
-                    toast.success(`Welcome to ${farms[0].farmName}`);
-                    router.push('/dashboard');
-                } else {
-                    // show farm selection
-                    setFarms(farms);
-                }
-            } else {
-                toast.error("Failed to log in.");
+        const response = await api.post('/auth/signin', {
+            username,
+            password
+        });
+    
+        const { access_token, farms } = response.data;
+    
+        // Call login() function
+        const success = await handleLogin(access_token);
+    
+        if (success) {
+            try {
+            // Check for pending invitations after successful login
+            const invitationsResponse = await api.get('/farm-invitations/check-pending');
+            const pendingInvitations = invitationsResponse.data;
+            
+            if (pendingInvitations && pendingInvitations.length > 0) {
+                // Store the first invitation token
+                localStorage.setItem('pendingInvitation', pendingInvitations[0].token);
+                toast.info(`You have a pending invitation to join ${pendingInvitations[0].farmName}`);
+                
+                // Redirect to the invitation page
+                router.push(`/invitation/${pendingInvitations[0].token}`);
+                return;
             }
-        } catch (error: unknown) {
-            if (error.response?.status === 401 && error.response?.data?.message === "Incorrect credentials") {
-                toast.error('Incorrect credentials');
-            } else {
-                toast.error(`An error has occurred: ${error.message}`);
+            } catch (error) {
+            console.error("Error checking pending invitations:", error);
+            // Continue with login flow even if invitation check fails
             }
+            
+            if (farms.length === 1) {
+            // auto-select farm and proceed
+            localStorage.setItem('x-selected-farm-id', farms[0].farmId);
+            toast.success(`Welcome to ${farms[0].farmName}`);
+            router.push('/dashboard');
+            } else {
+            // show farm selection
+            setFarms(farms);
+            }
+        } else {
+            toast.error("Failed to log in.");
+        }
+        } catch (error) {
+        if (error.response?.status === 401 && error.response?.data?.message === "Incorrect credentials") {
+            toast.error('Incorrect credentials');
+        } else {
+            toast.error(`An error has occurred: ${error.message}`);
+        }
         } finally {
-            setLoading(false);
+        setLoading(false);
         }
     };
 

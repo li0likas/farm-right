@@ -21,9 +21,52 @@ const InvitationPage = () => {
   const [error, setError] = useState('');
   const [alreadyMember, setAlreadyMember] = useState(false);
 
-  useEffect(() => {
-    verifyInvitation();
+// new-frontend/app/(full-page)/invitation/[token]/page.tsx
+// Update the useEffect hook at the top
+
+useEffect(() => {
+    // Only verify invitation details, don't accept automatically
+    if (token) {
+      verifyInvitationDetails();
+    }
   }, [token]);
+  
+  // Add this new function that only checks invitation details without accepting
+  const verifyInvitationDetails = async () => {
+    if (!token) return;
+    
+    setLoading(true);
+    try {
+      // Make a GET request to verify the invitation only (not accept it)
+      // We'll modify the controller to handle this verification without accepting
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}/details`,
+        isLoggedIn() ? {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        } : {}
+      );
+      
+      setInvitationData(response.data);
+      
+      // If response indicates user is already a member
+      if (response.data.alreadyMember || response.data.alreadyProcessed) {
+        setAlreadyMember(true);
+      }
+      
+      // If user is not logged in and this invitation requires registration
+      if (response.data.requiresRegistration && !isLoggedIn()) {
+        toast.info("Please register or log in to accept this invitation");
+      }
+      
+    } catch (error) {
+      console.error('Error verifying invitation:', error);
+      setError('This invitation is invalid or has expired.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const verifyInvitation = async () => {
     if (!token) return;

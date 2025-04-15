@@ -211,6 +211,28 @@ export class FarmInvitationService {
     }
   }
 
+  async getPendingInvitationsByEmail(email: string) {
+    const pendingInvitations = await this.prisma.farmInvitation.findMany({
+      where: { 
+        email,
+        expiresAt: { gt: new Date() }
+      },
+      include: {
+        farm: true,
+        role: true
+      }
+    });
+
+    return pendingInvitations.map(invitation => ({
+      id: invitation.id,
+      token: invitation.token,
+      farmId: invitation.farmId,
+      farmName: invitation.farm.name,
+      roleName: invitation.role.name,
+      expiresAt: invitation.expiresAt
+    }));
+  }
+
   private async sendInvitationEmail(email: string, token: string, farmName: string) {
     const baseUrl = this.configService.get<string>('app.baseUrl') || 'http://localhost:3000';
     const invitationUrl = `${baseUrl}/invitation/${token}`;

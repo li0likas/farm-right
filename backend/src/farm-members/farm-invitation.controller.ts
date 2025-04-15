@@ -23,6 +23,13 @@ export class FarmInvitationController {
     return this.farmInvitationService.createInvitation(selectedFarmId, email, roleId);
   }
 
+  @Get('check-pending')
+  @UseGuards(AuthGuard('jwt'))
+  async checkPendingInvitations(@Request() req) {
+    const user = req.user;
+    return this.farmInvitationService.getPendingInvitationsByEmail(user.email);
+  }
+
   @Get(':token')
   async verifyInvitation(@Param('token') token: string) {
     try {
