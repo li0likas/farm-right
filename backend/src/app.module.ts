@@ -16,6 +16,7 @@ import { EquipmentModule } from './equipment/equipment.module';
 import { EquipmentTypeOptionsModule } from './equipment/equipmentTypeOptions/equipmentTypeOptions.module';
 import { RolesModule } from './roles/roles.module';
 import { SeasonModule } from './season/season.module';
+import { FarmModule } from './farm/farm.module';
 import { ReportModule } from './report/report.module';
 import configuration from './config/configuration';
 import * as Joi from 'joi';
@@ -56,6 +57,7 @@ import * as Joi from 'joi';
     FarmMembersModule,
     RolesModule,
     SeasonModule,
+    FarmModule,
     ReportModule
   ],
   controllers: [],

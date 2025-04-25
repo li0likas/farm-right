@@ -85,131 +85,95 @@ export class FarmInvitationService {
     return invitation;
   }
 
-  async acceptInvitation(token: string) {
-    try {
-      // Verify and decode the token
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.jwtSecret,
-      });
-
-      // Check if this is a valid farm invitation token
-      if (payload.type !== 'farm-invitation') {
-        throw new ForbiddenException('Invalid invitation token');
-      }
-
-      // Extract information from the token
-      const { email, farmId, roleId } = payload;
-
-      // Check if invitation still exists in database
-      const invitation = await this.prisma.farmInvitation.findFirst({
-        where: { token },
-        include: { farm: true },
-      });
-
-      // If the invitation doesn't exist in the database anymore
-      if (!invitation) {
-        // Check if the user with this email is already a farm member
-        // using the information from the token
-        const user = await this.prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (user) {
-          const existingMember = await this.prisma.farmMember.findFirst({
-            where: { userId: user.id, farmId },
-          });
-
-          if (existingMember) {
-            // Find farm name
-            const farm = await this.prisma.farm.findUnique({
-              where: { id: farmId },
-            });
-
-            // User is already a member
-            return { 
-              success: true, 
-              message: 'You are already a member of this farm',
-              farmName: farm?.name || 'the farm',
-              alreadyProcessed: true
-            };
-          }
-        }
-
-        // If we get here, the invitation was deleted but user is not a member
-        throw new NotFoundException('Invitation not found');
-      }
-
-      // Check if invitation has expired
-      if (new Date() > invitation.expiresAt) {
-        throw new ForbiddenException('Invitation has expired');
-      }
-
-      // Find the user
-      const user = await this.prisma.user.findUnique({
-        where: { email: invitation.email },
-      });
-
-      // Check if user already joined the farm
-      if (user) {
-        const existingMember = await this.prisma.farmMember.findFirst({
-          where: { userId: user.id, farmId: invitation.farmId },
-        });
-
-        if (existingMember) {
-          // Delete the invitation since it's been used
-          await this.prisma.farmInvitation.delete({
-            where: { id: invitation.id },
-          });
-          
-          return { 
-            success: true, 
-            message: 'You are already a member of this farm',
-            farmName: invitation.farm.name,
-            alreadyMember: true
-          };
-        }
-      }
-
-      // If user doesn't exist, they need to register first
-      if (!user) {
-        return {
-          success: false,
-          message: 'Please register an account with this email first',
-          requiresRegistration: true,
-          email: invitation.email,
-          farmId: invitation.farmId,
-          farmName: invitation.farm.name
-        };
-      }
-
-      // Add user to farm
-      await this.prisma.farmMember.create({
-        data: {
-          userId: user.id,
-          farmId: invitation.farmId,
-          roleId: invitation.roleId,
-        },
-      });
-
-      // Delete the invitation since it's been used
-      await this.prisma.farmInvitation.delete({
-        where: { id: invitation.id },
-      });
-
-      return { 
-        success: true, 
-        message: `You have successfully joined ${invitation.farm.name}`,
-        farmName: invitation.farm.name,
-        justAccepted: true
-      };
-    } catch (error) {
-      if (error instanceof ForbiddenException || error instanceof NotFoundException) {
-        throw error;
-      }
-      
-      throw new ForbiddenException('Invalid or expired invitation token');
+  async acceptInvitation(token: string, user: any) {
+    const invitation = await this.prisma.farmInvitation.findFirst({
+      where: { token },
+      include: { farm: true },
+    });
+  
+    if (!invitation) {
+      throw new NotFoundException('Invitation not found');
+    }    
+  
+    if (new Date() > invitation.expiresAt) {
+      throw new ForbiddenException('Invitation has expired');
     }
+  
+    if (user.email !== invitation.email) {
+      throw new ForbiddenException('This invitation is not for your email address');
+    }
+  
+    const existingMember = await this.prisma.farmMember.findFirst({
+      where: {
+        userId: user.id,
+        farmId: invitation.farmId,
+      },
+    });
+  
+    if (existingMember) {
+      await this.prisma.farmInvitation.delete({ where: { id: invitation.id } });
+  
+      return {
+        success: true,
+        message: 'You are already a member of this farm',
+        farmName: invitation.farm.name,
+        alreadyMember: true,
+      };
+    }
+  
+    await this.prisma.farmMember.create({
+      data: {
+        userId: user.id,
+        farmId: invitation.farmId,
+        roleId: invitation.roleId,
+      },
+    });
+  
+    await this.prisma.farmInvitation.delete({
+      where: { id: invitation.id },
+    });
+  
+    return {
+      success: true,
+      message: `You have successfully joined ${invitation.farm.name}`,
+      farmName: invitation.farm.name,
+      justAccepted: true,
+    };
   }
+  
+
+  async verifyInvitation(token: string) {
+    const invitation = await this.prisma.farmInvitation.findFirst({
+      where: { token },
+      include: { farm: true },
+    });
+  
+    if (!invitation) throw new NotFoundException('Invitation not found');
+    if (new Date() > invitation.expiresAt) {
+      throw new ForbiddenException('Invitation has expired');
+    }
+  
+    const user = await this.prisma.user.findUnique({
+      where: { email: invitation.email },
+    });
+  
+    const alreadyProcessed = user
+      ? await this.prisma.farmMember.findFirst({
+          where: {
+            userId: user.id,
+            farmId: invitation.farmId,
+          },
+        })
+      : null;
+  
+    return {
+      success: true,
+      farmName: invitation.farm.name,
+      email: invitation.email,
+      alreadyProcessed: !!alreadyProcessed,
+      requiresRegistration: !user,
+    };
+  }  
 
   async getPendingInvitationsByEmail(email: string) {
     const pendingInvitations = await this.prisma.farmInvitation.findMany({

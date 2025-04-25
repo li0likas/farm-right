@@ -9,7 +9,7 @@ import { Divider } from 'primereact/divider';
 import { toast } from 'sonner';
 import axios from 'axios';
 import Link from 'next/link';
-import { login, isLoggedIn } from '@/utils/auth';
+import { isLoggedIn } from '@/utils/auth';
 
 const InvitationPage = () => {
   const { token } = useParams();
@@ -21,15 +21,20 @@ const InvitationPage = () => {
   const [error, setError] = useState('');
   const [alreadyMember, setAlreadyMember] = useState(false);
 
-// new-frontend/app/(full-page)/invitation/[token]/page.tsx
-// Update the useEffect hook at the top
-
-useEffect(() => {
+  useEffect(() => {
     // Only verify invitation details, don't accept automatically
     if (token) {
       verifyInvitationDetails();
     }
   }, [token]);
+
+  useEffect(() => {
+    if (error) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('pendingInvitation');
+      }
+    }
+  }, [error]);
   
   // Add this new function that only checks invitation details without accepting
   const verifyInvitationDetails = async () => {
@@ -40,7 +45,7 @@ useEffect(() => {
       // Make a GET request to verify the invitation only (not accept it)
       // We'll modify the controller to handle this verification without accepting
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}/details`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}/verify`,
         isLoggedIn() ? {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('accessToken')}`
@@ -68,161 +73,90 @@ useEffect(() => {
     }
   };
 
-  const verifyInvitation = async () => {
-    if (!token) return;
-    
-    setLoading(true);
-    try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}`
-      );
-      
-      setInvitationData(response.data);
-      
-      // If response indicates user is already a member
-      if (response.data.alreadyMember || response.data.alreadyProcessed) {
-        setAlreadyMember(true);
-      }
-      
-      // If user is not logged in and this invitation requires registration
-      if (response.data.requiresRegistration && !isLoggedIn()) {
-        toast.info("Please register or log in to accept this invitation");
-      }
-      
-    } catch (error) {
-      console.error('Error verifying invitation:', error);
-      
-      // If the error is 404, check if the token has information about being a member
-      if (error.response?.status === 404) {
-        try {
-          // Try to decode the token locally to see if it's a valid invitation
-          const tokenParts = token.split('.');
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(atob(tokenParts[1]));
-            if (payload.type === 'farm-invitation' && payload.farmId) {
-              // Check if user is already a member of this farm
-              if (isLoggedIn()) {
-                const userFarmsResponse = await axios.get(
-                  `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`,
-                  {
-                    headers: {
-                      Authorization: `Bearer ${localStorage.getItem('accessToken')}`
-                    }
-                  }
-                );
-                
-                const farms = userFarmsResponse.data;
-                const isMember = farms.some((farm: any) => farm.id === payload.farmId);
-                
-                if (isMember) {
-                  setAlreadyMember(true);
-                  setInvitationData({
-                    success: true,
-                    message: 'You are already a member of this farm',
-                    alreadyMember: true,
-                    farmId: payload.farmId,
-                    farmName: farms.find((farm: any) => farm.id === payload.farmId)?.name || 'this farm'
-                  });
-                  setLoading(false);
-                  return;
-                }
-              }
-            }
-          }
-        } catch (e) {
-          // If error in token decoding, continue with normal error handling
-          console.error('Error decoding token:', e);
-        }
-      }
-      
-      setError('This invitation is invalid or has expired.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAcceptInvitation = async () => {
     if (!token) return;
-    
+  
     setProcessing(true);
     try {
       // Check if user is logged in
       if (!isLoggedIn()) {
-        // Save invitation token to localStorage
         localStorage.setItem('pendingInvitation', token as string);
-        
-        // Redirect to login/registration
         router.push('/auth/login');
         return;
       }
-      
-      // If we already know the user is a member, just redirect to dashboard
+  
+      // If already a member, just redirect
       if (alreadyMember) {
+        localStorage.removeItem('pendingInvitation'); // ✅ clean up if already member
         router.push('/dashboard');
         return;
       }
-      
+  
       // Accept the invitation
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+          }
         }
-      });
-      
+      );
+  
       // Update invitation data
       setInvitationData(response.data);
-      
-      // Check if user was already a member
+  
       if (response.data.alreadyMember) {
         setAlreadyMember(true);
         toast.info(`You are already a member of ${response.data.farmName || 'this farm'}`);
+        localStorage.removeItem('pendingInvitation'); // ✅ clean up
       } else {
-        // Show success message for new members
         toast.success(`You have successfully joined ${response.data.farmName || 'the farm'}!`);
+        localStorage.removeItem('pendingInvitation'); // ✅ clean up
       }
-      
-      // Refresh user data - use a different endpoint without the token
+  
+      // Refresh user's farms
       const userResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('accessToken')}`
         }
       });
-      
-      // Update farm selection
+  
       if (userResponse.data && userResponse.data.length > 0) {
         const newFarm = userResponse.data.find((farm: any) => farm.name === response.data.farmName);
         if (newFarm) {
           localStorage.setItem('x-selected-farm-id', newFarm.id.toString());
         }
       }
-      
-      // Redirect to dashboard after a short delay
+  
       setTimeout(() => {
         router.push('/dashboard');
       }, 1500);
-      
+  
     } catch (error) {
       console.error('Error accepting invitation:', error);
-      
-      // Special handling for different error cases
-      if (error.response?.status === 404) {
+  
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
         if (invitationData?.success) {
-          // This is fine - the invitation was already processed
           toast.info(`You are already a member of ${invitationData.farmName || 'this farm'}`);
+          localStorage.removeItem('pendingInvitation'); // ✅ clean up even on fallback
           setTimeout(() => {
             router.push('/dashboard');
           }, 1500);
           return;
         }
-        
         setError('This invitation link is no longer valid. It may have been already used or expired.');
       } else {
-        toast.error('Failed to accept invitation: ' + (error.response?.data?.message || 'Unknown error'));
+        if (axios.isAxiosError(error)) {
+          toast.error('Failed to accept invitation: ' + (error.response?.data?.message || 'Unknown error'));
+        } else {
+          toast.error('Failed to accept invitation: Unknown error');
+        }
       }
     } finally {
       setProcessing(false);
     }
-  };
+  };  
 
   if (loading) {
     return (

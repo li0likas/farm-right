@@ -30,20 +30,16 @@ export class FarmInvitationController {
     return this.farmInvitationService.getPendingInvitationsByEmail(user.email);
   }
 
-  @Get(':token')
+  // 🔍 Only verify the invitation token (no login required)
+  @Get(':token/verify')
   async verifyInvitation(@Param('token') token: string) {
-    try {
-      return await this.farmInvitationService.acceptInvitation(token);
-    } catch (error) {
-      // Handle special case for already accepted invitations
-      if (error.message && error.message.includes('already a member')) {
-        return {
-          success: true,
-          message: error.message,
-          alreadyMember: true
-        };
-      }
-      throw error;
-    }
+    return this.farmInvitationService.verifyInvitation(token);
+  }
+
+  // ✅ Accept invitation (login required)
+  @Post(':token')
+  @UseGuards(AuthGuard('jwt'))
+  async acceptInvitation(@Param('token') token: string, @Request() req) {
+    return this.farmInvitationService.acceptInvitation(token, req.user);
   }
 }

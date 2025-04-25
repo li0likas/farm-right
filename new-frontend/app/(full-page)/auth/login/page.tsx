@@ -81,15 +81,16 @@ const LoginPage = () => {
             // Continue with login flow even if invitation check fails
             }
             
-            if (farms.length === 1) {
-            // auto-select farm and proceed
-            localStorage.setItem('x-selected-farm-id', farms[0].farmId);
-            toast.success(`Welcome to ${farms[0].farmName}`);
-            router.push('/dashboard');
-            } else {
-            // show farm selection
-            setFarms(farms);
-            }
+            if (farms.length === 0) {
+                toast.info('You have no farm yet, please create one');
+                router.push('/create-farm'); // your farm creation page
+              } else if (farms.length === 1) {
+                localStorage.setItem('x-selected-farm-id', farms[0].farmId);
+                toast.success(`Welcome to ${farms[0].farmName}`);
+                router.push('/dashboard');
+              } else {
+                setFarms(farms);
+              }              
         } else {
             toast.error("Failed to log in.");
         }

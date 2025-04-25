@@ -116,7 +116,7 @@ async function main() {
   const roles = await prisma.role.createMany({
     data: [
       { name: 'ADMIN' },
-      { name: 'FARMER' },
+      { name: 'OWNER' },
       { name: 'WORKER' },
       { name: 'AGRONOMIST' },
     ],
@@ -124,12 +124,12 @@ async function main() {
   });
 
   // Fetch created roles & permissions
-  const [adminRole, farmerRole, workerRole, agronomistRole] = await prisma.role.findMany();
+  const [adminRole, ownerRole, workerRole, agronomistRole] = await prisma.role.findMany();
   const allPermissions = await prisma.permission.findMany();
 
   // // Get created roles and permissions
   // const adminRole = await prisma.role.findUnique({ where: { name: 'ADMIN' } });
-  // const farmerRole = await prisma.role.findUnique({ where: { name: 'FARMER' } });
+  // const ownerRole = await prisma.role.findUnique({ where: { name: 'OWNER' } });
   // const workerRole = await prisma.role.findUnique({ where: { name: 'WORKER' } });
   // const agronomistRole = await prisma.role.findUnique({ where: { name: 'AGRONOMIST' } });
 
@@ -149,7 +149,7 @@ async function main() {
   // const adminAccessPermission = await prisma.permission.findUnique({ where: { name: 'ADMIN_ACCESS' } });
 
   // // Create roleRights
-  // if (adminRole && farmerRole && workerRole && agronomistRole && fieldCreatePermission && fieldReadPermission && fieldUpdatePermission && fieldDeletePermission && fieldTaskCreatePermission && fieldTaskReadPermission && fieldTaskUpdatePermission && fieldTaskDeletePermission && fieldTaskCommentCreatePermission && fieldTaskCommentReadPermission && fieldTaskCommentUpdatePermission && fieldTaskCommentDeletePermission && userManagePermission && adminAccessPermission) {
+  // if (adminRole && ownerRole && workerRole && agronomistRole && fieldCreatePermission && fieldReadPermission && fieldUpdatePermission && fieldDeletePermission && fieldTaskCreatePermission && fieldTaskReadPermission && fieldTaskUpdatePermission && fieldTaskDeletePermission && fieldTaskCommentCreatePermission && fieldTaskCommentReadPermission && fieldTaskCommentUpdatePermission && fieldTaskCommentDeletePermission && userManagePermission && adminAccessPermission) {
   //   await prisma.roleRight.createMany({
   //     data: [
   //       // ADMIN role rights
@@ -168,16 +168,16 @@ async function main() {
   //       { roleId: adminRole.id, permissionId: userManagePermission.id },
   //       { roleId: adminRole.id, permissionId: adminAccessPermission.id },
 
-  //       // FARMER role rights
-  //       { roleId: farmerRole.id, permissionId: fieldCreatePermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldReadPermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldUpdatePermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskCreatePermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskReadPermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskUpdatePermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskCommentCreatePermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskCommentReadPermission.id },
-  //       { roleId: farmerRole.id, permissionId: fieldTaskCommentUpdatePermission.id },
+  //       // OWNER role rights
+  //       { roleId: ownerRole.id, permissionId: fieldCreatePermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldReadPermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldUpdatePermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskCreatePermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskReadPermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskUpdatePermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskCommentCreatePermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskCommentReadPermission.id },
+  //       { roleId: ownerRole.id, permissionId: fieldTaskCommentUpdatePermission.id },
 
   //       // WORKER role rights
   //       { roleId: workerRole.id, permissionId: fieldReadPermission.id },
@@ -263,16 +263,16 @@ async function main() {
   //   }
   // });
 
-  // const farmerUser = await prisma.user.create({
+  // const ownerUser = await prisma.user.create({
   //   data: {
-  //     username: 'farmer',
-  //     email: 'farmer@example.com',
+  //     username: 'owner',
+  //     email: 'owner@example.com',
   //     password: "gvidas123",
   //     hash: "$argon2id$v=19$m=65536,t=3,p=4$PEoZK5Bd9h8TBCEutueP7g$BbbJCRqyBna3l0h8KGAd/p68NSzxU/sfsqGME7M+Y1A",
   //     // roles: {
   //     //   create: {
   //     //     role: {
-  //     //       connect: { id: farmerRole.id }
+  //     //       connect: { id: ownerRole.id }
   //     //     }
   //     //   }
   //     // }
@@ -353,7 +353,7 @@ async function main() {
   //     // roles: {
   //     //   create: {
   //     //     role: {
-  //     //       connect: { id: farmerRole.id }
+  //     //       connect: { id: ownerRole.id }
   //     //     }
   //     //   }
   //     // },
@@ -371,7 +371,7 @@ async function main() {
   const users = await prisma.user.createMany({
     data: [
       { username: 'admin', email: 'admin@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'farmer', email: 'farmer@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
+      { username: 'owner', email: 'owner@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
       { username: 'worker1', email: 'worker1@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
       { username: 'worker2', email: 'worker2@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
       { username: 'worker3', email: 'worker3@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
@@ -382,7 +382,7 @@ async function main() {
   });
 
   // ✅ Fetch created users
-  const [adminUser, farmerUser, workerUser1, workerUser2, workerUser3, agronomistUser, gvidasUser] = await prisma.user.findMany();
+  const [adminUser, ownerUser, workerUser1, workerUser2, workerUser3, agronomistUser, gvidasUser] = await prisma.user.findMany();
 
   // Create a new farm for user 'gvidas'
   const farm = await prisma.farm.create({
@@ -392,11 +392,11 @@ async function main() {
     },
   });
 
-  // Create a new farm for user 'farmer'
+  // Create a new farm for user 'owner'
   const farm2 = await prisma.farm.create({
     data: {
       name: 'Fermerio ūkis',
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
     },
   });
 
@@ -406,7 +406,7 @@ async function main() {
   // Assign Users to 'Garadausko ukis' Farm with Roles
   await prisma.farmMember.createMany({
     data: [
-      { userId: workerUser1.id, farmId: farm.id, roleId: farmerRole.id },
+      { userId: workerUser1.id, farmId: farm.id, roleId: ownerRole.id },
       { userId: workerUser2.id, farmId: farm.id, roleId: workerRole.id },
       { userId: agronomistUser.id, farmId: farm.id, roleId: agronomistRole.id },
       { userId: gvidasUser.id, farmId: farm.id, roleId: adminRole.id },
@@ -418,20 +418,20 @@ async function main() {
   await prisma.farmMember.createMany({
     data: [
       { userId: gvidasUser.id, farmId: farm2.id, roleId: agronomistRole.id },
-      { userId: farmerUser.id, farmId: farm2.id, roleId: farmerRole.id },
+      { userId: ownerUser.id, farmId: farm2.id, roleId: ownerRole.id },
     ],
     skipDuplicates: true
   });
 
   // Assign permissions to roles PER FARM
   for (const farm of farms) {
-    for (const role of [adminRole, farmerRole, workerRole, agronomistRole]) {
+    for (const role of [adminRole, ownerRole, workerRole, agronomistRole]) {
       // Get permissions for each role dynamically
       let rolePermissions: string[] = [];
 
       if (role.name === 'ADMIN') {
         rolePermissions = allPermissions.map((p) => p.name);
-      } else if (role.name === 'FARMER') {
+      } else if (role.name === 'OWNER') {
         rolePermissions = ['FIELD_CREATE', 'FIELD_READ', 'FIELD_UPDATE', 'FIELD_TASK_CREATE', 'FIELD_TASK_READ', 'FIELD_TASK_UPDATE', 'PERMISSION_READ', 'PERMISSION_ASSIGN', 'PERMISSION_REMOVE', 'FARM_MEMBER_CREATE', 'FARM_MEMBER_READ', 'FARM_MEMBER_UPDATE', 'FARM_MEMBER_DELETE'];
       } else if (role.name === 'WORKER') {
         rolePermissions = ['FIELD_READ', 'FIELD_TASK_READ', 'FIELD_TASK_COMMENT_CREATE', 'FIELD_TASK_COMMENT_READ'];
@@ -495,7 +495,7 @@ async function main() {
     data: {
       name: "Kuhn Vari-Master 153",
       typeId: plowType.id,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id,
     }
   });
@@ -504,7 +504,7 @@ async function main() {
     data: {
       name: "DON 1500-B",
       typeId: harvesterType.id,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id,
     }
   });
@@ -513,7 +513,7 @@ async function main() {
     data: {
       name: "Valtra T191h",
       typeId: tractorType.id,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id,
     }
   });
@@ -523,7 +523,7 @@ async function main() {
     data: {
       name: "Amazone ZA-TS 3200",
       typeId: fertilizerSpreaderType.id,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id,
     }
   });
@@ -532,7 +532,7 @@ async function main() {
     data: {
       name: "Horsch Cruiser XL 6000",
       typeId: cultivatorType.id,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id,
     }
   });
@@ -590,7 +590,7 @@ async function main() {
       area: 45.0,
       perimeter: 180.0,
       cropId: 3,
-      ownerId: farmerUser.id,
+      ownerId: ownerUser.id,
       farmId: farm2.id, // Assign to 'Fermerio ukis' farm
       boundary: {
         type: 'Polygon',

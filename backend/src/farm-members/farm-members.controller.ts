@@ -10,6 +10,12 @@ import { request } from 'http';
 export class FarmMembersController {
   constructor(private readonly farmMembersService: FarmMembersService) {}
 
+  @Delete(':farmId')
+  @UseGuards(AuthGuard('jwt'))
+  async leaveFarm(@Param('farmId') farmId: string, @Request() req) {
+    return this.farmMembersService.leaveFarm(req.user.id, parseInt(farmId));
+  }
+
   @Get()
   @Permissions('FARM_MEMBER_READ')
   async getFarmMembers(@Request() req) {
