@@ -10,6 +10,7 @@ import Link from "next/link";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api"; // ✅ API instance with interceptor
 import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
+import { useTranslations } from "next-intl"; // Import this
 
 interface Task {
     id: string;
@@ -23,7 +24,9 @@ interface Task {
 const Dashboard = () => {
     const { hasPermission } = usePermissions();
 
-    // ✅ Permission checks
+    const t = useTranslations('common');
+    const dt = useTranslations('dashboard');
+
     const canReadTasks = hasPermission("TASK_READ");
     const canReadTaskStats = hasPermission("TASK_STATS_READ");
     const canReadFields = hasPermission("FIELD_TOTAL_AREA_READ");
@@ -115,16 +118,15 @@ const Dashboard = () => {
     return (
         <ProtectedRoute>
             <div className="grid">
-
                 {/* AI Summary */}
                 {canReadAiSummary && (
                     <div className="col-12 lg:col-6 xl:col-6">
                         <div className="card mb-0">
                             <div className="flex justify-content-between mb-3">
                                 <div>
-                                    <span className="block text-500 font-medium mb-3">AI Summary</span>
+                                    <span className="block text-500 font-medium mb-3">{dt('aiSummary')}</span>
                                     <div className="text-900 font-medium text-base whitespace-pre-wrap">
-                                        {loadingInsight ? "Generating summary..." : aiInsight || "No summary available."}
+                                        {loadingInsight ? dt('generatingSummary') : aiInsight || dt('noSummaryAvailable')}
                                     </div>
                                 </div>
 
@@ -140,7 +142,7 @@ const Dashboard = () => {
                                         className="p-button-text p-button-sm"
                                         onClick={fetchAiInsight}
                                         disabled={loadingInsight}
-                                        tooltip="Regenerate insight"
+                                        tooltip={dt('regenerateInsight')}
                                     />
                                 </div>
                             )}
@@ -154,7 +156,7 @@ const Dashboard = () => {
                         <div className="card mb-0">
                             <div className="flex justify-content-between mb-3">
                                 <div>
-                                    <span className="block text-500 font-medium mb-3">Task Completion</span>
+                                    <span className="block text-500 font-medium mb-3">{dt('taskCompletion')}</span>
                                     <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
                                 </div>
                                 <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
@@ -166,8 +168,8 @@ const Dashboard = () => {
                                 series={[
                                     {
                                         data: [
-                                            { id: 0, value: completedPercentage, color: "#61E9B1", label: "Completed" },
-                                            { id: 1, value: 100 - completedPercentage, color: "#e1e1e1", label: "Not done" },
+                                            { id: 0, value: completedPercentage, color: "#61E9B1", label: dt('completed') },
+                                            { id: 1, value: 100 - completedPercentage, color: "#e1e1e1", label: dt('notDone') },
                                         ],
                                         innerRadius: 20,
                                         outerRadius: 30,
@@ -190,7 +192,7 @@ const Dashboard = () => {
                         <div className="card mb-0">
                             <div className="flex justify-content-between mb-3">
                                 <div>
-                                    <span className="block text-500 font-medium mb-3">Total Field Area</span>
+                                    <span className="block text-500 font-medium mb-3">{dt('totalFieldArea')}</span>
                                     <div className="text-900 font-medium text-xl">{totalFieldArea.toFixed(2)} ha</div>
                                 </div>
                                 <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
@@ -205,19 +207,19 @@ const Dashboard = () => {
                 {canReadTasks && (
                     <div className="col-12">
                         <div className="card">
-                            <h5>Tasks timeline</h5>
+                            <h5>{dt('tasksTimeline')}</h5>
                             <DataTable value={tasks} responsiveLayout="scroll">
-                                <Column field="type.name" header="Task" />
-                                <Column field="field.name" header="Field" />
-                                <Column field="status.name" header="Status" />
+                                <Column field="type.name" header={dt('task')} />
+                                <Column field="field.name" header={t('field')} />
+                                <Column field="status.name" header={dt('status')} />
                                 <Column
-                                    header="Date"
+                                    header={dt('date')}
                                     body={(data) => {
                                         const isDue = !!data.dueDate;
                                         const date = isDue ? data.dueDate : data.completionDate;
                                         return date ? (
                                             <>
-                                                <span className="text-sm text-gray-700">{isDue ? "Due:" : "Completed:"}</span>
+                                                <span className="text-sm text-gray-700">{isDue ? dt('due') : dt('completed')}:</span>
                                                 <br />
                                                 {new Date(date).toLocaleDateString("en-CA")}
                                             </>
@@ -225,7 +227,7 @@ const Dashboard = () => {
                                     }}
                                 />
                                 <Column
-                                    header="View"
+                                    header={dt('view')}
                                     body={(data) => (
                                         <Link href={`/tasks/${data.id}`}>
                                             <Button icon="pi pi-eye" text />

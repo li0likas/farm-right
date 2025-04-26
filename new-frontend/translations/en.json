@@ -1,0 +1,21 @@
+{
+    "common": {
+      "field": "Field"
+    },
+    "dashboard": {
+      "aiSummary": "AI Summary",
+      "generatingSummary": "Generating summary...",
+      "noSummaryAvailable": "No summary available.",
+      "regenerateInsight": "Regenerate insight",
+      "taskCompletion": "Task Completion",
+      "completed": "Completed",
+      "notDone": "Not done",
+      "totalFieldArea": "Total Field Area",
+      "tasksTimeline": "Tasks timeline",
+      "task": "Task",
+      "status": "Status",
+      "date": "Date",
+      "due": "Due",
+      "view": "View"
+    }
+  }

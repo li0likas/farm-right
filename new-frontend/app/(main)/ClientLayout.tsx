@@ -1,14 +1,14 @@
-// jeigu kazkas knisis, tai sita faila trinti, o main/layout.tsx grazinti uzkomentuota koda
-
+// new-frontend/app/(main)/ClientLayout.tsx
 'use client';
 
 import React from "react";
 import Layout from "../../layout/layout";
 import { PermissionsProvider, usePermissions } from "@/context/PermissionsContext";
 import { ProgressSpinner } from "primereact/progressspinner";
+import LanguageProviderWrapper from "../LanguageProviderWrapper";
 
 const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
-    const { loading } = usePermissions(); // Ensure this is inside PermissionsProvider
+    const { loading } = usePermissions();
 
     if (loading) {
         return (
@@ -24,7 +24,9 @@ const LayoutWrapper = ({ children }: { children: React.ReactNode }) => {
 const ClientLayout = ({ children }: { children: React.ReactNode }) => {
     return (
         <PermissionsProvider>
-            <LayoutWrapper>{children}</LayoutWrapper>
+            <LanguageProviderWrapper>
+                <LayoutWrapper>{children}</LayoutWrapper>
+            </LanguageProviderWrapper>
         </PermissionsProvider>
     );
 };

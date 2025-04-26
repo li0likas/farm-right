@@ -1,0 +1,22 @@
+{
+    "common": {
+      "field": "Laukas"
+    },
+    "dashboard": {
+      "aiSummary": "AI Santrauka",
+      "generatingSummary": "Generuojama santrauka...",
+      "noSummaryAvailable": "Santrauka nepasiekiama.",
+      "regenerateInsight": "Atnaujinti įžvalgą",
+      "taskCompletion": "Užduočių Atlikimas",
+      "completed": "Atlikta",
+      "notDone": "Neatlikta",
+      "totalFieldArea": "Bendras Laukų Plotas",
+      "tasksTimeline": "Užduočių laiko juosta",
+      "task": "Užduotis",
+      "status": "Būsena",
+      "date": "Data",
+      "due": "Terminas",
+      "completed": "Atlikta",
+      "view": "Peržiūrėti"
+    }
+  }

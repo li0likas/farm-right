@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import api from '@/utils/api';
 import axios from 'axios';
 import InvitationForm from '@/app/components/InvitationForm';
+import LanguageToggle from '../app/components/LanguageToggle';
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -182,6 +183,9 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 </button>
 
                 <div ref={topbarmenuRef} className={classNames('layout-topbar-menu', { 'layout-topbar-menu-mobile-active': layoutState.profileSidebarVisible })}>
+                    
+                    <LanguageToggle />
+
                     <div className="relative">
                         <button type="button" className="p-link layout-topbar-button" onClick={(event) => profileMenuRef.current?.toggle(event)}>
                             <i className="pi pi-user"></i>
