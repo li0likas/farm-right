@@ -2,6 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import languageService from '@/utils/languageService';
 
 type Language = 'en' | 'lt';
 
@@ -29,6 +30,7 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
 
   const setLanguage = (lang: Language) => {
     localStorage.setItem('language', lang);
+    languageService.setLanguage(lang); // Update the language service
     setLanguageState(lang);
   };
 

@@ -1,3 +1,4 @@
+// new-frontend/app/(main)/crop-health/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,8 +12,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
+import { useTranslations } from 'next-intl'; // Import this
 
 const CropHealthPage = () => {
+  // Get translations
+  const t = useTranslations('common');
+  const ch = useTranslations('cropHealth');
+
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -123,9 +129,9 @@ const CropHealthPage = () => {
 
   return (
     <div className="container mx-auto p-6">
-      <Card title="🧠 Crop Health Diagnosis (AI)" className="mb-6 shadow-md">
+      <Card title={ch('title')} className="mb-6 shadow-md">
         <p className="text-sm text-gray-600 mb-4">
-          Upload a photo of your plant or crop and get AI-powered disease insights.
+          {ch('subtitle')}
         </p>
 
         <FileUpload
@@ -133,14 +139,14 @@ const CropHealthPage = () => {
           accept="image/*"
           customUpload={false}
           onSelect={(e) => handleImagePreview(e.files?.[0])}
-          chooseLabel="Choose Crop Image"
+          chooseLabel={ch('chooseCropImage')}
           mode="basic"
         />
 
         {uploadedFile && (
           <div className="mt-4 text-center">
             <Button
-              label={`Analyze "${uploadedFileName}"`}
+              label={`${ch('analyze')} "${uploadedFileName}"`}
               icon="pi pi-search"
               className="p-button-primary"
               onClick={() => handleFileUpload({ files: [uploadedFile] })}
@@ -162,22 +168,23 @@ const CropHealthPage = () => {
 
         {result && !loading && (
           <div className="mt-6">
-            <h6 className="text-md font-semibold mb-3">🌿 Diagnosis Report</h6>
+            <h6 className="text-md font-semibold mb-3">{ch('diagnosisReport')}</h6>
 
             <div className="mb-4">
-              <p><strong>Plant Detected:</strong> {result.is_plant ? 'Yes' : 'No'} ({(result.is_plant_probability * 100).toFixed(1)}%)</p>
-              <p><strong>Health Status:</strong> {result.health_assessment.is_healthy ? 'Healthy' : 'Unhealthy'} ({(result.health_assessment.is_healthy_probability * 100).toFixed(1)}%)</p>
+              <p><strong>{ch('plantDetected')}:</strong> {result.is_plant ? ch('yes') : ch('no')} ({(result.is_plant_probability * 100).toFixed(1)}%)</p>
+              <p><strong>{ch('healthStatus')}:</strong> {result.health_assessment.is_healthy ? ch('healthy') : ch('unhealthy')} ({(result.health_assessment.is_healthy_probability * 100).toFixed(1)}%)</p>
             </div>
 
             <div className="mb-4">
-              <p className="font-semibold mb-2">Detected Diseases:</p>
+              <p className="font-semibold mb-2">{ch('detectedDiseases')}:</p>
               <table className="w-full text-sm text-left border">
                 <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <th className="p-2">Disease</th>
-                    <th className="p-2">Probability</th>
-                    <th className="p-2">Similar Images</th>
-                    <th className="p-2">Action</th>
+                    <th className="p-2">{ch('disease')}</th>
+                    <th className="p-2">{ch('probability')}</th>
+                    <th className="p-2">{ch('similarImages')}</th>
+                    // new-frontend/app/(main)/crop-health/page.tsx (continued)
+                    <th className="p-2">{ch('action')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -200,7 +207,7 @@ const CropHealthPage = () => {
                       </td>
                       <td className="p-2">
                         <Button
-                          label="Create Task"
+                          label={ch('createTask')}
                           icon="pi pi-plus"
                           className="p-button-sm p-button-outlined p-button-success"
                           onClick={() => handleCreateTaskFromDisease(disease.name)}
@@ -220,14 +227,14 @@ const CropHealthPage = () => {
       </Card>
 
       <Dialog
-        header="Select Field"
+        header={ch('selectField')}
         visible={showFieldDialog}
         onHide={() => setShowFieldDialog(false)}
         footer={
           <>
-            <Button label="Cancel" className="p-button-text" onClick={() => setShowFieldDialog(false)} />
+            <Button label={t('cancel')} className="p-button-text" onClick={() => setShowFieldDialog(false)} />
             <Button
-              label="Confirm"
+              label={ch('confirm')}
               icon="pi pi-check"
               className="p-button-success"
               onClick={confirmDiseaseTask}
@@ -237,13 +244,16 @@ const CropHealthPage = () => {
         }
       >
         {generating ? (
-          <div className="flex justify-center my-4"><ProgressSpinner /></div>
+          <div className="flex justify-center my-4">
+            <ProgressSpinner />
+            <span className="ml-3">{ch('generatingDescription')}</span>
+          </div>
         ) : (
           <Dropdown
             value={selectedField}
             options={fieldOptions}
             onChange={(e) => setSelectedField(e.value)}
-            placeholder="Choose field for task"
+            placeholder={ch('selectField')}
             className="w-full"
           />
         )}

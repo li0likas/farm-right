@@ -13,6 +13,7 @@ import taskImage from "@/public/demo/images/avatar/bernardodominic.png";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl";
 
 interface Task {
     id: string;
@@ -38,6 +39,8 @@ const TasksPage = () => {
     const canCreateTask = hasPermission("TASK_CREATE");
     const canViewTaskDetails = hasPermission("TASK_READ");
 
+    const taskT = useTranslations('tasks');
+
     useEffect(() => {
         if (!canReadTasks) return;
         fetchTasks();
@@ -53,16 +56,16 @@ const TasksPage = () => {
             const response = await api.get("/tasks");
             setTasks(response.data);
         } catch (error) {
-            toast.error("Failed to fetch tasks.");
+            toast.error(taskT('fetchTasksError'));
         }
     };
 
     const fetchSeasons = async () => {
         try {
             const res = await api.get("/seasons");
-            setSeasons([{ id: null, name: "All seasons" }, ...res.data]);
+            setSeasons([{ id: null, name: taskT('allSeasons') }, ...res.data]);
         } catch {
-            toast.error("Failed to load seasons.");
+            toast.error(taskT('fetchSeasonsError'));
         }
     };
 
@@ -80,16 +83,17 @@ const TasksPage = () => {
     };
 
     const handleTabChange = (e: any) => {
-        const newStatus = e.value.label;
+        const newStatus = tabItems[e.index].label; // Use real status value
         setActiveTab(newStatus);
-    };
+    }; 
 
     const tabItems = [
-        { label: "All", icon: "pi pi-list" },
-        { label: "Pending", icon: "pi pi-clock" },
-        { label: "Completed", icon: "pi pi-check" },
-        { label: "Canceled", icon: "pi pi-times" },
-    ];
+        { label: 'All', icon: "pi pi-list", displayLabel: taskT('all') },
+        { label: 'Pending', icon: "pi pi-clock", displayLabel: taskT('taskStatusPending') },
+        { label: 'Completed', icon: "pi pi-check", displayLabel: taskT('taskStatusCompleted') },
+        { label: 'Canceled', icon: "pi pi-times", displayLabel: taskT('taskStatusCanceled') }
+      ];
+      
 
     const dataviewListItem = (task: Task) => (
         <div className="col-12">
@@ -98,12 +102,12 @@ const TasksPage = () => {
                     <Image src={taskImage} alt="Task Image" width={100} height={100} className="rounded-lg" />
                     <div className="ml-4">
                         <p className="text-lg font-semibold text-primary">
-                            <i className="pi pi-map-marker text-green-500"></i> Field: {" "}
+                            <i className="pi pi-map-marker text-green-500"></i> {taskT('field')}:{" "}
                             <span className="text-xl font-bold text-green-700">{task.field.name}</span>
                         </p>
                         {(task.dueDate || task.completionDate) && (
                             <p className="text-sm text-gray-700">
-                                <i className="pi pi-calendar"></i> Date: {new Date(task.dueDate ?? task.completionDate!).toLocaleDateString("en-CA")}
+                                <i className="pi pi-calendar"></i> {taskT('date')}: {new Date(task.dueDate ?? task.completionDate!).toLocaleDateString("en-CA")}
                             </p>
                         )}
                         <Tag
@@ -120,7 +124,7 @@ const TasksPage = () => {
                 </div>
                 {canViewTaskDetails && (
                     <Button
-                        label="View Task"
+                        label={taskT('viewTask')}
                         icon="pi pi-eye"
                         className="p-button-secondary mt-3"
                         onClick={() => router.push(`/tasks/${task.id}`)}
@@ -133,7 +137,7 @@ const TasksPage = () => {
     if (!canReadTasks) {
         return (
             <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-                🚫 You do not have permission to view tasks.
+                {taskT('noPermission')}
             </div>
         );
     }
@@ -159,7 +163,7 @@ const TasksPage = () => {
                             {canCreateTask && (
                                 <div className="ml-auto">
                                     <Button
-                                        label="Create Task"
+                                        label={taskT('createTask')}
                                         icon="pi pi-plus"
                                         className="p-button-success"
                                         onClick={() => router.push("/create-task")}
@@ -169,9 +173,9 @@ const TasksPage = () => {
                         </div>
 
                         <TabMenu
-                            model={tabItems}
-                            activeIndex={tabItems.findIndex((tab) => tab.label === activeTab)}
-                            onTabChange={handleTabChange}
+                        model={tabItems.map(item => ({ ...item, label: item.displayLabel }))}
+                        activeIndex={tabItems.findIndex(tab => tab.label === activeTab)}
+                        onTabChange={handleTabChange}
                         />
 
                         <DataView value={filteredTasks} layout="list" itemTemplate={dataviewListItem} />

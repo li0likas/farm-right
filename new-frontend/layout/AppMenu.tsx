@@ -6,41 +6,39 @@ import { LayoutContext } from './context/layoutcontext';
 import { MenuProvider } from './context/menucontext';
 import Link from 'next/link';
 import { AppMenuItem } from '@/types';
+import { useTranslations } from 'next-intl';
 
 const AppMenu = () => {
     const { layoutConfig } = useContext(LayoutContext);
+    const t = useTranslations('menu');
 
     const model: AppMenuItem[] = [
         {
-            label: 'Home',
+            label: t('home'),
             items: [
-                { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/dashboard' },
+                { label: t('dashboard'), icon: 'pi pi-fw pi-home', to: '/dashboard' },
+                { label: t('cropHealth'), icon: 'pi pi-fw pi-sun', to: '/crop-health' }, // 🆕
+                { label: t('map'), icon: 'pi pi-fw pi-map', to: '/fields/map' },
+                { label: t('fields'), icon: 'pi pi-fw pi-map-marker', to: '/fields' }, // 🆕
+                { label: t('tasks'), icon: 'pi pi-fw pi-list', to: '/tasks' }, // 🆕
+                { label: t('equipment'), icon: 'pi pi-fw pi-cog', to: '/equipment' }, // 🆕
+                { label: t('farmMembers'), icon: 'pi pi-fw pi-users', to: '/farm-members' }, // 🆕
                 {
-                    label: "Crop Health",
-                    icon: "pi pi-heart", // or use something like "pi pi-search" or "pi pi-eye"
-                    to: "/crop-health"
-                },
-                { label: 'Map', icon: 'pi pi-map', to: '/fields/map' },                  
-                { label: 'Fields', icon: 'pi pi-fw pi-check-square', to: '/fields' },
-                { label: 'Tasks', icon: 'pi pi-fw pi-check-square', to: '/tasks' },
-                { label: 'Equipment', icon: 'pi pi-fw pi-check-square', to: '/equipment' },
-                { label: 'Farm Members', icon: 'pi pi-fw pi-check-square', to: '/farm-members' },
-                {
-                    label: 'Configuration',
+                    label: t('configuration'),
                     icon: 'pi pi-fw pi-cog',
                     items: [
-                        { label: 'Roles & Permissions', icon: 'pi pi-fw pi-shield', to: '/configuration/roles-permissions' }
+                        { label: t('rolesPermissions'), icon: 'pi pi-fw pi-shield', to: '/configuration/roles-permissions' }
                     ]
                 },
                 {
-                    label: 'Reports',
-                    icon: 'pi pi-fw pi-cog',
+                    label: t('reports'),
+                    icon: 'pi pi-fw pi-chart-bar', // 🆕
                     items: [
-                        { label: 'Task Summary', icon: 'pi pi-fw pi-shield', to: '/reports/task-summary' },
-                        { label: 'Equipment Usage', icon: 'pi pi-fw pi-shield', to: '/reports/equipment-usage' },
-                        { label: 'Farm Members Activity', icon: 'pi pi-fw pi-shield', to: '/reports/farm-members-activity' }
+                        { label: t('taskSummary'), icon: 'pi pi-fw pi-list', to: '/reports/task-summary' }, // 🆕
+                        { label: t('equipmentUsage'), icon: 'pi pi-fw pi-cog', to: '/reports/equipment-usage' }, // 🆕
+                        { label: t('farmMembersActivity'), icon: 'pi pi-fw pi-users', to: '/reports/farm-members-activity' } // 🆕
                     ]
-                }                 
+                }
             ]
         },
         {
@@ -202,9 +200,11 @@ const AppMenu = () => {
     return (
         <MenuProvider>
             <ul className="layout-menu">
-                {model.map((item, i) => {
-                    return !item?.seperator ? <AppMenuitem item={item} root={true} index={i} key={item.label} /> : <li className="menu-separator"></li>;
-                })}
+                {model.map((item, i) => (
+                    !item?.seperator
+                        ? <AppMenuitem item={item} root={true} index={i} key={item.label} />
+                        : <li className="menu-separator" key={`separator-${i}`}></li>
+                ))}
 
                 <Link href="https://blocks.primereact.org" target="_blank" style={{ cursor: 'pointer' }}>
                     <img alt="Prime Blocks" className="w-full mt-3" src={`/layout/images/banner-primeblocks${layoutConfig.colorScheme === 'light' ? '' : '-dark'}.png`} />

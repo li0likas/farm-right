@@ -10,9 +10,10 @@ import { Column } from "primereact/column";
 import { toast } from "sonner";
 import { Dialog } from "primereact/dialog";
 import { getUser } from "@/utils/user";
-import api from '@/utils/api'; // ✅ Use API instance with interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
-import InvitationForm from "@/app/components/InvitationForm"; // Import the InvitationForm component
+import api from '@/utils/api';
+import { usePermissions } from "@/context/PermissionsContext";
+import InvitationForm from "@/app/components/InvitationForm";
+import { useTranslations } from "next-intl"; // ✅ Add translation
 
 interface Member {
   id: number;
@@ -24,15 +25,16 @@ interface Member {
 
 const FarmMembersPage = () => {
   const router = useRouter();
-  const { hasPermission, permissions } = usePermissions(); // ✅ Get user permissions
+  const { hasPermission, permissions } = usePermissions();
 
-  // ✅ Permission checks
+  const t = useTranslations('common');
+  const fm = useTranslations('farmMembers');
+
   const canRead = hasPermission("FARM_MEMBER_READ");
   const canInvite = hasPermission("FARM_MEMBER_INVITE");
   const canUpdateRole = hasPermission("FARM_MEMBER_UPDATE_ROLE");
   const canDelete = hasPermission("FARM_MEMBER_REMOVE");
 
-  // ✅ Hide "Actions" column if the user can't edit or delete
   const showActionsColumn = canUpdateRole || canDelete;
 
   const [members, setMembers] = useState<Member[]>([]);
@@ -51,14 +53,14 @@ const FarmMembersPage = () => {
 
     if (canRead) fetchMembers();
     if (canUpdateRole) fetchRoles();
-  }, [permissions]); // ✅ Fetch only after permissions load
+  }, [permissions]);
 
   const fetchMembers = async () => {
     try {
       const response = await api.get("/farm-members");
       setMembers(response.data);
     } catch (error) {
-      toast.error("Failed to load members");
+      toast.error(fm('fetchMembersError'));
     }
   };
 
@@ -67,7 +69,7 @@ const FarmMembersPage = () => {
       const response = await api.get("/roles");
       setRoles(response.data.map((role: { name: any; id: any; }) => ({ label: role.name, value: role.id })));
     } catch (error) {
-      toast.error("Failed to load roles");
+      toast.error(fm('fetchRolesError'));
     }
   };
 
@@ -80,7 +82,7 @@ const FarmMembersPage = () => {
 
     try {
       await api.patch(`/farm-members/${userId}`, { roleId: roleChanges[userId] });
-      toast.success("Role updated successfully!");
+      toast.success(fm('updateRoleSuccess'));
       fetchMembers();
       setRoleChanges((prev) => {
         const updated = { ...prev };
@@ -88,7 +90,7 @@ const FarmMembersPage = () => {
         return updated;
       });
     } catch (error) {
-      toast.error("Failed to update role");
+      toast.error(fm('updateRoleError'));
     }
   };
 
@@ -101,10 +103,10 @@ const FarmMembersPage = () => {
     if (memberToDelete !== null) {
       try {
         await api.delete(`/farm-members/${memberToDelete}`);
-        toast.success("Member removed!");
+        toast.success(fm('removeSuccess'));
         fetchMembers();
       } catch (error) {
-        toast.error("Failed to remove member.");
+        toast.error(fm('removeError'));
       }
       setDeleteDialogVisible(false);
       setMemberToDelete(null);
@@ -115,37 +117,33 @@ const FarmMembersPage = () => {
     setInviteDialogVisible(true);
   };
 
-  // ✅ Hide entire page if user lacks `FARM_MEMBER_READ`
   if (!canRead) {
     return (
       <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-        🚫 You do not have permission to view farm members.
+        {fm('noPermission')}
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-6">
-      <Card title="Farm Members" className="mb-6">
+      <Card title={fm('title')} className="mb-6">
 
-        {/* ✅ Show "Invite Member" Button If User Has `FARM_MEMBER_INVITE` */}
         {canInvite && (
           <div className="flex gap-2 mb-4">
-            <Button label="Invite by Email" className="p-button-info" onClick={handleInviteMember} icon="pi pi-envelope" />
+            <Button label={fm('inviteByEmail')} className="p-button-info" onClick={handleInviteMember} icon="pi pi-envelope" />
           </div>
         )}
 
-        {/* Members Table */}
         <DataTable value={members} responsiveLayout="scroll">
-          <Column field="username" header="Name" />
-          <Column field="email" header="Email" />
+          <Column field="username" header={fm('name')} />
+          <Column field="email" header={fm('email')} />
 
-          {/* ✅ Role Column (Always Visible) */}
           <Column
-            header="Role"
+            header={fm('role')}
             body={(rowData: Member) => {
               const isEditing = roleChanges[rowData.id] !== undefined;
-              const isCurrentUser = rowData.id === currentUserId; // Prevent editing own role
+              const isCurrentUser = rowData.id === currentUserId;
 
               return (
                 <div className="flex align-items-center gap-2">
@@ -155,7 +153,7 @@ const FarmMembersPage = () => {
                         value={roleChanges[rowData.id] || rowData.roleId}
                         options={roles}
                         onChange={(e) => handleRoleChange(rowData.id, e.value)}
-                        placeholder="Select Role"
+                        placeholder={fm('selectRole')}
                         className="w-12rem"
                       />
                       <Button 
@@ -166,7 +164,7 @@ const FarmMembersPage = () => {
                     </>
                   ) : (
                     <>
-                      <span>{rowData.role || "Unknown Role"}</span>
+                      <span>{rowData.role || fm('unknownRole')}</span>
                       {canUpdateRole && !isCurrentUser && (
                         <Button 
                           icon="pi pi-pencil" 
@@ -181,12 +179,11 @@ const FarmMembersPage = () => {
             }}
           />
 
-          {/* ✅ Remove Member Column - Only If `FARM_MEMBER_REMOVE` */}
           {canDelete && (
             <Column
-              header="Remove"
+              header={fm('remove')}
               body={(rowData: Member) => {
-                const isCurrentUser = rowData.id === currentUserId; // Prevent self-removal
+                const isCurrentUser = rowData.id === currentUserId;
                 return isCurrentUser ? null : (
                   <Button
                     icon="pi pi-trash"
@@ -200,22 +197,20 @@ const FarmMembersPage = () => {
         </DataTable>
       </Card>
 
-      {/* ✅ Delete Confirmation Dialog */}
       <Dialog
-        header="Confirm Deletion"
+        header={fm('confirmDeletion')}
         visible={deleteDialogVisible}
         onHide={() => setDeleteDialogVisible(false)}
         footer={
           <>
-            <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
-            <Button label="Delete" icon="pi pi-check" className="p-button-danger" onClick={handleDelete} />
+            <Button label={t('cancel')} icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
+            <Button label={fm('delete')} icon="pi pi-check" className="p-button-danger" onClick={handleDelete} />
           </>
         }
       >
-        <p>Are you sure you want to remove this member?</p>
+        <p>{fm('confirmDeleteBody')}</p>
       </Dialog>
 
-      {/* Invitation Form Dialog */}
       <InvitationForm 
         visible={inviteDialogVisible} 
         onHide={() => setInviteDialogVisible(false)} 

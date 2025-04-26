@@ -1,3 +1,4 @@
+// new-frontend/app/(main)/create-task/[[...id]]/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -11,15 +12,20 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import { ProgressSpinner } from "primereact/progressspinner";
-import api from "@/utils/api"; // ✅ Use API instance with interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
+import api from "@/utils/api";
+import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl"; // Import this
 
 const TaskCreatePage = () => {
   const pathname = usePathname();
   const router = useRouter();
   const fieldIdFromUrl = Number(pathname.split("/").pop());
 
-  const { hasPermission, permissions } = usePermissions();
+  const { hasPermission } = usePermissions();
+  
+  // Get translations
+  const t = useTranslations('common');
+  const ct = useTranslations('tasks');
 
   const [taskDescription, setTaskDescription] = useState("");
   const [taskStatus, setTaskStatus] = useState(null);
@@ -47,7 +53,7 @@ const TaskCreatePage = () => {
     fetchOptions();
     fetchUserEquipment();
     fetchSeasons();
-  }, [permissions]);
+  }, [hasPermission]);
 
   useEffect(() => {
     if (taskTypeOptions.length && taskStatusOptions.length) {
@@ -291,7 +297,7 @@ const TaskCreatePage = () => {
       return (
           <ProtectedRoute>
               <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-                  🚫 You do not have permission to create tasks.
+                  {ct('noPermission')}
               </div>
           </ProtectedRoute>
       );
@@ -300,18 +306,18 @@ const TaskCreatePage = () => {
   return (
     <ProtectedRoute>
       <div className="container mx-auto p-6">
-        <Card title="Create a Task" className="mb-6">
+        <Card title={ct('title')} className="mb-6">
           {/* Task Type Selection */}
-          <h5>Task Type</h5>
-          <Dropdown value={taskType} options={taskTypeOptions} onChange={(e) => setTaskType(e.value)} placeholder="Select Task Type" className="w-full mb-4" />
+          <h5>{ct('taskType')}</h5>
+          <Dropdown value={taskType} options={taskTypeOptions} onChange={(e) => setTaskType(e.value)} placeholder={ct('selectTaskType')} className="w-full mb-4" />
 
           {/* 🎤 Task Description with Voice Button */}
-          <h5>Description</h5>
+          <h5>{ct('description')}</h5>
           <div className="flex align-items-center gap-2 mb-4">
             <InputTextarea
               value={taskDescription}
               onChange={(e) => setTaskDescription(e.target.value)}
-              placeholder="Task Description"
+              placeholder={ct('description')}
               rows={3}
               className="w-full"
             />
@@ -319,7 +325,7 @@ const TaskCreatePage = () => {
               icon={isRecording ? "pi pi-stop" : "pi pi-microphone"}
               className={isRecording ? "p-button-danger" : "p-button-primary"}
               onClick={isRecording ? stopVoiceRecognition : startVoiceRecognition}
-              tooltip={isRecording ? "Stop recording" : "Start recording"}
+              tooltip={isRecording ? ct('stopRecording') : ct('startRecording')}
             />
           </div>
 
@@ -327,25 +333,26 @@ const TaskCreatePage = () => {
           {loadingAI && (
             <div className="flex justify-content-center my-2">
               <ProgressSpinner />
+              <span className="ml-2">{ct('processingVoice')}</span>
             </div>
           )}
 
           {/* Task Status Selection */}
-          <h5>Task Status</h5>
-          <Dropdown value={taskStatus} options={taskStatusOptions} onChange={(e) => setTaskStatus(e.value)} placeholder="Select Task Status" className="w-full mb-4" />
+          <h5>{ct('taskStatus')}</h5>
+          <Dropdown value={taskStatus} options={taskStatusOptions} onChange={(e) => setTaskStatus(e.value)} placeholder={ct('selectTaskStatus')} className="w-full mb-4" />
 
           {/* Field Selection */}
-          <h5>Field</h5>
-          {!fieldIdFromUrl && <Dropdown value={taskField} options={taskFieldOptions} onChange={(e) => setTaskField(e.value)} placeholder="Select Field" className="w-full mb-4" />}
+          <h5>{ct('field')}</h5>
+          {!fieldIdFromUrl && <Dropdown value={taskField} options={taskFieldOptions} onChange={(e) => setTaskField(e.value)} placeholder={ct('selectField')} className="w-full mb-4" />}
 
           {/* Season Selection */}
-          <h5>Season</h5>
+          <h5>{ct('season')}</h5>
           {(
             <Dropdown
               value={selectedSeason}
               options={seasonOptions}
               onChange={(e) => setSelectedSeason(e.value)}
-              placeholder="Select Season"
+              placeholder={ct('selectSeason')}
               className="w-full mb-4"
             />
           )}
@@ -354,35 +361,35 @@ const TaskCreatePage = () => {
           {(taskStatus === 1 || taskStatus === 2) && (
             <div className="mb-2 mt-3">
               <h5>
-                {taskStatus === 1 ? 'Completed Date' : 'Due Date'}
+                {taskStatus === 1 ? ct('completedDate') : ct('dueDate')}
               </h5>
             </div>
           )}
 
           {/* Due Date Selection */}
           {taskStatus === 2 && <Calendar
-  value={dueDate}
-  onChange={(e) => {
-    setDueDate(e.value);
-    setIsRecommendedDateUsed(false); // mark as manual input
-  }}
-  placeholder="Select Due Date"
-  className="w-full mb-4"
-  showIcon
-/>
-}
+            value={dueDate}
+            onChange={(e) => {
+              setDueDate(e.value);
+              setIsRecommendedDateUsed(false); // mark as manual input
+            }}
+            placeholder={ct('dueDate')}
+            className="w-full mb-4"
+            showIcon
+          />
+          }
 
           {/* Completion Date Selection */}
-          {taskStatus === 1 && <Calendar value={completionDate} onChange={(e) => setCompletionDate(e.value)} placeholder="Select Completion Date" className="w-full mb-4" showIcon />}
+          {taskStatus === 1 && <Calendar value={completionDate} onChange={(e) => setCompletionDate(e.value)} placeholder={ct('completedDate')} className="w-full mb-4" showIcon />}
 
           {/* ✅ Equipment Selection (Multi-Select Dropdown) */}
           <div className="mb-4">
-            <h5>Select Equipment</h5>
+            <h5>{ct('selectEquipment')}</h5>
             <MultiSelect
               value={selectedEquipment}
               options={equipmentList}
               onChange={(e) => setSelectedEquipment(e.value)}
-              placeholder="Select Equipment"
+              placeholder={ct('selectEquipment')}
               className="w-full"
               display="chip"
             />
@@ -403,12 +410,12 @@ const TaskCreatePage = () => {
                   <div className="flex align-items-center gap-2">
                     <i className="pi pi-calendar text-blue-500 text-lg"></i>
                     <span className="font-bold text-lg text-blue-700">
-                      Recommended date for this task:{" "}
+                      {ct('recommendedDate')}:{" "}
                       <span className="text-2xl">{new Date(optimalDateTime).toLocaleDateString("lt-LT")}</span>
                     </span>
                   </div>
                   <Button
-                    label="Use recommended date"
+                    label={ct('useRecommendedDate')}
                     icon="pi pi-check"
                     className="p-button-outlined"
                     onClick={() => {
@@ -430,7 +437,7 @@ const TaskCreatePage = () => {
 
           {/* Create Task Button */}
           <Button
-            label="Create Task"
+            label={ct('createTask')}
             className="p-button-success w-full"
             onClick={handleCreateTask}
             disabled={loading || loadingAI}

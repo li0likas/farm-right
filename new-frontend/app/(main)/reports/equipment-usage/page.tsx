@@ -10,6 +10,7 @@ import api from "@/utils/api";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import { Chart } from "primereact/chart";
 import { TabView, TabPanel } from "primereact/tabview";
+import { useTranslations } from "next-intl"; // ✅ Added
 
 const EquipmentUsageReport = () => {
   const [seasonOptions, setSeasonOptions] = useState([]);
@@ -18,6 +19,8 @@ const EquipmentUsageReport = () => {
   const [loading, setLoading] = useState(false);
   const [taskTypeOptions, setTaskTypeOptions] = useState<string[]>([]);
 
+  const t = useTranslations('common');
+  const r = useTranslations('equipmentReport');
 
   useEffect(() => {
     fetchSeasons();
@@ -29,22 +32,9 @@ const EquipmentUsageReport = () => {
       const res = await api.get("/task-type-options");
       setTaskTypeOptions(res.data.map((t: any) => t.name));
     } catch {
-      toast.error("Failed to load task types.");
+      toast.error(r('fetchTaskTypesError'));
     }
   };
-
-  const getChartDataByTaskType = (
-    equipmentData: any,
-    valueKey: 'count' | 'fuel' | 'minutes'
-  ) => {
-    const labels = taskTypeOptions;
-    const values = labels.map(
-      (label) => equipmentData.byTaskType[label]?.[valueKey] ?? 0
-    );
-    return { labels, values };
-  };
-  
-  
 
   const fetchSeasons = async () => {
     try {
@@ -59,7 +49,7 @@ const EquipmentUsageReport = () => {
         fetchEquipmentUsage(options[0].value);
       }
     } catch {
-      toast.error("Failed to load seasons.");
+      toast.error(r('fetchSeasonsError'));
     }
   };
 
@@ -73,243 +63,249 @@ const EquipmentUsageReport = () => {
       });
       setEquipmentUsage(res.data);
     } catch {
-      toast.error("Failed to load equipment usage report.");
+      toast.error(r('fetchUsageError'));
     } finally {
       setLoading(false);
     }
   };
-  
+
+  const getChartDataByTaskType = (
+    equipmentData: any,
+    valueKey: 'count' | 'fuel' | 'minutes'
+  ) => {
+    const labels = taskTypeOptions;
+    const values = labels.map(
+      (label) => equipmentData.byTaskType[label]?.[valueKey] ?? 0
+    );
+    return { labels, values };
+  };
 
   return (
     <ProtectedRoute>
-    <div className="container mx-auto p-6">
-      <Card title="Equipment Usage Report">
-        <div className="mb-4 flex gap-4 items-center">
-          <Dropdown
-            value={selectedSeason}
-            options={seasonOptions}
-            onChange={(e) => {
-              setSelectedSeason(e.value);
-              fetchEquipmentUsage(e.value);
-            }}
-            placeholder="Select Season"
-            className="w-72"
-          />
-        </div>
-  
-        <TabView className="mt-4">
-          {/* 🛠️ Task Overview */}
-          <TabPanel header="🛠️ Task Overview">
-            {equipmentUsage.map((equip: any) => {
+      <div className="container mx-auto p-6">
+        <Card title={r('title')}>
+          <div className="mb-4 flex gap-4 items-center">
+            <Dropdown
+              value={selectedSeason}
+              options={seasonOptions}
+              onChange={(e) => {
+                setSelectedSeason(e.value);
+                fetchEquipmentUsage(e.value);
+              }}
+              placeholder={t('selectSeason')}
+              className="w-72"
+            />
+          </div>
+
+          <TabView className="mt-4">
+            {/* 🛠️ Task Overview */}
+            <TabPanel header={r('taskOverview')}>
+              {equipmentUsage.map((equip: any) => {
                 const totalTasks = equip.totalTasks || 0;
                 const { labels, values: counts } = getChartDataByTaskType(equip, 'count');
 
                 if (totalTasks === 0) {
-                return (
+                  return (
                     <Card key={equip.id} title={equip.name} className="mb-4">
-                    <p className="text-gray-500">No completed tasks assigned to this equipment.</p>
+                      <p className="text-gray-500">{r('noCompletedTasks')}</p>
                     </Card>
-                );
+                  );
                 }
 
                 const percentages = counts.map((c) => (c / (totalTasks || 1)) * 100);
 
                 const chartData = {
-                labels,
-                datasets: [
+                  labels,
+                  datasets: [
                     {
-                    label: '% of Total Tasks',
-                    data: percentages,
-                    backgroundColor: ['#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#FF7043'],
+                      label: '%',
+                      data: percentages,
+                      backgroundColor: ['#42A5F5', '#66BB6A', '#FFA726', '#AB47BC', '#FF7043'],
                     },
-                ],
+                  ],
                 };
 
                 return (
-                <Card key={equip.id} title={equip.name} className="mb-4">
+                  <Card key={equip.id} title={equip.name} className="mb-4">
                     <div className="text-sm mb-2 text-gray-700">
-                    <strong>Total Tasks Completed:</strong> {totalTasks}
+                      <strong>{r('totalTasksCompleted')}</strong> {totalTasks}
                     </div>
-                    <h6 className="mb-2 font-bold text-sm text-gray-700">Task Type Breakdown (%)</h6>
+                    <h6 className="mb-2 font-bold text-sm text-gray-700">{r('taskTypeBreakdown')}</h6>
                     <Chart
-                    type="bar"
-                    data={chartData}
-                    options={{
+                      type="bar"
+                      data={chartData}
+                      options={{
                         plugins: { legend: { display: false } },
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                        y: {
+                          y: {
                             beginAtZero: true,
                             max: 100,
                             title: { display: true, text: '%' },
+                          },
                         },
-                        },
-                    }}
-                    style={{ height: '200px' }}
+                      }}
+                      style={{ height: '200px' }}
                     />
-                </Card>
+                  </Card>
                 );
-            })}
+              })}
             </TabPanel>
 
-
-          {/* ⛽ Fuel Usage */}
-          <TabPanel header="⛽ Fuel Usage">
-            {equipmentUsage.map((equip: any) => {
+            {/* ⛽ Fuel Usage */}
+            <TabPanel header={r('fuelUsage')}>
+              {equipmentUsage.map((equip: any) => {
                 const entries = Object.entries(equip.byTaskType).filter(([_, data]) => data.fuel > 0);
 
                 if (entries.length === 0) {
-                return (
+                  return (
                     <Card key={equip.id} title={equip.name} className="mb-4">
-                    <p className="text-gray-500">No fuel usage data</p>
+                      <p className="text-gray-500">{r('noFuelUsage')}</p>
                     </Card>
-                );
+                  );
                 }
 
-                const { labels, values } = getChartDataByTaskType(equip, 'fuel'); // or 'minutes'
+                const { labels, values } = getChartDataByTaskType(equip, 'fuel');
 
                 const chartData = {
-                labels,
-                datasets: [
+                  labels,
+                  datasets: [
                     {
-                    label: 'Fuel Used (L)',
-                    data: values,
-                    backgroundColor: ['#EF5350', '#29B6F6', '#9CCC65', '#FFA726', '#BA68C8'],
+                      label: r('fuelUsedLabel'),
+                      data: values,
+                      backgroundColor: ['#EF5350', '#29B6F6', '#9CCC65', '#FFA726', '#BA68C8'],
                     },
-                ],
+                  ],
                 };
 
                 return (
-                <Card key={equip.id} title={equip.name} className="mb-4">
+                  <Card key={equip.id} title={equip.name} className="mb-4">
                     <div className="text-sm mb-2 text-gray-700">
-                    <strong>Total Fuel Used:</strong> {equip.totalFuel?.toFixed(1) ?? '0.0'} L
+                      <strong>{r('totalFuelUsed')}</strong> {equip.totalFuel?.toFixed(1) ?? '0.0'} L
                     </div>
-                    <h6 className="mb-2 font-bold text-sm text-gray-700">Fuel Usage per Task Type</h6>
+                    <h6 className="mb-2 font-bold text-sm text-gray-700">{r('fuelUsagePerTaskType')}</h6>
                     <Chart
-                    type="pie"
-                    data={chartData}
-                    options={{ responsive: true, maintainAspectRatio: false }}
-                    style={{ height: '200px' }}
+                      type="pie"
+                      data={chartData}
+                      options={{ responsive: true, maintainAspectRatio: false }}
+                      style={{ height: '200px' }}
                     />
-                </Card>
+                  </Card>
                 );
-            })}
+              })}
             </TabPanel>
 
-          {/* ⏱️ Time Worked */}
-          <TabPanel header="⏱️ Time Worked">
-            {equipmentUsage.map((equip: any) => {
+            {/* ⏱️ Time Worked */}
+            <TabPanel header={r('timeWorked')}>
+              {equipmentUsage.map((equip: any) => {
                 const entries = Object.entries(equip.byTaskType).filter(([_, data]) => data.minutes > 0);
 
                 if (entries.length === 0) {
-                return (
+                  return (
                     <Card key={equip.id} title={equip.name} className="mb-4">
-                    <p className="text-gray-500">No time usage data</p>
+                      <p className="text-gray-500">{r('noTimeUsage')}</p>
                     </Card>
-                );
+                  );
                 }
 
                 const { labels, values } = getChartDataByTaskType(equip, 'minutes');
                 const totalMinutes = values.reduce((sum, val) => sum + val, 0);
 
-
                 const chartData = {
-                labels,
-                datasets: [
+                  labels,
+                  datasets: [
                     {
-                    label: 'Minutes Worked',
-                    data: values,
-                    backgroundColor: ['#FFD54F', '#4DD0E1', '#9575CD', '#FF8A65', '#81C784'],
+                      label: r('minutesWorkedLabel'),
+                      data: values,
+                      backgroundColor: ['#FFD54F', '#4DD0E1', '#9575CD', '#FF8A65', '#81C784'],
                     },
-                ],
+                  ],
                 };
 
                 return (
-                <Card key={equip.id} title={equip.name} className="mb-4">
+                  <Card key={equip.id} title={equip.name} className="mb-4">
                     <div className="text-sm mb-2 text-gray-700">
-                    <strong>Total Time Worked:</strong> {totalMinutes} minutes
+                      <strong>{r('totalTimeWorked')}</strong> {totalMinutes} {t('minutes')}
                     </div>
-                    <h6 className="mb-2 font-bold text-sm text-gray-700">Time Spent per Task Type</h6>
+                    <h6 className="mb-2 font-bold text-sm text-gray-700">{r('timeSpentPerTaskType')}</h6>
                     <Chart
-                    type="bar"
-                    data={chartData}
-                    options={{
+                      type="bar"
+                      data={chartData}
+                      options={{
                         plugins: { legend: { display: false } },
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                        y: {
+                          y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Minutes' },
+                            title: { display: true, text: t('minutes') },
+                          },
                         },
-                        },
-                    }}
-                    style={{ height: '200px' }}
+                      }}
+                      style={{ height: '200px' }}
                     />
-                </Card>
+                  </Card>
                 );
-            })}
+              })}
             </TabPanel>
 
-            <TabPanel header="📐 Area Covered">
-                {equipmentUsage.map((equip: any) => {
-                    const labels = taskTypeOptions;
-                    const values = labels.map(label => equip.byTaskType[label]?.area ?? 0);
-                    const totalArea = values.reduce((sum, val) => sum + val, 0);
+            {/* 📐 Area Covered */}
+            <TabPanel header={r('areaCovered')}>
+              {equipmentUsage.map((equip: any) => {
+                const labels = taskTypeOptions;
+                const values = labels.map(label => equip.byTaskType[label]?.area ?? 0);
+                const totalArea = values.reduce((sum, val) => sum + val, 0);
 
-                    if (totalArea === 0) {
-                    return (
-                        <Card key={equip.id} title={equip.name} className="mb-4">
-                        <p className="text-gray-500">No area data recorded</p>
-                        </Card>
-                    );
-                    }
-
-                    const chartData = {
-                    labels,
-                    datasets: [
-                        {
-                        label: 'Area Covered (ha)',
-                        data: values,
-                        backgroundColor: ['#81C784', '#4FC3F7', '#FFD54F', '#A1887F', '#BA68C8'],
-                        },
-                    ],
-                    };
-
-                    return (
+                if (totalArea === 0) {
+                  return (
                     <Card key={equip.id} title={equip.name} className="mb-4">
-                        <div className="text-sm mb-2 text-gray-700">
-                        <strong>Total Area Covered:</strong> {totalArea.toFixed(2)} hectares
-                        </div>
-                        <h6 className="mb-2 font-bold text-sm text-gray-700">Area Covered per Task Type</h6>
-                        <Chart
-                        type="bar"
-                        data={chartData}
-                        options={{
-                            plugins: { legend: { display: false } },
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: 'Hectares' },
-                            },
-                            },
-                        }}
-                        style={{ height: '200px' }}
-                        />
+                      <p className="text-gray-500">{r('noAreaData')}</p>
                     </Card>
-                    );
-                })}
-                </TabPanel>
+                  );
+                }
 
+                const chartData = {
+                  labels,
+                  datasets: [
+                    {
+                      label: r('areaCoveredLabel'),
+                      data: values,
+                      backgroundColor: ['#81C784', '#4FC3F7', '#FFD54F', '#A1887F', '#BA68C8'],
+                    },
+                  ],
+                };
 
-        </TabView>
-      </Card>
-    </div>
-  </ProtectedRoute>
-  
+                return (
+                  <Card key={equip.id} title={equip.name} className="mb-4">
+                    <div className="text-sm mb-2 text-gray-700">
+                      <strong>{r('totalAreaCovered')}</strong> {totalArea.toFixed(2)} {t('ha')}
+                    </div>
+                    <h6 className="mb-2 font-bold text-sm text-gray-700">{r('areaPerTaskType')}</h6>
+                    <Chart
+                      type="bar"
+                      data={chartData}
+                      options={{
+                        plugins: { legend: { display: false } },
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                          y: {
+                            beginAtZero: true,
+                            title: { display: true, text: t('ha') },
+                          },
+                        },
+                      }}
+                      style={{ height: '200px' }}
+                    />
+                  </Card>
+                );
+              })}
+            </TabPanel>
+          </TabView>
+        </Card>
+      </div>
+    </ProtectedRoute>
   );
 };
 

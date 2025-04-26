@@ -16,6 +16,7 @@ import api from '@/utils/api';
 import axios from 'axios';
 import InvitationForm from '@/app/components/InvitationForm';
 import LanguageToggle from '../app/components/LanguageToggle';
+import { useTranslations } from 'next-intl';
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -24,6 +25,9 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const topbarmenubuttonRef = useRef(null);
     const profileMenuRef = useRef<Menu>(null);
     const router = useRouter();
+    
+    const t = useTranslations('topbar');
+    const common = useTranslations('common');
 
     const [farms, setFarms] = useState([]);
     const [selectedFarm, setSelectedFarm] = useState<number | null>(null);
@@ -79,17 +83,17 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 setSelectedFarmDetails(response.data);
             } catch (error) {
                 console.error(error);
-                toast.error('Failed to load farm details');
+                toast.error(t('errors.loadFarmDetails'));
             }
         };
 
         fetchFarmDetails();
-    }, [selectedManageFarm]);
+    }, [selectedManageFarm, t]);
 
     const switchFarm = (farmId: number) => {
         localStorage.setItem('x-selected-farm-id', farmId.toString());
         setSelectedFarm(farmId);
-        toast.success('Farm switched successfully!');
+        toast.success(t('success.farmSwitched'));
         window.location.reload();
     };
 
@@ -103,18 +107,18 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             return response.data;
         } catch (error) {
             console.error('Failed to refresh farms', error);
-            return []; // Return an empty array in case of an error
+            return [];
         }
     };
 
     const profileMenuItems = [
         {
-            label: 'Profile',
+            label: t('menu.profile'),
             icon: 'pi pi-user',
             command: () => router.push('/profile')
         },
         {
-            label: 'Settings',
+            label: t('menu.settings'),
             icon: 'pi pi-cog',
             command: () => router.push('/settings')
         },
@@ -122,7 +126,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             separator: true
         },
         {
-            label: 'Switch Farm',
+            label: t('menu.switchFarm'),
             icon: 'pi pi-refresh',
             items: farms.length > 1
                 ? farms.map(farm => ({
@@ -135,19 +139,18 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                         >
                             <span>{farm.name}</span>
                             {farm.ownerId === currentUserId ? (
-                                <span className="bg-primary text-white text-xs px-2 py-1 border-round ml-2">Owner</span>
+                                <span className="bg-primary text-white text-xs px-2 py-1 border-round ml-2">{t('labels.owner')}</span>
                             ) : (
-                                <span className="bg-gray-400 text-white text-xs px-2 py-1 border-round ml-2">Member</span>
+                                <span className="bg-gray-400 text-white text-xs px-2 py-1 border-round ml-2">{t('labels.member')}</span>
                             )}
                         </div>
                     ),
                     command: () => switchFarm(farm.id)
                 }))
-                : [{ label: 'No other farms available', disabled: true }]
-        }
-        ,
+                : [{ label: t('menu.noOtherFarms'), disabled: true }]
+        },
         {
-            label: 'Manage Farms',
+            label: t('menu.manageFarms'),
             icon: 'pi pi-cog',
             command: () => setShowManageFarmsModal(true)
         },
@@ -155,13 +158,13 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             separator: true
         },
         {
-            label: 'Logout',
+            label: t('menu.logout'),
             icon: 'pi pi-sign-out',
             command: () => {
                 localStorage.clear();
                 sessionStorage.removeItem('aiInsight');
                 router.push('/auth/login');
-                toast.success('Logged out successfully');
+                toast.success(t('success.loggedOut'));
             }
         }
     ];
@@ -189,7 +192,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                     <div className="relative">
                         <button type="button" className="p-link layout-topbar-button" onClick={(event) => profileMenuRef.current?.toggle(event)}>
                             <i className="pi pi-user"></i>
-                            <span>Profile</span>
+                            <span>{t('menu.profile')}</span>
                         </button>
                         <Menu model={profileMenuItems} popup ref={profileMenuRef} />
                     </div>
@@ -197,14 +200,13 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                     <Link href="/documentation">
                         <button type="button" className="p-link layout-topbar-button">
                             <i className="pi pi-cog"></i>
-                            <span>Settings</span>
+                            <span>{t('menu.settings')}</span>
                         </button>
                     </Link>
                 </div>
             </div>
 
-            {/* 🔵 Manage Farms Modal */}
-            <Dialog header="Manage Farms" visible={showManageFarmsModal} onHide={() => setShowManageFarmsModal(false)} style={{ width: '40vw' }}>
+            <Dialog header={t('manageFarms.title')} visible={showManageFarmsModal} onHide={() => setShowManageFarmsModal(false)} style={{ width: '40vw' }}>
                 <div className="flex flex-column gap-4">
                     <Dropdown
                         value={selectedManageFarm}
@@ -213,65 +215,63 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                                 <div className="flex align-items-center gap-2">
                                     <span>{f.name}</span>
                                     {f.ownerId === currentUserId ? (
-                                        <span className="bg-primary text-white text-xs px-2 py-1 border-round">Owner</span>
+                                        <span className="bg-primary text-white text-xs px-2 py-1 border-round">{t('labels.owner')}</span>
                                     ) : (
-                                        <span className="bg-gray-400 text-white text-xs px-2 py-1 border-round">Member</span>
+                                        <span className="bg-gray-400 text-white text-xs px-2 py-1 border-round">{t('labels.member')}</span>
                                     )}
                                 </div>
                             ),
                             value: f.id
                         }))}
                         onChange={(e) => setSelectedManageFarm(e.value)}
-                        placeholder="Select a farm"
+                        placeholder={t('manageFarms.selectFarm')}
                         className="w-full"
                     />
 
                     {selectedFarmDetails && (
                         <>
                             <div className="flex flex-column gap-2 p-3 border-1 border-round surface-border surface-card">
-                                <div><i className="pi pi-users mr-2"></i> Members: <b>{selectedFarmDetails.membersCount}</b></div>
-                                <div><i className="pi pi-map mr-2"></i> Fields: <b>{selectedFarmDetails.fieldsCount}</b></div>
-                                <div><i className="pi pi-cog mr-2"></i> Equipments: <b>{selectedFarmDetails.equipmentsCount}</b></div>
-                                <div><i className="pi pi-check-square mr-2"></i> Tasks: <b>{selectedFarmDetails.tasksCount}</b></div>
+                                <div><i className="pi pi-users mr-2"></i> {t('manageFarms.members')}: <b>{selectedFarmDetails.membersCount}</b></div>
+                                <div><i className="pi pi-map mr-2"></i> {t('manageFarms.fields')}: <b>{selectedFarmDetails.fieldsCount}</b></div>
+                                <div><i className="pi pi-cog mr-2"></i> {t('manageFarms.equipments')}: <b>{selectedFarmDetails.equipmentsCount}</b></div>
+                                <div><i className="pi pi-check-square mr-2"></i> {t('manageFarms.tasks')}: <b>{selectedFarmDetails.tasksCount}</b></div>
                             </div>
 
                             <div className="flex flex-column md:flex-row gap-2 mt-4 justify-content-center">
-                                <Button label="Invite Member" icon="pi pi-user-plus" className="p-button-success" onClick={() => setInviteDialogVisible(true)} />
+                                <Button label={t('buttons.inviteMember')} icon="pi pi-user-plus" className="p-button-success" onClick={() => setInviteDialogVisible(true)} />
                                 {selectedFarmDetails.ownerId === currentUserId ? (
                                 <>
-                                    <Button label="Rename Farm" icon="pi pi-pencil" className="p-button-info" onClick={() => setRenameDialogVisible(true)} />
-                                    <Button label="Delete Farm" icon="pi pi-trash" className="p-button-danger" onClick={() => setDeleteConfirmVisible(true)} />
+                                    <Button label={t('buttons.renameFarm')} icon="pi pi-pencil" className="p-button-info" onClick={() => setRenameDialogVisible(true)} />
+                                    <Button label={t('buttons.deleteFarm')} icon="pi pi-trash" className="p-button-danger" onClick={() => setDeleteConfirmVisible(true)} />
                                 </>
                                 ) : (
-                                <Button label="Leave Farm" icon="pi pi-sign-out" className="p-button-warning" onClick={() => setLeaveConfirmVisible(true)} />
+                                <Button label={t('buttons.leaveFarm')} icon="pi pi-sign-out" className="p-button-warning" onClick={() => setLeaveConfirmVisible(true)} />
                                 )}
                             </div>
                         </>
                     )}
 
-                    {/* ➕ Create New Farm Button */}
                     {farms.length < 3 && (
-                        <Button label="Create New Farm" icon="pi pi-plus" className="p-button-primary mt-3" onClick={() => setNewFarmDialogVisible(true)} />
+                        <Button label={t('buttons.createNewFarm')} icon="pi pi-plus" className="p-button-primary mt-3" onClick={() => setNewFarmDialogVisible(true)} />
                     )}
                 </div>
             </Dialog>
 
-            {/* 🏷️ Rename Farm */}
-            <Dialog header="Rename Farm" visible={renameDialogVisible} onHide={() => setRenameDialogVisible(false)} style={{ width: '30vw' }}>
+            <Dialog header={t('renameFarm.title')} visible={renameDialogVisible} onHide={() => setRenameDialogVisible(false)} style={{ width: '30vw' }}>
                 <div className="flex flex-column gap-3">
-                    <InputText placeholder="New farm name" value={newFarmNameInput} onChange={(e) => setNewFarmNameInput(e.target.value)} className="w-full" />
+                    <InputText placeholder={t('renameFarm.placeholder')} value={newFarmNameInput} onChange={(e) => setNewFarmNameInput(e.target.value)} className="w-full" />
                     <Button
-                        label="Save"
+                        label={t('buttons.save')}
                         icon="pi pi-check"
                         onClick={async () => {
                             try {
                                 await api.patch(`/farms/${selectedManageFarm}`, { name: newFarmNameInput });
-                                toast.success('Farm renamed!');
+                                toast.success(t('success.farmRenamed'));
                                 refreshFarms();
                                 setRenameDialogVisible(false);
                                 setSelectedManageFarm(null);
                             } catch (error) {
-                                toast.error('Failed to rename farm');
+                                toast.error(t('errors.renameFarm'));
                             }
                         }}
                         disabled={!newFarmNameInput || newFarmNameInput.length < 3}
@@ -279,70 +279,63 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                 </div>
             </Dialog>
 
-            {/* 🗑️ Confirm Delete Farm */}
-            <Dialog header="Delete Farm" visible={deleteConfirmVisible} onHide={() => setDeleteConfirmVisible(false)} style={{ width: '30vw' }}>
+            <Dialog header={t('deleteFarm.title')} visible={deleteConfirmVisible} onHide={() => setDeleteConfirmVisible(false)} style={{ width: '30vw' }}>
                 <div className="flex flex-column gap-4">
-                    <p>Are you sure you want to delete this farm? This action cannot be undone.</p>
+                    <p>{t('deleteFarm.confirmMessage')}</p>
                     <div className="flex justify-content-end gap-2">
-                        <Button label="Cancel" className="p-button-text" onClick={() => setDeleteConfirmVisible(false)} />
-                        <Button label="Delete" icon="pi pi-trash" className="p-button-danger" onClick={async () => {
+                        <Button label={t('buttons.cancel')} className="p-button-text" onClick={() => setDeleteConfirmVisible(false)} />
+                        <Button label={t('buttons.delete')} icon="pi pi-trash" className="p-button-danger" onClick={async () => {
                             try {
                                 await api.delete(`/farms/${selectedManageFarm}`);
-                                toast.success('Farm deleted!');
+                                toast.success(t('success.farmDeleted'));
                                 
-                                // Refresh farms
                                 const updatedFarms = await refreshFarms();
                                 
-                                // Check if farms are left
                                 if (updatedFarms.length > 0) {
-                                  // Switch to first available farm
                                   const newFarmId = updatedFarms[0].id;
                                   localStorage.setItem('x-selected-farm-id', newFarmId.toString());
                                   setSelectedFarm(newFarmId);
-                                  window.location.reload(); // Optional: you can soft refresh state instead if needed
+                                  window.location.reload();
                                 } else {
-                                  // No farms left, redirect to farm creation page
-                                  router.push('/create-farm'); // <-- make sure this page exists
+                                  router.push('/create-farm');
                                 }
                                 
                             } catch (error) {
-                                toast.error('Failed to delete farm');
+                                toast.error(t('errors.deleteFarm'));
                             }
                         }} />
                     </div>
                 </div>
             </Dialog>
 
-            {/* ✉️ Invite Modal */}
             <InvitationForm visible={inviteDialogVisible} onHide={() => setInviteDialogVisible(false)} onSuccess={refreshFarms} />
 
-            {/* ➕ Create New Farm Modal */}
-            <Dialog header="Create New Farm" visible={newFarmDialogVisible} onHide={() => setNewFarmDialogVisible(false)} style={{ width: '30vw' }}>
+            <Dialog header={t('createFarm.title')} visible={newFarmDialogVisible} onHide={() => setNewFarmDialogVisible(false)} style={{ width: '30vw' }}>
                 <div className="flex flex-column gap-3">
-                    <InputText placeholder="Farm Name" value={newFarmInputName} onChange={(e) => setNewFarmInputName(e.target.value)} className="w-full" />
-                    <Button label="Create" icon="pi pi-plus" onClick={async () => {
+                    <InputText placeholder={t('createFarm.placeholder')} value={newFarmInputName} onChange={(e) => setNewFarmInputName(e.target.value)} className="w-full" />
+                    <Button label={t('buttons.create')} icon="pi pi-plus" onClick={async () => {
                         try {
                             await api.post('/farms', { name: newFarmInputName });
-                            toast.success('New farm created!');
+                            toast.success(t('success.farmCreated'));
                             refreshFarms();
                             setNewFarmDialogVisible(false);
                             setNewFarmInputName('');
                         } catch (error) {
-                            toast.error('Failed to create farm');
+                            toast.error(t('errors.createFarm'));
                         }
                     }} disabled={!newFarmInputName || newFarmInputName.length < 3} />
                 </div>
             </Dialog>
 
-            <Dialog header="Leave Farm" visible={leaveConfirmVisible} onHide={() => setLeaveConfirmVisible(false)} style={{ width: '30vw' }}>
+            <Dialog header={t('leaveFarm.title')} visible={leaveConfirmVisible} onHide={() => setLeaveConfirmVisible(false)} style={{ width: '30vw' }}>
                 <div className="flex flex-column gap-4">
-                    <p>Are you sure you want to leave this farm?</p>
+                    <p>{t('leaveFarm.confirmMessage')}</p>
                     <div className="flex justify-content-end gap-2">
-                    <Button label="Cancel" className="p-button-text" onClick={() => setLeaveConfirmVisible(false)} />
-                    <Button label="Leave" icon="pi pi-sign-out" className="p-button-warning" onClick={async () => {
+                    <Button label={t('buttons.cancel')} className="p-button-text" onClick={() => setLeaveConfirmVisible(false)} />
+                    <Button label={t('buttons.leave')} icon="pi pi-sign-out" className="p-button-warning" onClick={async () => {
                         try {
-                        await api.delete(`/farm-members/${selectedManageFarm}`); // We'll implement backend in a sec
-                        toast.success('You left the farm!');
+                        await api.delete(`/farm-members/${selectedManageFarm}`);
+                        toast.success(t('success.leftFarm'));
                         const updatedFarms = await refreshFarms();
                         if (updatedFarms.length > 0) {
                             const newFarmId = updatedFarms[0].id;
@@ -354,7 +347,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                         }
                         setLeaveConfirmVisible(false);
                         } catch (error) {
-                        toast.error('Failed to leave farm');
+                        toast.error(t('errors.leaveFarm'));
                         }
                     }} />
                     </div>

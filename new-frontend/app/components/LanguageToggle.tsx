@@ -1,4 +1,3 @@
-// new-frontend/components/LanguageToggle.tsx
 'use client';
 
 import React from 'react';

@@ -1,6 +1,8 @@
+// new-frontend/utils/api.ts
 import axios from "axios";
 import { logout } from "@/utils/auth";
 import { toast } from "sonner";
+import languageService from "@/utils/languageService";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -10,22 +12,6 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
-
-// // add Authorization and Farm ID headers dynamically
-// api.interceptors.request.use((config) => {
-//   const accessToken = localStorage.getItem("accessToken");
-//   const selectedFarmId = localStorage.getItem("x-selected-farm-id");
-
-//   if (!accessToken || !selectedFarmId) {
-//     toast.error("Missing authentication or farm selection.");
-//     return Promise.reject(new Error("Unauthorized"));
-//   }
-
-//   config.headers["Authorization"] = `Bearer ${accessToken}`;
-//   config.headers["x-selected-farm-id"] = selectedFarmId;
-
-//   return config;
-// });
 
 // attach Token & Farm ID dynamically before requests
 api.interceptors.request.use((config) => {
@@ -58,7 +44,7 @@ api.interceptors.response.use(
       // Handle 401 Unauthorized (EXCEPT login & signup)
       if (status === 401 && !requestUrl?.includes("/auth/signin") && !requestUrl?.includes("/auth/signup")) {
         console.warn("Unauthorized! Logging out...");
-        toast.error("Session expired. Please log in again.");
+        toast.error(languageService.t('api.errors.sessionExpired'));
 
         logout(); // clear local storage & session
         window.location.href = "/auth/login"; // redirect to login
@@ -66,14 +52,31 @@ api.interceptors.response.use(
 
       // Handle 403 Forbidden (Redirect to /pages/access)
       if (status === 403) {
-        console.warn("Forbidden! Redirecting to access page...");
-        toast.error("You do not have permission to do this.");
+        console.warn("Forbidden! Access denied...");
+        toast.error(languageService.t('api.errors.permissionDenied'));
         //window.location.href = "/auth/access"; // Forbidden page
       }
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error("Network Error:", error);
+      toast.error(languageService.t('api.errors.networkError'));
+    } else {
+      // Something happened in setting up the request
+      console.error("Error:", error.message);
+      toast.error(languageService.t('api.errors.unknownError'));
     }
 
     return Promise.reject(error);
   }
 );
+
+// Listen for language changes
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'language' && event.newValue) {
+      languageService.setLanguage(event.newValue);
+    }
+  });
+}
 
 export default api;

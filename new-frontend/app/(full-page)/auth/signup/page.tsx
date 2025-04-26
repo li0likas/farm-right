@@ -9,9 +9,12 @@ import { InputText } from 'primereact/inputtext';
 import { FileUpload } from 'primereact/fileupload';
 import { logout } from "@/utils/auth";
 import api from '@/utils/api';
+import { useTranslations } from 'next-intl'; // ✅ Import for translations
+import LanguageToggle from '@/app/components/LanguageToggle'; // ✅ Import Language Toggle
 
 const RegisterPage = () => {
     const router = useRouter();
+    const t = useTranslations('auth'); // ✅ Use 'auth' namespace (you can adjust)
 
     // Form state
     const [name, setName] = useState('');
@@ -22,43 +25,40 @@ const RegisterPage = () => {
     const [loading, setLoading] = useState(false);
     const [checked, setChecked] = useState(false);
 
-    // Validation logic
     const validate = () => {
         if (!name || !email || !password || !rePassword) {
-            toast.error('There are empty fields');
+            toast.error(t('emptyFields'));
             return false;
         }
         if (!email.match(/^\S+@\S+\.\S+$/)) {
-            toast.error('Invalid email address is provided');
+            toast.error(t('invalidEmail'));
             return false;
         }
         if (password.length < 5) {
-            toast.error('Password must be at least 5 characters');
+            toast.error(t('passwordTooShort'));
             return false;
         }
         if (password !== rePassword) {
-            toast.error('Passwords do not match');
+            toast.error(t('passwordsDoNotMatch'));
             return false;
         }
-        if (!checked) { 
-            toast.error('You must agree to the terms & conditions');
+        if (!checked) {
+            toast.error(t('agreeTerms'));
             return false;
         }
         return true;
     };
-    
-    // Upload profile pic
+
     const onUpload = (event: any) => {
-        const file = event.files[0]; // Get the uploaded file
+        const file = event.files[0];
         if (file) {
             setProfileImage(file);
-            toast.success('Profile image selected successfully!');
+            toast.success(t('profileImageSelected'));
         }
     };
 
-    // Form submission
     const submit = async () => {
-        logout(); // Clear local storage & session
+        logout();
 
         if (!validate()) return;
 
@@ -74,27 +74,25 @@ const RegisterPage = () => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            toast.success('Successful registration');
-            
-            // Check if there's a pending invitation
+            toast.success(t('registrationSuccess'));
+
             const pendingInvitation = localStorage.getItem('pendingInvitation');
             if (pendingInvitation) {
-                toast.info('Please log in to accept your invitation');
+                toast.info(t('loginToAcceptInvitation'));
             }
-            
-            // Redirect to login page
+
             setTimeout(() => {
                 router.push('/auth/login');
             }, 2000);
-        } catch (error: unknown) {
+        } catch (error: any) {
             if (error.response?.status === 403) {
                 if (error.response.data.message === "Email is already taken") {
-                    toast.error('Email is already taken');
+                    toast.error(t('emailTaken'));
                 } else if (error.response.data.message === "Username is already taken") {
-                    toast.error('Username is already taken');
+                    toast.error(t('usernameTaken'));
                 }
             } else {
-                toast.error(`An error occurred: ${error.message}`);
+                toast.error(`${t('errorOccurred')}: ${error.message}`);
             }
         } finally {
             setLoading(false);
@@ -103,6 +101,12 @@ const RegisterPage = () => {
 
     return (
         <div className="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">
+            
+            {/* ✅ Language Toggle at top right */}
+            <div className="absolute top-0 right-0 m-4">
+                <LanguageToggle />
+            </div>
+
             <div className="flex flex-column align-items-center justify-content-center">
                 <img src="/layout/images/logo-dark.svg" alt="Sakai logo" className="mb-5 w-6rem flex-shrink-0" />
                 <div
@@ -115,69 +119,61 @@ const RegisterPage = () => {
                     <div className="w-full surface-card py-8 px-5 sm:px-8" style={{ borderRadius: '53px' }}>
                         <div className="text-center mb-5">
                             <img src="/demo/images/login/avatar.png" alt="Avatar" height="50" className="mb-3" />
-                            <div className="text-900 text-3xl font-medium mb-3">Create an Account</div>
-                            <span className="text-600 font-medium">Sign up to get started</span>
+                            <div className="text-900 text-3xl font-medium mb-3">{t('createAccount')}</div>
+                            <span className="text-600 font-medium">{t('signUpToStart')}</span>
                         </div>
 
                         <div>
-                            <label htmlFor="name" className="block text-900 text-xl font-medium mb-2">
-                                Name
-                            </label>
+                            <label htmlFor="name" className="block text-900 text-xl font-medium mb-2">{t('name')}</label>
                             <InputText
                                 id="name"
                                 type="text"
-                                placeholder="Enter your name"
+                                placeholder={t('enterName')}
                                 className="w-full md:w-30rem mb-5 p-3"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                             />
 
-                            <label htmlFor="email" className="block text-900 text-xl font-medium mb-2">
-                                Email
-                            </label>
+                            <label htmlFor="email" className="block text-900 text-xl font-medium mb-2">{t('email')}</label>
                             <InputText
                                 id="email"
                                 type="text"
-                                placeholder="Enter your email"
+                                placeholder={t('enterEmail')}
                                 className="w-full md:w-30rem mb-5 p-3"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
 
-                            <label htmlFor="password" className="block text-900 text-xl font-medium mb-2">
-                                Password
-                            </label>
+                            <label htmlFor="password" className="block text-900 text-xl font-medium mb-2">{t('password')}</label>
                             <Password
                                 inputId="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
+                                placeholder={t('enterPassword')}
                                 toggleMask
                                 className="w-full mb-5"
                                 inputClassName="w-full p-3 md:w-30rem"
                             />
 
-                            <label htmlFor="rePassword" className="block text-900 text-xl font-medium mb-2">
-                                Repeat Password
-                            </label>
+                            <label htmlFor="rePassword" className="block text-900 text-xl font-medium mb-2">{t('repeatPassword')}</label>
                             <Password
                                 inputId="rePassword"
                                 value={rePassword}
                                 onChange={(e) => setRePassword(e.target.value)}
                                 feedback={false}
-                                placeholder="Confirm your password"
+                                placeholder={t('confirmPassword')}
                                 className="w-full mb-5"
                                 inputClassName="w-full p-3 md:w-30rem"
                             />
 
                             <div className="mb-5">
-                                <h5>Upload Profile Image</h5>
+                                <h5>{t('uploadProfileImage')}</h5>
                                 <FileUpload 
                                     mode="basic"
                                     name="profile"
                                     accept="image/*"
                                     maxFileSize={1000000}
-                                    chooseLabel="Select Image"
+                                    chooseLabel={t('selectImage')}
                                     customUpload
                                     uploadHandler={onUpload}
                                     className="p-button-success"
@@ -192,12 +188,12 @@ const RegisterPage = () => {
                                         onChange={(e) => setChecked(e.checked ?? false)}
                                         className="mr-2"
                                     />
-                                    <label htmlFor="agree">I agree to the terms & conditions</label>
+                                    <label htmlFor="agree">{t('agreeTerms')}</label>
                                 </div>
                             </div>
 
                             <Button
-                                label={loading ? 'Creating Account...' : 'Sign Up'}
+                                label={loading ? t('creatingAccount') : t('signUp')}
                                 className="w-full p-3 text-xl"
                                 onClick={submit}
                                 disabled={loading}

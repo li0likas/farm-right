@@ -1,3 +1,4 @@
+// For new-frontend/app/(main)/create-equipment/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -9,8 +10,9 @@ import { Dropdown } from 'primereact/dropdown';
 import { Button } from 'primereact/button';
 import { InputTextarea } from 'primereact/inputtextarea';
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import api from '@/utils/api'; // ✅ Use API instance with interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
+import api from '@/utils/api';
+import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from 'next-intl'; // Import this
 
 interface EquipmentType {
     id: number;
@@ -19,7 +21,11 @@ interface EquipmentType {
 
 const CreateEquipmentPage = () => {
     const router = useRouter();
-    const { hasPermission, permissions } = usePermissions();
+    const { hasPermission } = usePermissions();
+    
+    // Get translations
+    const t = useTranslations('common');
+    const e = useTranslations('equipment');
 
     const [name, setName] = useState('');
     const [type, setType] = useState<number | null>(null);
@@ -30,7 +36,7 @@ const CreateEquipmentPage = () => {
     useEffect(() => {
         if (!hasPermission("EQUIPMENT_CREATE")) return;
         fetchEquipmentTypes();
-    }, [permissions]);
+    }, [hasPermission]);
 
     const fetchEquipmentTypes = async () => {
         try {
@@ -46,7 +52,7 @@ const CreateEquipmentPage = () => {
         if (!hasPermission("EQUIPMENT_CREATE")) return; 
 
         if (!name || !type) {
-            toast.warning("Please fill in all required fields.");
+            toast.warning('Please fill in all required fields.');
             return;
         }
 
@@ -73,7 +79,7 @@ const CreateEquipmentPage = () => {
         return (
             <ProtectedRoute>
                 <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-                    🚫 You do not have permission to create equipment on this farm.
+                    {e('noPermission')}
                 </div>
             </ProtectedRoute>
         );
@@ -82,37 +88,37 @@ const CreateEquipmentPage = () => {
     return (
         <ProtectedRoute>
             <div className="container mx-auto p-6">
-                <Card title="Create Equipment" className="mb-6">
+                <Card title={e('title')} className="mb-6">
                     {/* Equipment Name */}
                     <div className="mb-4">
-                        <label className="block font-bold mb-2">Equipment Name</label>
+                        <label className="block font-bold mb-2">{e('equipmentName')}</label>
                         <InputText 
                             value={name} 
                             onChange={(e) => setName(e.target.value)} 
-                            placeholder="Enter equipment name" 
+                            placeholder={e('enterEquipmentName')} 
                             className="w-full" 
                         />
                     </div>
 
                     {/* Equipment Type Selection */}
                     <div className="mb-4">
-                        <label className="block font-bold mb-2">Select Equipment Type</label>
+                        <label className="block font-bold mb-2">{e('selectEquipmentType')}</label>
                         <Dropdown
                             value={type}
                             options={equipmentTypes.map((t) => ({ label: t.name, value: t.id }))}
                             onChange={(e) => setType(e.value)}
-                            placeholder="Select equipment type"
+                            placeholder={e('selectType')}
                             className="w-full"
                         />
                     </div>
 
                     {/* Equipment Description */}
                     <div className="mb-4">
-                        <label className="block font-bold mb-2">Description (optional)</label>
+                        <label className="block font-bold mb-2">{e('description')} ({t('optional')})</label>
                         <InputTextarea 
                             value={description} 
                             onChange={(e) => setDescription(e.target.value)} 
-                            placeholder="Enter equipment description" 
+                            placeholder={e('enterDescription')} 
                             className="w-full" 
                             rows={3} 
                         />
@@ -120,7 +126,7 @@ const CreateEquipmentPage = () => {
 
                     {/* Create Equipment Button */}
                     <Button 
-                        label="Create Equipment" 
+                        label={e('createButton')} 
                         className="p-button-success w-full" 
                         onClick={handleCreateEquipment} 
                         loading={loading} 

@@ -10,8 +10,9 @@ import { Dialog } from "primereact/dialog";
 import { toast } from "sonner";
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import api from '@/utils/api'; // ✅ Use API instance with interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
+import api from '@/utils/api';
+import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl"; // ✅ Added
 
 interface Equipment {
     id: number;
@@ -29,13 +30,14 @@ const EquipmentPage = () => {
     const router = useRouter();
     const { hasPermission, permissions } = usePermissions();
 
-    // ✅ Permission checks
+    const t = useTranslations('common');
+    const et = useTranslations('equipment'); // ✅ Added
+
     const canRead = hasPermission("EQUIPMENT_READ");
     const canCreate = hasPermission("EQUIPMENT_CREATE");
     const canEdit = hasPermission("EQUIPMENT_UPDATE");
     const canDelete = hasPermission("EQUIPMENT_DELETE");
 
-    // ✅ Hide "Actions" column if the user can't edit or delete
     const showActionsColumn = canEdit || canDelete;
 
     const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -66,7 +68,7 @@ const EquipmentPage = () => {
             setEquipment(response.data);
             setFilteredEquipment(response.data);
         } catch (error) {
-            toast.error("Failed to fetch equipment.");
+            toast.error(et('fetchError'));
         }
     };
 
@@ -75,7 +77,7 @@ const EquipmentPage = () => {
             const response = await api.get('/equipment-type-options');
             setEquipmentTypes(response.data);
         } catch (error) {
-            toast.error("Failed to fetch equipment types.");
+            toast.error(et('fetchTypesError'));
         }
     };
 
@@ -93,7 +95,7 @@ const EquipmentPage = () => {
 
     const getTypeName = (typeId: number) => {
         const type = equipmentTypes.find((t) => t.id === typeId);
-        return type ? type.name : "Unknown";
+        return type ? type.name : et('unknown');
     };
 
     const enableEdit = (equip: Equipment) => {
@@ -106,11 +108,11 @@ const EquipmentPage = () => {
         if (!editedEquipment || !editingEquipmentId || !canEdit) return;
         try {
             await api.put(`/equipment/${editingEquipmentId}`, editedEquipment);
-            toast.success("Equipment updated successfully.");
+            toast.success(et('updateSuccess'));
             setEditingEquipmentId(null);
             fetchEquipment();
         } catch (error) {
-            toast.error("Failed to update equipment.");
+            toast.error(et('updateError'));
         }
     };
 
@@ -129,17 +131,16 @@ const EquipmentPage = () => {
         if (!equipmentToDelete || !canDelete) return;
         try {
             await api.delete(`/equipment/${equipmentToDelete.id}`);
-            toast.success(`Deleted equipment: ${equipmentToDelete.name}`);
+            toast.success(et('deleteSuccess', { name: equipmentToDelete.name }));
             setDeleteDialogVisible(false);
             fetchEquipment();
         } catch (error) {
-            toast.error("Failed to delete equipment.");
+            toast.error(et('deleteError'));
         }
     };
 
-    // ✅ Hide entire table if user lacks "EQUIPMENT_READ"
     if (!canRead) {
-        return <p className="text-center text-gray-600">You do not have permission to view equipment.</p>;
+        return <p className="text-center text-gray-600">{et('noPermission')}</p>;
     }
 
     return (
@@ -147,25 +148,24 @@ const EquipmentPage = () => {
             <div className="grid">
                 <div className="col-12">
                     <div className="card">
-                        <h5>My Equipment</h5>
+                        <h5>{et('myEquipment')}</h5>
 
-                        {/* 🔍 Search, Filter & Create Equipment */}
                         <div className="flex mb-4 gap-3">
                             <InputText
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search by name..."
+                                placeholder={et('searchPlaceholder')}
                             />
                             <Dropdown
                                 value={selectedType}
-                                options={[{ label: "Show All", value: null }, ...equipmentTypes.map((t) => ({ label: t.name, value: t.id }))]}
+                                options={[{ label: et('showAll'), value: null }, ...equipmentTypes.map((t) => ({ label: t.name, value: t.id }))]}
                                 onChange={(e) => setSelectedType(e.value)}
-                                placeholder="Filter by Type"
+                                placeholder={et('filterByType')}
                                 className="w-full md:w-20rem"
                             />
                             {canCreate && (
                                 <Button
-                                    label="Create Equipment"
+                                    label={et('createEquipment')}
                                     icon="pi pi-plus"
                                     className="p-button-success"
                                     onClick={() => router.push('/create-equipment')}
@@ -173,9 +173,8 @@ const EquipmentPage = () => {
                             )}
                         </div>
 
-                        {/* 📋 Equipment Table */}
                         <DataTable value={filteredEquipment} paginator rows={5} responsiveLayout="scroll">
-                            <Column field="name" header="Equipment Name" body={(data) => (
+                            <Column field="name" header={et('equipmentName')} body={(data) => (
                                 editingEquipmentId === data.id ? (
                                     <InputText
                                         value={editedEquipment.name || ""}
@@ -186,7 +185,7 @@ const EquipmentPage = () => {
                                 )
                             )} sortable />
 
-                            <Column field="typeId" header="Type" body={(data) => (
+                            <Column field="typeId" header={et('type')} body={(data) => (
                                 editingEquipmentId === data.id ? (
                                     <Dropdown
                                         value={editedEquipment.typeId || data.typeId}
@@ -198,7 +197,7 @@ const EquipmentPage = () => {
                                 )
                             )} sortable />
 
-                            <Column field="description" header="Description" body={(data) => (
+                            <Column field="description" header={t('description')} body={(data) => (
                                 editingEquipmentId === data.id ? (
                                     <InputText
                                         value={editedEquipment.description || ""}
@@ -211,15 +210,15 @@ const EquipmentPage = () => {
 
                             {showActionsColumn && (
                                 <Column
-                                    header="Actions"
+                                    header={et('actions')}
                                     body={(data) => (
                                         <div className="flex gap-2">
                                             {editingEquipmentId === data.id ? (
                                                 <>
                                                     {canEdit && (
-                                                        <Button label="Save" className="p-button-success p-button-sm" onClick={saveEquipment} />
+                                                        <Button label={t('save')} className="p-button-success p-button-sm" onClick={saveEquipment} />
                                                     )}
-                                                    <Button label="Cancel" className="p-button-secondary p-button-sm" onClick={cancelEdit} />
+                                                    <Button label={t('cancel')} className="p-button-secondary p-button-sm" onClick={cancelEdit} />
                                                 </>
                                             ) : (
                                                 <>
@@ -240,17 +239,16 @@ const EquipmentPage = () => {
                 </div>
             </div>
 
-            {/* 🛠️ Delete Confirmation Dialog */}
             <Dialog
                 visible={deleteDialogVisible}
                 onHide={() => setDeleteDialogVisible(false)}
-                header="Confirm Delete"
+                header={et('confirmDelete')}
                 footer={
                     <div>
-                        <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
+                        <Button label={t('cancel')} icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
                         {hasPermission("EQUIPMENT_DELETE") && (
-                                <Button
-                                label="Delete"
+                            <Button
+                                label={et('delete')}
                                 icon="pi pi-check"
                                 className="p-button-danger"
                                 onClick={handleDelete}
@@ -259,7 +257,7 @@ const EquipmentPage = () => {
                     </div>
                 }
             >
-                {equipmentToDelete && <p>Are you sure you want to delete <strong>{equipmentToDelete.name}</strong>?</p>}
+                {equipmentToDelete && <p>{et('deleteConfirmation')}<strong>{equipmentToDelete.name}</strong>?</p>}
             </Dialog>
         </ProtectedRoute>
     );

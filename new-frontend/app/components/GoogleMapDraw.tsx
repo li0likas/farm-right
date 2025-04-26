@@ -3,6 +3,7 @@ import { GoogleMap, LoadScript, Polygon, Marker } from "@react-google-maps/api";
 import { area as turfArea, length as turfLength, polygon as turfPolygon, lineString } from "@turf/turf";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
+import { useTranslations } from "next-intl";
 
 interface GoogleMapDrawProps {
   setBoundary: (boundary: any) => void;
@@ -31,6 +32,8 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
   resetTrigger,
 }) => {
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+  const t = useTranslations('mapDraw');
 
   const [drawingPath, setDrawingPath] = useState<{ lat: number; lng: number }[]>([]);
   const [mapCenter] = useState({ lat: 55.1694, lng: 23.8813 });
@@ -216,21 +219,21 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
     <div className="relative">
       {/* PrimeReact Control Buttons */}
       <div className="flex gap-3 mb-3 flex-wrap">
-        <Button
-          label="Cancel Drawing"
+      <Button
+          label={t('cancelDrawing')}
           icon="pi pi-times"
           className="p-button-danger"
           onClick={handleCancelDrawing}
           disabled={drawingPath.length === 0}
         />
         <Button
-          label="Reset View"
+          label={t('resetView')}
           icon="pi pi-refresh"
           className="p-button-secondary"
           onClick={handleResetView}
         />
         <Button
-          label="Finish Drawing"
+          label={t('finishDrawing')}
           icon="pi pi-check"
           className="p-button-success"
           onClick={handleFinishDrawing}
@@ -337,10 +340,10 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
       {liveMeasurement && (
         <Card
           className="absolute top-4 right-4 shadow-2 p-3 text-sm"
-          title="Current Measurement"
+          title={t('currentMeasurement')}
         >
-          <div><strong>Area:</strong> {liveMeasurement.area.toFixed(2)} ha</div>
-          <div><strong>Perimeter:</strong> {liveMeasurement.perimeter.toFixed(2)} m</div>
+          <div><strong>{t('area')}:</strong> {liveMeasurement.area.toFixed(2)} ha</div>
+          <div><strong>{t('perimeter')}:</strong> {liveMeasurement.perimeter.toFixed(2)} m</div>
         </Card>
       )}
     </div>

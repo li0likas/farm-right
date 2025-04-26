@@ -9,8 +9,9 @@ import { InputText } from "primereact/inputtext";
 import { centroid } from "@turf/turf";
 import GoogleMapComponent from "../../components/GoogleMapComponent";
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import api from "@/utils/api"; // ✅ Use API interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import Permissions Context
+import api from "@/utils/api";
+import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl"; // ✅ Add translation hook
 
 interface Field {
   id: string;
@@ -24,6 +25,9 @@ const Fields = () => {
   const router = useRouter();
   const { hasPermission, permissions } = usePermissions();
 
+  const t = useTranslations('common');
+  const f = useTranslations('fields');
+
   const [fields, setFields] = useState<Field[]>([]);
   const [filteredFields, setFilteredFields] = useState<Field[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,7 +35,7 @@ const Fields = () => {
 
   const canRead = hasPermission("FIELD_READ");
   const canCreate = hasPermission("FIELD_CREATE");
-  const canViewDetails = hasPermission("FIELD_TASK_READ"); // Example: Only allow viewing details if task reading is allowed
+  const canViewDetails = hasPermission("FIELD_TASK_READ");
 
   useEffect(() => {
     if (canRead) fetchFields();
@@ -43,7 +47,7 @@ const Fields = () => {
       setFields(response.data);
       setFilteredFields(response.data);
     } catch (error) {
-      toast.error("Failed to fetch fields.");
+      toast.error(f('fetchFieldsError'));
     }
   };
 
@@ -60,17 +64,21 @@ const Fields = () => {
   if (!canRead) {
     return (
       <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-        🚫 You do not have permission to view fields.
+        🚫 {f('noPermission')}
       </div>
     );
   }
 
   const dataViewHeader = (
     <div className="flex flex-column md:flex-row md:justify-content-between gap-2">
-      <InputText value={searchQuery} onChange={handleSearch} placeholder="Search fields by name" />
+      <InputText
+        value={searchQuery}
+        onChange={handleSearch}
+        placeholder={f('searchPlaceholder')}
+      />
       {canCreate && (
         <Button
-          label="Create Field"
+          label={f('createButton')}
           icon="pi pi-plus"
           className="p-button-success"
           onClick={() => router.push("/create-field")}
@@ -89,14 +97,14 @@ const Fields = () => {
         <div className="flex flex-column md:flex-row align-items-center p-3 w-full border-1 surface-border">
           <div className="flex-1 flex flex-column align-items-center text-center md:text-left">
             <h3 className="font-bold text-2xl">{field.name}</h3>
-            <p>Area: {field.area} hectares</p>
-            <p>Perimeter: {field.perimeter} meters</p>
+            <p>{f('area')}: {field.area} {f('ha')}</p>
+            <p>{f('perimeter')}: {field.perimeter} {f('m')}</p>
             <GoogleMapComponent center={center} boundary={field.boundary} />
           </div>
           <div className="flex flex-row md:flex-column justify-content-between w-full md:w-auto align-items-center md:align-items-end mt-5 md:mt-0">
             {canViewDetails && (
               <Button
-                label="More Info"
+                label={f('moreInfo')}
                 className="p-button-primary"
                 onClick={() => router.push(`/fields/${field.id}`)}
               />
@@ -115,13 +123,13 @@ const Fields = () => {
       <div className="col-12 lg:col-4">
         <div className="card m-3 border-1 surface-border">
           <h3 className="text-xl font-bold">{field.name}</h3>
-          <p>Area: {field.area} hectares</p>
-          <p>Perimeter: {field.perimeter} meters</p>
+          <p>{f('area')}: {field.area} {f('ha')}</p>
+          <p>{f('perimeter')}: {field.perimeter} {f('m')}</p>
           <GoogleMapComponent center={center} boundary={field.boundary} />
           <div className="mt-3">
             {canViewDetails && (
               <Button
-                label="More Info"
+                label={f('moreInfo')}
                 className="p-button-primary"
                 onClick={() => router.push(`/fields/${field.id}`)}
               />
@@ -142,7 +150,7 @@ const Fields = () => {
       <div className="grid">
         <div className="col-12">
           <div className="card">
-            <h5>My Fields</h5>
+            <h5>{f('myFields')}</h5>
             <DataView
               value={filteredFields}
               layout={layout}

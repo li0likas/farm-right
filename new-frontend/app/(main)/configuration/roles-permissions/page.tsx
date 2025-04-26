@@ -1,3 +1,4 @@
+// new-frontend/app/(main)/configuration/roles-permissions/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,12 +7,16 @@ import { Checkbox } from 'primereact/checkbox';
 import { toast } from 'sonner';
 import api from '@/utils/api';
 import { usePermissions } from '@/context/PermissionsContext';
+import { useTranslations } from 'next-intl'; // Import this
 
 const RolesPermissionsPage = () => {
   const { hasPermission } = usePermissions();
   const canRead = hasPermission('PERMISSION_READ');
   const canAssign = hasPermission('PERMISSION_ASSIGN');
   const canRemove = hasPermission('PERMISSION_REMOVE');
+
+  // Get translations
+  const r = useTranslations('roles');
 
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
@@ -68,7 +73,7 @@ const RolesPermissionsPage = () => {
   };
 
   if (!canRead) {
-    return <p className="text-center text-gray-600">You do not have permission to view roles and permissions.</p>;
+    return <p className="text-center text-gray-600">{r('noPermission')}</p>;
   }
 
   const groupedPermissions = permissions.reduce((groups, perm) => {
@@ -80,13 +85,13 @@ const RolesPermissionsPage = () => {
 
   return (
     <div className="container mx-auto p-6 max-w-3xl">
-      <h2 className="text-2xl font-bold mb-6">Roles & Permissions</h2>
+      <h2 className="text-2xl font-bold mb-6">{r('title')}</h2>
 
       <Dropdown
         value={selectedRole}
-        options={roles.map((r) => ({ label: r.name, value: r }))}
+        options={roles.map((role) => ({ label: role.name, value: role }))}
         onChange={handleRoleChange}
-        placeholder="Select a role"
+        placeholder={r('selectRole')}
         className="w-full mb-6"
       />
 

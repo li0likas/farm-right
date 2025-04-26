@@ -7,12 +7,16 @@ import { Dropdown } from "primereact/dropdown";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl"; // ✅ Added
 
 const FarmMembersActivityReport = () => {
   const [loading, setLoading] = useState(true);
   const [activityData, setActivityData] = useState<any[]>([]);
   const [seasonOptions, setSeasonOptions] = useState([]);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
+
+  const t = useTranslations('common');
+  const ar = useTranslations('activityReport'); // ✅ Activity Report translations
 
   useEffect(() => {
     fetchSeasons();
@@ -30,7 +34,7 @@ const FarmMembersActivityReport = () => {
         setSelectedSeason(options[0].value);
       }
     } catch {
-      toast.error("Failed to load seasons");
+      toast.error(ar('fetchSeasonsError'));
     }
   };
 
@@ -47,7 +51,7 @@ const FarmMembersActivityReport = () => {
         });
         setActivityData(res.data);
       } catch {
-        toast.error("Failed to load activity report");
+        toast.error(ar('fetchActivityError'));
       } finally {
         setLoading(false);
       }
@@ -59,13 +63,13 @@ const FarmMembersActivityReport = () => {
   return (
     <ProtectedRoute>
       <div className="container mx-auto p-6">
-        <Card title="Farm Members Activity Report">
+        <Card title={ar('title')}>
           <div className="mb-4">
             <Dropdown
               value={selectedSeason}
               options={seasonOptions}
               onChange={(e) => setSelectedSeason(e.value)}
-              placeholder="Select Season"
+              placeholder={t('selectSeason')}
               className="w-72"
             />
           </div>
@@ -75,16 +79,16 @@ const FarmMembersActivityReport = () => {
               <ProgressSpinner />
             </div>
           ) : activityData.length === 0 ? (
-            <p className="text-gray-500">No activity data found for this season.</p>
+            <p className="text-gray-500">{ar('noActivityData')}</p>
           ) : (
             activityData.map((member) => (
               <Card key={member.id} title={member.username} className="mb-4">
-                <p><strong>Role:</strong> {member.role}</p>
-                <p><strong>Tasks Participated:</strong> {member.taskCount}</p>
-                <p><strong>Total Minutes Worked:</strong> {member.totalMinutes}</p>
+                <p><strong>{ar('role')}</strong> {member.role}</p>
+                <p><strong>{ar('tasksParticipated')}</strong> {member.taskCount}</p>
+                <p><strong>{ar('totalMinutesWorked')}</strong> {member.totalMinutes}</p>
                 {member.taskTitles.length > 0 && (
                   <>
-                    <p className="mt-2 font-semibold">Tasks:</p>
+                    <p className="mt-2 font-semibold">{ar('tasks')}</p>
                     <ul className="list-disc ml-6 mt-1">
                       {member.taskTitles.map((title: string, index: number) => (
                         <li key={index}>{title}</li>

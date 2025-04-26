@@ -6,6 +6,7 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl'; // ✅ Add this
 import api from '@/utils/api';
 
 interface InvitationFormProps {
@@ -21,10 +22,11 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<{ email?: string; role?: string }>({});
 
+  const t = useTranslations('invitationForm'); // ✅ Use namespace
+
   useEffect(() => {
     if (visible) {
       fetchRoles();
-      // Reset form
       setEmail('');
       setRoleId(null);
       setFormErrors({});
@@ -40,7 +42,7 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
       }));
       setRoles(roleOptions);
     } catch (error) {
-      toast.error('Failed to load roles');
+      toast.error(t('fetchRolesError'));
     }
   };
 
@@ -49,15 +51,15 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
     let isValid = true;
 
     if (!email) {
-      errors.email = 'Email is required';
+      errors.email = t('emailRequired');
       isValid = false;
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      errors.email = 'Email is invalid';
+      errors.email = t('emailInvalid');
       isValid = false;
     }
 
     if (!roleId) {
-      errors.role = 'Role is required';
+      errors.role = t('roleRequired');
       isValid = false;
     }
 
@@ -71,14 +73,14 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
     setLoading(true);
     try {
       await api.post('/farm-invitations', { email, roleId });
-      toast.success('Invitation sent successfully!');
+      toast.success(t('inviteSuccess'));
       onHide();
       if (onSuccess) onSuccess();
     } catch (error) {
       if (error.response?.status === 403 && error.response?.data?.message === 'User is already a member of this farm') {
-        toast.error('This user is already a member of this farm');
+        toast.error(t('alreadyMemberError'));
       } else {
-        toast.error('Failed to send invitation');
+        toast.error(t('inviteError'));
       }
     } finally {
       setLoading(false);
@@ -87,9 +89,9 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
 
   const footer = (
     <div>
-      <Button label="Cancel" icon="pi pi-times" className="p-button-text" onClick={onHide} />
+      <Button label={t('cancel')} icon="pi pi-times" className="p-button-text" onClick={onHide} />
       <Button 
-        label={loading ? "Sending..." : "Send Invitation"} 
+        label={loading ? t('sending') : t('sendInvite')} 
         icon="pi pi-envelope" 
         className="p-button-primary" 
         onClick={handleSubmit} 
@@ -100,7 +102,7 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
 
   return (
     <Dialog
-      header="Invite Member"
+      header={t('dialogTitle')}
       visible={visible}
       style={{ width: '450px' }}
       footer={footer}
@@ -108,25 +110,25 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
     >
       <div className="p-fluid">
         <div className="field">
-          <label htmlFor="email" className="font-bold">Email</label>
+          <label htmlFor="email" className="font-bold">{t('email')}</label>
           <InputText
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className={formErrors.email ? 'p-invalid' : ''}
-            placeholder="Enter email address"
+            placeholder={t('emailPlaceholder')}
           />
           {formErrors.email && <small className="p-error">{formErrors.email}</small>}
         </div>
         
         <div className="field mt-3">
-          <label htmlFor="role" className="font-bold">Role</label>
+          <label htmlFor="role" className="font-bold">{t('role')}</label>
           <Dropdown
             id="role"
             value={roleId}
             options={roles}
             onChange={(e) => setRoleId(e.value)}
-            placeholder="Select a role"
+            placeholder={t('selectRole')}
             className={formErrors.role ? 'p-invalid' : ''}
           />
           {formErrors.role && <small className="p-error">{formErrors.role}</small>}
@@ -135,7 +137,7 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
         <div className="mt-4 p-2 border-1 surface-border border-round bg-gray-50">
           <p className="text-sm text-gray-600 m-0">
             <i className="pi pi-info-circle mr-1"></i>
-            An invitation will be sent to this email. The user will need to create an account or log in to accept.
+            {t('infoText')}
           </p>
         </div>
       </div>
