@@ -58,7 +58,7 @@ const LoginPage = () => {
             const response = await api.post('/auth/signin', { username, password });
             const { access_token, farms } = response.data;
 
-            const success = await handleLogin(access_token);
+            const success = await handleLogin(access_token, checked);
 
             if (success) {
                 try {
@@ -183,6 +183,14 @@ const LoginPage = () => {
                                     </div>
 
                                     <Button label={loading ? t('signingIn') : t('signIn')} className="w-full p-3 text-xl" onClick={login} disabled={loading} />
+
+                                    <div className="mt-4 flex justify-center">
+                                        <Button 
+                                            label={t('goToSignUp')} 
+                                            className="p-button-text text-primary" 
+                                            onClick={() => router.push('/auth/signup')} 
+                                        />
+                                    </div>
                                 </div>
                             </>
                         ) : (

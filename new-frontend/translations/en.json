@@ -299,7 +299,8 @@
         "selectFarmPlaceholder": "-- Select Farm --",
         "confirmFarm": "Confirm Farm",
         "selectFarmError": "Please select a farm.",
-        "farmSelected": "Farm selected successfully!"
+        "farmSelected": "Farm selected successfully!",
+        "goToSignUp": "Don't have an account? Sign Up"
     },
     "auth": {
         "createAccount": "Create an Account",

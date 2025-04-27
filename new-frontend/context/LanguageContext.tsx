@@ -22,9 +22,10 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'lt')) {
       setLanguageState(savedLanguage);
     } else {
-      // Default to browser language if available
-      const browserLang = navigator.language.substring(0, 2);
-      setLanguageState(browserLang === 'lt' ? 'lt' : 'en');
+      // Changed default to 'lt' instead of using browser language
+      setLanguageState('lt');
+      // Also set it in localStorage for persistence
+      localStorage.setItem('language', 'lt');
     }
   }, []);
 

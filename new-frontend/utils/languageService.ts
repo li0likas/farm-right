@@ -12,11 +12,17 @@ class LanguageService {
   private currentLanguage: string = 'en';
 
   private constructor() {
-    // Initialize with the stored language or default to 'en'
+    // Initialize with the stored language or default to 'lt'
     if (typeof window !== 'undefined') {
       const storedLang = localStorage.getItem('language');
       if (storedLang && (storedLang === 'en' || storedLang === 'lt')) {
         this.currentLanguage = storedLang;
+      } else {
+        this.currentLanguage = 'lt'; // Changed default to 'lt'
+        // Also set it in localStorage for persistence
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('language', 'lt');
+        }
       }
     }
   }

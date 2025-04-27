@@ -299,7 +299,8 @@
         "selectFarmPlaceholder": "-- Pasirinkite ūkį --",
         "confirmFarm": "Patvirtinti ūkį",
         "selectFarmError": "Pasirinkite ūkį.",
-        "farmSelected": "Ūkis sėkmingai pasirinktas!"
+        "farmSelected": "Ūkis sėkmingai pasirinktas!",
+        "goToSignUp": "Neturite paskyros? Registruotis"
     },
     "auth": {
         "createAccount": "Sukurti paskyrą",

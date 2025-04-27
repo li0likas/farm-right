@@ -15,7 +15,7 @@ const api = axios.create({
 
 // attach Token & Farm ID dynamically before requests
 api.interceptors.request.use((config) => {
-  const accessToken = localStorage.getItem("accessToken");
+  const accessToken = sessionStorage.getItem("accessToken") || localStorage.getItem("accessToken");
   const selectedFarmId = localStorage.getItem("x-selected-farm-id");
 
   // bypass headers for login-related requests
