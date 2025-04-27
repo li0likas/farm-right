@@ -32,7 +32,92 @@
         "owner": "Owner",
         "member": "Member",
         "updateRole": "Save Role",
-        "noPermission": "You do not have permission to view roles and permissions."
+        "noPermission": "You do not have permission to view roles and permissions.",
+        "permissionGroups": {
+            "FARM": "Farm Management",
+            "FIELD": "Fields",
+            "TASK": "Tasks",
+            "EQUIPMENT": "Equipment",
+            "PERMISSION": "Permissions",
+            "DASHBOARD": "Dashboard",
+            "COMMENT": "Comments",
+            "USER": "User Management",
+            "SEASON": "Seasons",
+            "CROP": "Crops",
+            "ADMIN": "Admin"
+        },
+        "permissions": {
+            "FARM_CREATE": "Create Farms",
+            "FARM_READ": "View Farms",
+            "FARM_UPDATE": "Update Farms",
+            "FARM_DELETE": "Delete Farms",
+
+            "CROP_CREATE": "Create Crop Health",
+            "CROP_READ": "View Crop Health",
+            "CROP_UPDATE": "Update Crop Health",
+            "CROP_DELETE": "Delete Crop Health",
+
+            "FIELD_CREATE": "Create Fields",
+            "FIELD_READ": "View Fields",
+            "FIELD_UPDATE": "Update Fields",
+            "FIELD_DELETE": "Delete Fields",
+            "FIELD_TOTAL_AREA_READ": "View Total Field Area",
+
+            "FIELD_TASK_CREATE": "Create Field Tasks",
+            "FIELD_TASK_READ": "View Field Tasks",
+            "FIELD_TASK_UPDATE": "Update Field Tasks",
+            "FIELD_TASK_DELETE": "Delete Field Tasks",
+
+            "FIELD_TASK_COMMENT_CREATE": "Create Field Task Comments",
+            "FIELD_TASK_COMMENT_READ": "View Field Task Comments",
+            "FIELD_TASK_COMMENT_DELETE": "Delete Field Task Comments",
+
+            "SEASON_CREATE": "Create Seasons",
+            "SEASON_READ": "View Seasons",
+            "SEASON_UPDATE": "Update Seasons",
+            "SEASON_DELETE": "Delete Seasons",
+
+            "TASK_CREATE": "Create Tasks",
+            "TASK_READ": "View Tasks",
+            "TASK_UPDATE": "Update Tasks",
+            "TASK_DELETE": "Delete Tasks",
+            "TASK_STATS_READ": "View Task Statistics",
+            "TASK_CHANGE_STATUS": "Change Task Status",
+
+            "TASK_EQUIPMENT_READ": "View Task Equipment",
+            "TASK_EQUIPMENT_ASSIGN": "Assign Equipment to Tasks",
+            "TASK_EQUIPMENT_REMOVE": "Remove Equipment from Tasks",
+
+            "TASK_READ_PARTICIPANTS": "View Task Participants",
+            "TASK_ASSIGN_PARTICIPANTS": "Assign Task Participants",
+            "TASK_REMOVE_PARTICIPANTS": "Remove Task Participants",
+
+            "EQUIPMENT_CREATE": "Create Equipment",
+            "EQUIPMENT_READ": "View Equipment",
+            "EQUIPMENT_UPDATE": "Update Equipment",
+            "EQUIPMENT_DELETE": "Delete Equipment",
+
+            "FARM_MEMBER_INVITE": "Invite Farm Members",
+            "FARM_MEMBER_READ": "View Farm Members",
+            "FARM_MEMBER_UPDATE_ROLE": "Update Member Roles",
+            "FARM_MEMBER_REMOVE": "Remove Members",
+
+            "DASHBOARD_AI_SUMMARY": "View AI Dashboard Summary",
+
+            "PERMISSION_READ": "View Permissions",
+            "PERMISSION_ASSIGN": "Assign Permissions",
+            "PERMISSION_REMOVE": "Remove Permissions",
+
+            "USER_MANAGE": "Manage Users",
+            "ADMIN_ACCESS": "Admin Access"
+        },
+
+        "roleNames": {
+            "OWNER": "Owner",
+            "ADMIN": "Administrator",
+            "AGRONOMIST": "Agronomist",
+            "WORKER": "Worker"
+        }
     },
     "equipment": {
         "title": "Create Equipment",

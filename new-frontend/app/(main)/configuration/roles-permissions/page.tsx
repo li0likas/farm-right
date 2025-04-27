@@ -7,7 +7,7 @@ import { Checkbox } from 'primereact/checkbox';
 import { toast } from 'sonner';
 import api from '@/utils/api';
 import { usePermissions } from '@/context/PermissionsContext';
-import { useTranslations } from 'next-intl'; // Import this
+import { useTranslations } from 'next-intl'; 
 
 const RolesPermissionsPage = () => {
   const { hasPermission } = usePermissions();
@@ -17,6 +17,7 @@ const RolesPermissionsPage = () => {
 
   // Get translations
   const r = useTranslations('roles');
+  const common = useTranslations('common');
 
   const [roles, setRoles] = useState([]);
   const [permissions, setPermissions] = useState([]);
@@ -34,7 +35,7 @@ const RolesPermissionsPage = () => {
       const response = await api.get('/roles');
       setRoles(response.data);
     } catch {
-      toast.error('Failed to fetch roles');
+      toast.error(r('fetchRolesError'));
     }
   };
 
@@ -43,7 +44,7 @@ const RolesPermissionsPage = () => {
       const response = await api.get('/roles/permissions');
       setPermissions(response.data);
     } catch {
-      toast.error('Failed to fetch permissions');
+      toast.error(r('fetchPermissionsError'));
     }
   };
 
@@ -64,11 +65,11 @@ const RolesPermissionsPage = () => {
       } else {
         await api.post(`/roles/${roleId}/permissions`, { permissionId });
       }
-      toast.success('Permission updated!');
+      toast.success(r('permissionUpdated'));
       const updatedRoles = await api.get('/roles');
       setSelectedRole(updatedRoles.data.find((r) => r.id === roleId));
     } catch {
-      toast.error('Failed to update permission');
+      toast.error(r('failedToUpdatePermission'));
     }
   };
 
@@ -76,6 +77,7 @@ const RolesPermissionsPage = () => {
     return <p className="text-center text-gray-600">{r('noPermission')}</p>;
   }
 
+  // Group permissions by category
   const groupedPermissions = permissions.reduce((groups, perm) => {
     const [group] = perm.name.split('_');
     if (!groups[group]) groups[group] = [];
@@ -89,7 +91,10 @@ const RolesPermissionsPage = () => {
 
       <Dropdown
         value={selectedRole}
-        options={roles.map((role) => ({ label: role.name, value: role }))}
+        options={roles.map((role) => ({ 
+          label: r(`roleNames.${role.name}`) || role.name, // Translate role name or fallback to original
+          value: role 
+        }))}
         onChange={handleRoleChange}
         placeholder={r('selectRole')}
         className="w-full mb-6"
@@ -99,11 +104,15 @@ const RolesPermissionsPage = () => {
         <div className="space-y-6">
           {Object.entries(groupedPermissions).map(([group, perms]) => (
             <div key={group} className="bg-white rounded shadow p-4">
-              <h4 className="font-semibold text-gray-700 mb-3">{group}</h4>
+              <h4 className="font-semibold text-gray-700 mb-3">
+                {r(`permissionGroups.${group}`) || group}
+              </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {perms.map((perm) => (
                   <div key={perm.id} className="flex justify-between items-center">
-                    <span className="text-sm text-gray-700">{perm.name}</span>
+                    <span className="text-sm text-gray-700">
+                      {r(`permissions.${perm.name}`) || perm.name}
+                    </span>
                     <Checkbox
                       checked={roleHasPermission(perm.id)}
                       onChange={() =>

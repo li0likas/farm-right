@@ -32,7 +32,92 @@
         "owner": "Savininkas",
         "member": "Narys",
         "updateRole": "Išsaugoti Rolę",
-        "noPermission": "Jūs neturite teisės peržiūrėti rolių ir leidimų."
+        "noPermission": "Jūs neturite teisės peržiūrėti rolių ir leidimų.",
+        "permissionGroups": {
+            "FARM": "Ūkio valdymas",
+            "FIELD": "Laukai",
+            "TASK": "Užduotys",
+            "EQUIPMENT": "Įranga",
+            "PERMISSION": "Teisės",
+            "DASHBOARD": "Valdymo skydelis",
+            "COMMENT": "Komentarai",
+            "USER": "Naudotojų valdymas",
+            "SEASON": "Sezonai",
+            "CROP": "Pasėlių sveikata",
+            "ADMIN": "Admin"
+        },
+       "permissions": {
+            "FARM_CREATE": "Sukurti ūkius",
+            "FARM_READ": "Peržiūrėti ūkius",
+            "FARM_UPDATE": "Atnaujinti ūkius",
+            "FARM_DELETE": "Ištrinti ūkius",
+
+            "CROP_CREATE": "Sukurti augalus",
+            "CROP_READ": "Peržiūrėti augalus",
+            "CROP_UPDATE": "Atnaujinti augalus",
+            "CROP_DELETE": "Ištrinti augalus",
+
+            "FIELD_CREATE": "Sukurti laukus",
+            "FIELD_READ": "Peržiūrėti laukus",
+            "FIELD_UPDATE": "Atnaujinti laukus",
+            "FIELD_DELETE": "Ištrinti laukus",
+            "FIELD_TOTAL_AREA_READ": "Peržiūrėti bendrą laukų plotą",
+
+            "FIELD_TASK_CREATE": "Sukurti lauko užduotis",
+            "FIELD_TASK_READ": "Peržiūrėti lauko užduotis",
+            "FIELD_TASK_UPDATE": "Atnaujinti lauko užduotis",
+            "FIELD_TASK_DELETE": "Ištrinti lauko užduotis",
+
+            "FIELD_TASK_COMMENT_CREATE": "Sukurti komentarus prie lauko užduočių",
+            "FIELD_TASK_COMMENT_READ": "Peržiūrėti komentarus prie lauko užduočių",
+            "FIELD_TASK_COMMENT_DELETE": "Ištrinti komentarus prie lauko užduočių",
+
+            "SEASON_CREATE": "Sukurti sezonus",
+            "SEASON_READ": "Peržiūrėti sezonus",
+            "SEASON_UPDATE": "Atnaujinti sezonus",
+            "SEASON_DELETE": "Ištrinti sezonus",
+
+            "TASK_CREATE": "Sukurti užduotis",
+            "TASK_READ": "Peržiūrėti užduotis",
+            "TASK_UPDATE": "Atnaujinti užduotis",
+            "TASK_DELETE": "Ištrinti užduotis",
+            "TASK_STATS_READ": "Peržiūrėti užduočių statistiką",
+            "TASK_CHANGE_STATUS": "Keisti užduoties būseną",
+
+            "TASK_EQUIPMENT_READ": "Peržiūrėti užduoties įrangą",
+            "TASK_EQUIPMENT_ASSIGN": "Priskirti įrangą užduotims",
+            "TASK_EQUIPMENT_REMOVE": "Pašalinti įrangą iš užduoties",
+
+            "TASK_READ_PARTICIPANTS": "Peržiūrėti užduočių dalyvius",
+            "TASK_ASSIGN_PARTICIPANTS": "Priskirti dalyvius užduotims",
+            "TASK_REMOVE_PARTICIPANTS": "Pašalinti dalyvius iš užduoties",
+
+            "EQUIPMENT_CREATE": "Sukurti įrangą",
+            "EQUIPMENT_READ": "Peržiūrėti įrangą",
+            "EQUIPMENT_UPDATE": "Atnaujinti įrangą",
+            "EQUIPMENT_DELETE": "Ištrinti įrangą",
+
+            "FARM_MEMBER_INVITE": "Kviesti ūkio narius",
+            "FARM_MEMBER_READ": "Peržiūrėti ūkio narius",
+            "FARM_MEMBER_UPDATE_ROLE": "Atnaujinti nario rolę",
+            "FARM_MEMBER_REMOVE": "Pašalinti narius",
+
+            "DASHBOARD_AI_SUMMARY": "Peržiūrėti AI suvestinę valdymo skydelyje",
+
+            "PERMISSION_READ": "Peržiūrėti leidimus",
+            "PERMISSION_ASSIGN": "Priskirti leidimus",
+            "PERMISSION_REMOVE": "Pašalinti leidimus",
+
+            "USER_MANAGE": "Tvarkyti vartotojus",
+            "ADMIN_ACCESS": "Administratoriaus prieiga"
+        },
+
+        "roleNames": {
+            "OWNER": "Savininkas",
+            "ADMIN": "Administratorius",
+            "AGRONOMIST": "Agronomas",
+            "WORKER": "Darbuotojas"
+        }
     },
     "equipment": {
         "title": "Sukurti Įrangą",
