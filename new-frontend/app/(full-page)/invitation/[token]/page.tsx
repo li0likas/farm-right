@@ -10,13 +10,14 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import Link from 'next/link';
 import { isLoggedIn } from '@/utils/auth';
-import { useTranslations } from 'next-intl'; // ✅ Import
-import LanguageToggle from '@/app/components/LanguageToggle'; // ✅ Import
+import { useTranslations } from 'next-intl';
+import LanguageToggle from '@/app/components/LanguageToggle';
+import api from "@/utils/api";
 
 const InvitationPage = () => {
   const { token } = useParams();
   const router = useRouter();
-  const t = useTranslations('invitation'); // ✅ Using "invitation" namespace
+  const t = useTranslations('invitation');
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -41,8 +42,7 @@ const InvitationPage = () => {
 
     setLoading(true);
     try {
-      const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}/verify`,
+      const response = await api.get(`/farm-invitations/${token}/verify`,
         isLoggedIn()
           ? { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
           : {}
@@ -82,11 +82,7 @@ const InvitationPage = () => {
         return;
       }
 
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/farm-invitations/${token}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` } }
-      );
+      const response = await api.post(`/farm-invitations/${token}`);
 
       setInvitationData(response.data);
 
@@ -99,20 +95,21 @@ const InvitationPage = () => {
         localStorage.removeItem('pendingInvitation');
       }
 
-      const userResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('accessToken')}` }
-      });
+      const userResponse = await api.get(`/users/farms`);
 
-      if (userResponse.data?.length) {
-        const newFarm = userResponse.data.find((farm: any) => farm.name === response.data.farmName);
-        if (newFarm) {
-          localStorage.setItem('x-selected-farm-id', newFarm.id.toString());
-        }
-      }
+      if (userResponse.data?.length === 1) {
+        // Automatically select if only one farm
+        localStorage.setItem('x-selected-farm-id', userResponse.data[0].id.toString());
 
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1500);
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 1500);
+
+      } else {
+        setTimeout(() => {
+          router.push('/select-farm'); // Redirect to select farm page
+        }, 1500);
+      }      
 
     } catch (error) {
       console.error('Error accepting invitation:', error);

@@ -1,12 +1,10 @@
 import { createToken, getToken, removeToken } from "../utils/accessToken";
 import { setUser, removeUser, getUser } from "../utils/user";
-import axios from "axios";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import api from "@/utils/api";
 
 const fetchUserData = async (accessToken: string) => {
     try {
-        const { data } = await axios.get(`${API_BASE_URL}/users/me`, {
+        const { data } = await api.get(`/users/me`, {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         return data;

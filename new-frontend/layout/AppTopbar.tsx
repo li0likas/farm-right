@@ -13,10 +13,10 @@ import { Dropdown } from 'primereact/dropdown';
 import { classNames } from 'primereact/utils';
 import { toast } from 'sonner';
 import api from '@/utils/api';
-import axios from 'axios';
 import InvitationForm from '@/app/components/InvitationForm';
 import LanguageToggle from '../app/components/LanguageToggle';
 import { useTranslations } from 'next-intl';
+import { logout } from "@/utils/auth";
 
 const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const { layoutConfig, layoutState, onMenuToggle, showProfileSidebar } = useContext(LayoutContext);
@@ -48,10 +48,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     useEffect(() => {
         const fetchFarms = async () => {
             try {
-                const accessToken = localStorage.getItem('accessToken');
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
+                const response = await api.get(`/users/farms`);
                 setFarms(response.data);
                 const currentFarm = localStorage.getItem('x-selected-farm-id');
                 setSelectedFarm(currentFarm ? parseInt(currentFarm) : response.data[0]?.id || null);
@@ -77,9 +74,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
         const fetchFarmDetails = async () => {
             try {
                 const accessToken = localStorage.getItem('accessToken');
-                const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/farms/${selectedManageFarm}`, {
-                    headers: { Authorization: `Bearer ${accessToken}` }
-                });
+                const response = await api.get(`/farms/${selectedManageFarm}`);
                 setSelectedFarmDetails(response.data);
             } catch (error) {
                 console.error(error);
@@ -100,9 +95,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
     const refreshFarms = async (): Promise<any[]> => {
         try {
             const accessToken = localStorage.getItem('accessToken');
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/farms`, {
-                headers: { Authorization: `Bearer ${accessToken}` }
-            });
+            const response = await api.get(`/users/farms`);
             setFarms(response.data);
             return response.data;
         } catch (error) {
@@ -161,8 +154,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
             label: t('menu.logout'),
             icon: 'pi pi-sign-out',
             command: () => {
-                localStorage.clear();
-                sessionStorage.removeItem('aiInsight');
+                logout();
                 router.push('/auth/login');
                 toast.success(t('success.loggedOut'));
             }
