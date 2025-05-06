@@ -385,44 +385,46 @@ const FieldsMapView = () => {
     <ProtectedRoute>
       <div className="container mx-auto p-4">
         <Card title="Farm Fields Map View" className="mb-4">
-          <div className="grid mb-4">
-            <div className="col-12 md:col-6">
-              <h5>Filter Fields</h5>
-              <MultiSelect
-                value={selectedCrops}
-                options={cropOptions}
-                onChange={(e) => setSelectedCrops(e.value)}
-                placeholder="Filter by Crop Type"
-                className="w-full"
-                display="chip"
-              />
-            </div>
-            <div className="col-12 md:col-6">
-              <div className="flex flex-column md:flex-row justify-content-between align-items-center gap-3">
-                <div className="flex align-items-center">
-                  <ToggleButton
-                    checked={showWeatherLayer}
-                    onChange={(e) => setShowWeatherLayer(e.value)}
-                    onLabel="Weather On"
-                    offLabel="Weather Off"
-                    onIcon="pi pi-cloud"
-                    offIcon="pi pi-cloud"
-                    className="mr-2"
-                    disabled={loadingWeather}
-                  />
-                  {loadingWeather && <ProgressSpinner style={{ width: '20px', height: '20px' }} />}
-                </div>
-                
-                <Button
-                  icon={loadingLocation ? "pi pi-spin pi-spinner" : "pi pi-map-marker"}
-                  label={loadingLocation ? "Locating..." : "My Location"}
-                  onClick={getUserLocation}
-                  disabled={loadingLocation}
-                  className="p-button-info"
-                />
-              </div>
-            </div>
+        <div className="grid mb-4">
+          <div className="col-12 md:col-8">
+            <h5>Filter Fields</h5>
+            <MultiSelect
+              value={selectedCrops}
+              options={cropOptions}
+              onChange={(e) => setSelectedCrops(e.value)}
+              placeholder="Filter by Crop Type"
+              className="w-full"
+              display="chip"
+            />
           </div>
+          <div className="col-12 md:col-4 flex flex-column md:flex-row justify-content-end align-items-center gap-2">
+            <Button
+              label="Create New Field"
+              icon="pi pi-plus"
+              className="p-button-success"
+              onClick={() => router.push('/create-field')}
+              disabled={!hasPermission("FIELD_CREATE")}
+            />
+            <Button
+              icon={loadingLocation ? "pi pi-spin pi-spinner" : "pi pi-map-marker"}
+              label={loadingLocation ? "Locating..." : "My Location"}
+              onClick={getUserLocation}
+              disabled={loadingLocation}
+              className="p-button-info"
+            />
+            <ToggleButton
+              checked={showWeatherLayer}
+              onChange={(e) => setShowWeatherLayer(e.value)}
+              onLabel="Weather On"
+              offLabel="Weather Off"
+              onIcon="pi pi-cloud"
+              offIcon="pi pi-cloud"
+              className="ml-2"
+              disabled={loadingWeather}
+            />
+            {loadingWeather && <ProgressSpinner style={{ width: '20px', height: '20px' }} />}
+          </div>
+        </div>
           
           {loading ? (
             <div className="flex justify-center p-6">
@@ -542,19 +544,20 @@ const FieldsMapView = () => {
                   </GoogleMap>
                 </LoadScript>
                 
-                <div className="mt-4 flex justify-between">
-                  <span className="text-sm text-gray-600">
-                    {filteredFields.filter(field => isValidBoundary(field.boundary)).length} fields displayed
-                    {selectedCrops.length > 0 && ` (filtered from ${fields.length} total)`}
-                  </span>
-                  <Button
-                    label="Create New Field"
-                    icon="pi pi-plus"
-                    className="p-button-success"
-                    onClick={() => router.push('/create-field')}
-                    disabled={!hasPermission("FIELD_CREATE")}
-                  />
-                </div>
+                <div className="mt-6 flex items-center justify-center">
+  <div className="bg-gray-100 px-6 py-3 rounded-md shadow-sm flex items-center gap-2 text-gray-700 text-sm">
+    <i className="pi pi-map-marker text-primary" />
+    <span>
+      <strong className="text-primary font-semibold">
+        {filteredFields.filter(field => isValidBoundary(field.boundary)).length}
+      </strong> fields displayed
+      {selectedCrops.length > 0 && (
+        <span className="text-gray-500"> (filtered from {fields.length} total)</span>
+      )}
+    </span>
+  </div>
+</div>
+
               </div>
             </div>
           )}

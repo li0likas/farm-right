@@ -1,4 +1,3 @@
-// new-frontend/app/(main)/crop-health/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -183,7 +182,6 @@ const CropHealthPage = () => {
                     <th className="p-2">{ch('disease')}</th>
                     <th className="p-2">{ch('probability')}</th>
                     <th className="p-2">{ch('similarImages')}</th>
-                    // new-frontend/app/(main)/crop-health/page.tsx (continued)
                     <th className="p-2">{ch('action')}</th>
                   </tr>
                 </thead>
