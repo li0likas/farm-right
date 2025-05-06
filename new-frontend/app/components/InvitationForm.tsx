@@ -22,7 +22,8 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
   const [loading, setLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<{ email?: string; role?: string }>({});
 
-  const t = useTranslations('invitationForm'); // ✅ Use namespace
+  const t = useTranslations('invitationForm'); 
+  const r = useTranslations('roles');
 
   useEffect(() => {
     if (visible) {
@@ -37,7 +38,7 @@ const InvitationForm: React.FC<InvitationFormProps> = ({ visible, onHide, onSucc
     try {
       const response = await api.get('/roles');
       const roleOptions = response.data.map((role: any) => ({
-        label: role.name,
+        label: r(`roleNames.${role.name}`) || role.name,
         value: role.id
       }));
       setRoles(roleOptions);

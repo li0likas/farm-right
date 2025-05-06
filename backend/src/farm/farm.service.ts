@@ -140,4 +140,29 @@ export class FarmService {
       where: { id: farmId },
     });
   }
+
+  async leaveFarm(userId: number, farmId: number) {
+    const membership = await this.prisma.farmMember.findFirst({
+      where: {
+        userId,
+        farmId,
+      },
+    });
+  
+    if (!membership) {
+      throw new NotFoundException('Membership not found');
+    }
+  
+    // Do not allow leaving own farm (Owner must delete)
+    const farm = await this.prisma.farm.findUnique({ where: { id: farmId } });
+    if (farm.ownerId === userId) {
+      throw new ForbiddenException('Owner must delete farm instead of leaving');
+    }
+  
+    await this.prisma.farmMember.delete({
+      where: { id: membership.id },
+    });
+  
+    return { success: true };
+  }
 }

@@ -13,10 +13,16 @@ import { toast } from "sonner";
 import ProtectedRoute from "@/utils/ProtectedRoute";
 import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl"; // Import for translations
 
 const FieldsMapView = () => {
   const router = useRouter();
   const { hasPermission } = usePermissions();
+  
+  // Add translation hooks
+  const t = useTranslations('common');
+  const fm = useTranslations('fieldsMap');
+  
   const mapRef = useRef(null);
   const [fields, setFields] = useState([]);
   const [filteredFields, setFilteredFields] = useState([]);
@@ -90,7 +96,7 @@ const FieldsMapView = () => {
       // We'll calculate bounds after Google Maps API is loaded
     } catch (error) {
       console.error("Error fetching fields:", error);
-      toast.error("Failed to fetch fields.");
+      toast.error(fm('failedToFetchFields'));
     } finally {
       setLoading(false);
     }
@@ -110,12 +116,11 @@ const FieldsMapView = () => {
       }
     });
   
-    // ✅ Apply bounds immediately
+    // Apply bounds immediately
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds);
     }
   };
-  
 
   const fetchCropOptions = async () => {
     try {
@@ -126,7 +131,7 @@ const FieldsMapView = () => {
       })));
     } catch (error) {
       console.error("Error fetching crop options:", error);
-      toast.error("Failed to load crop options.");
+      toast.error(fm('failedToLoadCropOptions'));
     }
   };
 
@@ -158,7 +163,7 @@ const FieldsMapView = () => {
       setWeatherData(weatherResults);
     } catch (error) {
       console.error("Error fetching weather data:", error);
-      toast.error("Failed to load weather data.");
+      toast.error(fm('failedToLoadWeather'));
     } finally {
       setLoadingWeather(false);
     }
@@ -297,7 +302,7 @@ const FieldsMapView = () => {
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
+      toast.error(fm('geolocationNotSupported'));
       return;
     }
     
@@ -313,11 +318,11 @@ const FieldsMapView = () => {
         setMapCenter(userPos);
         setZoomLevel(16);
         setLoadingLocation(false);
-        toast.success("Location found!");
+        toast.success(fm('locationFound'));
       },
       (error) => {
         console.error("Error getting location:", error);
-        toast.error("Unable to retrieve your location. " + error.message);
+        toast.error(`${fm('locationError')} ${error.message}`);
         setLoadingLocation(false);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
@@ -343,7 +348,7 @@ const FieldsMapView = () => {
           />
         </div>
         <p className="text-xs capitalize">{weather.weather[0].description}</p>
-        <p className="text-xs">Wind: {weather.wind.speed} m/s</p>
+        <p className="text-xs">{fm('wind')}: {weather.wind.speed} m/s</p>
       </div>
     );
   };
@@ -376,7 +381,7 @@ const FieldsMapView = () => {
   if (!canReadFields) {
     return (
       <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-        🚫 You do not have permission to view fields.
+        🚫 {fm('noPermission')}
       </div>
     );
   }
@@ -384,22 +389,22 @@ const FieldsMapView = () => {
   return (
     <ProtectedRoute>
       <div className="container mx-auto p-4">
-        <Card title="Farm Fields Map View" className="mb-4">
+        <Card title={fm('title')} className="mb-4">
         <div className="grid mb-4">
           <div className="col-12 md:col-8">
-            <h5>Filter Fields</h5>
+            <h5>{fm('filterByLabel')}</h5>
             <MultiSelect
               value={selectedCrops}
               options={cropOptions}
               onChange={(e) => setSelectedCrops(e.value)}
-              placeholder="Filter by Crop Type"
+              placeholder={fm('filterByCrop')}
               className="w-full"
               display="chip"
             />
           </div>
           <div className="col-12 md:col-4 flex flex-column md:flex-row justify-content-end align-items-center gap-2">
             <Button
-              label="Create New Field"
+              label={fm('createNewField')}
               icon="pi pi-plus"
               className="p-button-success"
               onClick={() => router.push('/create-field')}
@@ -407,7 +412,7 @@ const FieldsMapView = () => {
             />
             <Button
               icon={loadingLocation ? "pi pi-spin pi-spinner" : "pi pi-map-marker"}
-              label={loadingLocation ? "Locating..." : "My Location"}
+              label={loadingLocation ? fm('locating') : fm('myLocation')}
               onClick={getUserLocation}
               disabled={loadingLocation}
               className="p-button-info"
@@ -415,8 +420,8 @@ const FieldsMapView = () => {
             <ToggleButton
               checked={showWeatherLayer}
               onChange={(e) => setShowWeatherLayer(e.value)}
-              onLabel="Weather On"
-              offLabel="Weather Off"
+              onLabel={fm('weatherOn')}
+              offLabel={fm('weatherOff')}
               onIcon="pi pi-cloud"
               offIcon="pi pi-cloud"
               className="ml-2"
@@ -512,10 +517,10 @@ const FieldsMapView = () => {
                             >
                               <div className="p-2">
                                 <h3 className="text-lg font-bold">{field.name}</h3>
-                                <p>Area: {field.area} ha</p>
-                                <p>Crop: {field.crop ? field.crop.name : "Not specified"}</p>
+                                <p>{fm('area')}: {field.area} {fm('hectares')}</p>
+                                <p>{fm('currentCrop')}: {field.crop ? field.crop.name : fm('notSpecified')}</p>
                                 <Button
-                                  label="View Details"
+                                  label={fm('viewDetails')}
                                   className="p-button-sm p-button-primary mt-2"
                                   onClick={handleViewDetails}
                                 />
@@ -538,26 +543,25 @@ const FieldsMapView = () => {
                           strokeColor: "#FFFFFF",
                           strokeWeight: 2,
                         }}
-                        title="Your Location"
+                        title={fm('myLocation')}
                       />
                     )}
                   </GoogleMap>
                 </LoadScript>
                 
                 <div className="mt-6 flex items-center justify-center">
-  <div className="bg-gray-100 px-6 py-3 rounded-md shadow-sm flex items-center gap-2 text-gray-700 text-sm">
-    <i className="pi pi-map-marker text-primary" />
-    <span>
-      <strong className="text-primary font-semibold">
-        {filteredFields.filter(field => isValidBoundary(field.boundary)).length}
-      </strong> fields displayed
-      {selectedCrops.length > 0 && (
-        <span className="text-gray-500"> (filtered from {fields.length} total)</span>
-      )}
-    </span>
-  </div>
-</div>
-
+                  <div className="bg-gray-100 px-6 py-3 rounded-md shadow-sm flex items-center gap-2 text-gray-700 text-sm">
+                    <i className="pi pi-map-marker text-primary" />
+                    <span>
+                      <strong className="text-primary font-semibold">
+                        {filteredFields.filter(field => isValidBoundary(field.boundary)).length}
+                      </strong> {fm('fieldsDisplayed')}
+                      {selectedCrops.length > 0 && (
+                        <span className="text-gray-500"> ({fm('filteredFrom')} {fields.length} {fm('total')})</span>
+                      )}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -565,20 +569,20 @@ const FieldsMapView = () => {
         
         {/* Field Details Dialog */}
         <Dialog
-          header={selectedField ? selectedField.name : "Field Details"}
+          header={selectedField ? selectedField.name : fm('fieldDetails')}
           visible={detailsVisible}
           style={{ width: "50vw" }}
           onHide={() => setDetailsVisible(false)}
           footer={
             <div className="flex justify-content-end">
               <Button
-                label="Close"
+                label={fm('close')}
                 icon="pi pi-times"
                 className="p-button-text"
                 onClick={() => setDetailsVisible(false)}
               />
               <Button
-                label="Inspect Field"
+                label={fm('inspectField')}
                 icon="pi pi-search"
                 onClick={handleInspectField}
               />
@@ -589,39 +593,39 @@ const FieldsMapView = () => {
             <div className="p-2">
               <div className="grid">
                 <div className="col-6">
-                  <h5>Field Information</h5>
-                  <p><strong>Name:</strong> {selectedField.name}</p>
-                  <p><strong>Area:</strong> {selectedField.area} hectares</p>
-                  <p><strong>Perimeter:</strong> {selectedField.perimeter} meters</p>
-                  <p><strong>Current Crop:</strong> {
-                    selectedField.crop ? selectedField.crop.name : "Not specified"
+                  <h5>{fm('fieldInfo')}</h5>
+                  <p><strong>{fm('fieldName')}:</strong> {selectedField.name}</p>
+                  <p><strong>{fm('area')}:</strong> {selectedField.area} {fm('hectares')}</p>
+                  <p><strong>{fm('perimeter')}:</strong> {selectedField.perimeter} {fm('meters')}</p>
+                  <p><strong>{fm('currentCrop')}:</strong> {
+                    selectedField.crop ? selectedField.crop.name : fm('notSpecified')
                   }</p>
                   
                   {showWeatherLayer && weatherData[selectedField.id] && (
                     <div className="mt-4 p-3 bg-gray-100 rounded">
-                      <h5>Weather Conditions</h5>
+                      <h5>{fm('weatherConditions')}</h5>
                       <div className="flex items-center">
                         <img 
                           src={`https://openweathermap.org/img/w/${weatherData[selectedField.id].weather[0].icon}.png`} 
                           alt="Weather icon"
                         />
                         <div>
-                          <p><strong>Temperature:</strong> {Math.round(weatherData[selectedField.id].main.temp)}°C</p>
-                          <p><strong>Conditions:</strong> {weatherData[selectedField.id].weather[0].description}</p>
-                          <p><strong>Wind:</strong> {weatherData[selectedField.id].wind.speed} m/s</p>
-                          <p><strong>Humidity:</strong> {weatherData[selectedField.id].main.humidity}%</p>
+                          <p><strong>{fm('temperature')}:</strong> {Math.round(weatherData[selectedField.id].main.temp)}°C</p>
+                          <p><strong>{fm('conditions')}:</strong> {weatherData[selectedField.id].weather[0].description}</p>
+                          <p><strong>{fm('wind')}:</strong> {weatherData[selectedField.id].wind.speed} m/s</p>
+                          <p><strong>{fm('humidity')}:</strong> {weatherData[selectedField.id].main.humidity}%</p>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
                 <div className="col-6">
-                  <h5>Recent Activity</h5>
+                  <h5>{fm('recentActivity')}</h5>
                   {/* You could add a list of recent tasks related to this field */}
-                  <p className="text-gray-500">No recent activities found for this field.</p>
+                  <p className="text-gray-500">{fm('noRecentActivities')}</p>
                   
                   <Button
-                    label="Create Task"
+                    label={fm('createTask')}
                     icon="pi pi-plus"
                     className="p-button-outlined mt-3"
                     onClick={() => router.push(`/create-task/${selectedField.id}`)}

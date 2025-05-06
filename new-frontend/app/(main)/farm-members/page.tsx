@@ -29,6 +29,7 @@ const FarmMembersPage = () => {
 
   const t = useTranslations('common');
   const fm = useTranslations('farmMembers');
+  const tr = useTranslations('roles');
 
   const canRead = hasPermission("FARM_MEMBER_READ");
   const canInvite = hasPermission("FARM_MEMBER_INVITE");
@@ -66,10 +67,10 @@ const FarmMembersPage = () => {
 
   const fetchRoles = async () => {
     try {
-      const response = await api.get("/roles");
-      setRoles(response.data.map((role: { name: any; id: any; }) => ({ label: role.name, value: role.id })));
-    } catch (error) {
-      toast.error(fm('fetchRolesError'));
+      const response = await api.get('/roles');
+      setRoles(response.data);
+    } catch {
+      toast.error(r('fetchRolesError'));
     }
   };
 
@@ -151,7 +152,10 @@ const FarmMembersPage = () => {
                     <>
                       <Dropdown
                         value={roleChanges[rowData.id] || rowData.roleId}
-                        options={roles}
+                        options={roles.map((role) => ({ 
+                          label: tr(`roleNames.${role.name}`) || role.name, // Translate role names
+                          value: role.id 
+                        }))}
                         onChange={(e) => handleRoleChange(rowData.id, e.value)}
                         placeholder={fm('selectRole')}
                         className="w-12rem"
@@ -164,7 +168,7 @@ const FarmMembersPage = () => {
                     </>
                   ) : (
                     <>
-                      <span>{rowData.role || fm('unknownRole')}</span>
+                      <span>{tr(`roleNames.${rowData.role}`) || rowData.role}</span>
                       {canUpdateRole && !isCurrentUser && (
                         <Button 
                           icon="pi pi-pencil" 

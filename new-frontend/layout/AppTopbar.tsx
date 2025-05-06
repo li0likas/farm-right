@@ -326,7 +326,7 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                     <Button label={t('buttons.cancel')} className="p-button-text" onClick={() => setLeaveConfirmVisible(false)} />
                     <Button label={t('buttons.leave')} icon="pi pi-sign-out" className="p-button-warning" onClick={async () => {
                         try {
-                        await api.delete(`/farm-members/${selectedManageFarm}`);
+                        await api.delete(`/farms/leave/${selectedManageFarm}`);
                         toast.success(t('success.leftFarm'));
                         const updatedFarms = await refreshFarms();
                         if (updatedFarms.length > 0) {

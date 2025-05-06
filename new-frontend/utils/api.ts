@@ -44,7 +44,7 @@ api.interceptors.response.use(
       // Handle 401 Unauthorized (EXCEPT login & signup)
       if (status === 401 && !requestUrl?.includes("/auth/signin") && !requestUrl?.includes("/auth/signup")) {
         console.warn("Unauthorized! Logging out...");
-        toast.error(languageService.t('api.errors.sessionExpired'));
+        toast.error(languageService.t('errors.sessionExpired'));
 
         logout(); // clear local storage & session
         window.location.href = "/auth/login"; // redirect to login
@@ -53,17 +53,17 @@ api.interceptors.response.use(
       // Handle 403 Forbidden (Redirect to /pages/access)
       if (status === 403) {
         console.warn("Forbidden! Access denied...");
-        toast.error(languageService.t('api.errors.permissionDenied'));
+        toast.error(languageService.t('errors.permissionDenied'));
         //window.location.href = "/auth/access"; // Forbidden page
       }
     } else if (error.request) {
       // The request was made but no response was received
       console.error("Network Error:", error);
-      toast.error(languageService.t('api.errors.networkError'));
+      toast.error(languageService.t('errors.networkError'));
     } else {
       // Something happened in setting up the request
       console.error("Error:", error.message);
-      toast.error(languageService.t('api.errors.unknownError'));
+      toast.error(languageService.t('errors.unknownError'));
     }
 
     return Promise.reject(error);

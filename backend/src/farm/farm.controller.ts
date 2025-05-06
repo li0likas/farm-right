@@ -26,4 +26,9 @@ export class FarmController {
   async deleteFarm(@Param('id') id: string, @Request() req) {
     return this.farmService.deleteFarm(parseInt(id, 10), req.user.id);
   }
+
+  @Delete('leave/:farmId')
+  async leaveFarm(@Param('farmId') farmId: string, @Request() req) {
+    return this.farmService.leaveFarm(req.user.id, parseInt(farmId));
+  }
 }
