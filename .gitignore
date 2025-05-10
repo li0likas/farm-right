@@ -43,3 +43,6 @@ Thumbs.db
 
 #ignore .idea
 /farm-right/.idea
+
+
+.VSCodeCounter/
