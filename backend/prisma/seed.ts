@@ -370,13 +370,13 @@ async function main() {
   // ✅ Create users
   const users = await prisma.user.createMany({
     data: [
-      { username: 'admin', email: 'admin@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'owner', email: 'owner@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'worker1', email: 'worker1@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'worker2', email: 'worker2@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'worker3', email: 'worker3@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'agronomist', email: 'agronomist@example.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
-      { username: 'gvidas', email: 'gvidas@gmail.com', password: "gvidas123", hash: await argon.hash("gvidas123") },
+      { username: 'admin', email: 'admin@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'owner', email: 'owner@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'worker1', email: 'worker1@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'worker2', email: 'worker2@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'worker3', email: 'worker3@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'agronomist', email: 'agronomist@example.com', hash: await argon.hash("gvidas123") },
+      { username: 'gvidas', email: 'gvidas@gmail.com', hash: await argon.hash("gvidas123") },
     ],
     skipDuplicates: true,
   });

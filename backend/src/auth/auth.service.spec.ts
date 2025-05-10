@@ -1,4 +1,3 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
@@ -277,11 +276,6 @@ describe('AuthService', () => {
   });
 
 describe('passReset', () => {
-  beforeEach(() => {
-    // Important: Clear all mock function calls between tests
-    jest.clearAllMocks();
-  });
-
   it('should reset password successfully', async () => {
     // Arrange
     const authpassDto: AuthpassDto = {
@@ -320,29 +314,28 @@ describe('passReset', () => {
   });
 
   it('should throw ForbiddenException if user not found or reset token invalid', async () => {
-    // Arrange
     const authpassDto: AuthpassDto = {
       newPassword: 'new-password123',
     };
     const email = 'test@example.com';
+
     const user = {
       id: 1,
-      username: 'testuser',
       email,
       hash: 'old-hash',
       resetPassToken: 'token',
-      isResetValid: false, // Invalid reset token
+      isResetValid: false, // Invalid
     };
 
-    // Need to clear previous test's mock calls
-    jest.clearAllMocks();
-    
-    mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
+    jest.clearAllMocks(); // reset all prior mocks
 
-    // Act & Assert
+    mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
+    (argon.hash as jest.Mock).mockReset(); // reset specific mock
+    const hashSpy = jest.spyOn(argon, 'hash'); // track actual calls
+
     await expect(authService.passReset(authpassDto, email)).rejects.toThrow(ForbiddenException);
     expect(mockPrismaAuthService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
-    expect(argon.hash).not.toHaveBeenCalled();
+    expect(hashSpy).not.toHaveBeenCalled(); // use this for clarity
     expect(mockPrismaAuthService.user.update).not.toHaveBeenCalled();
   });
 });

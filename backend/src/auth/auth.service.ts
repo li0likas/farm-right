@@ -127,13 +127,13 @@ export class AuthService {
   }
 
   async passReset(dto: AuthpassDto, email: string) {
-    const hash = await argon.hash(dto.newPassword);
-
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.isResetValid) {
       throw new ForbiddenException('Password could not be updated');
     }
+
+    const hash = await argon.hash(dto.newPassword);
 
     await this.prisma.user.update({
       where: { email },

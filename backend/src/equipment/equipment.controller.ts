@@ -48,7 +48,10 @@ export class EquipmentController {
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async createEquipment(@Request() req): Promise<Equipment> {
     const ownerId = req.user.id;
-    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']); // ✅ Ensure farm context
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    if (isNaN(selectedFarmId)) {
+      throw new HttpException('Invalid farm ID', HttpStatus.BAD_REQUEST);
+    }
 
     const { name, description, typeId } = req.body;
     const createEquipmentDto: CreateEquipmentDto = {
@@ -56,7 +59,7 @@ export class EquipmentController {
       description,
       typeId,
       ownerId: parseInt(ownerId),
-      farmId: selectedFarmId, // ✅ Associate equipment with selected farm
+      farmId: selectedFarmId,
     };
 
     return this.equipmentService.createEquipment(createEquipmentDto);
@@ -73,7 +76,11 @@ export class EquipmentController {
     @Body() data: { name?: string; typeId?: number; ownerId?: number; description?: string },
     @Request() req
   ) {
-    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    if (isNaN(selectedFarmId)) {
+      throw new HttpException('Invalid farm ID', HttpStatus.BAD_REQUEST);
+    }
+
     return this.equipmentService.updateEquipment(parseInt(id), data, selectedFarmId);
   }
 
@@ -84,7 +91,10 @@ export class EquipmentController {
   @ApiResponse({ status: 404, description: 'Equipment not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
   async deleteEquipment(@Param('id') id: string, @Request() req) {
-    const selectedFarmId = parseInt(req.headers['x-selected-farm-id']);
+    const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
+    if (isNaN(selectedFarmId)) {
+      throw new HttpException('Invalid farm ID', HttpStatus.BAD_REQUEST);
+    }
     return this.equipmentService.deleteEquipment(parseInt(id), selectedFarmId);
   }
 }

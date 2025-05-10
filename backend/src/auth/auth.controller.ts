@@ -38,12 +38,7 @@ export class AuthController {
     }))
     async signup(@Body() dto: AuthDto, @UploadedFiles() files: Array<Multer.File>) {
         try {
-            let profileFN = null;
-            if (files.length > 0) {
-                profileFN = process.env.USER_PHOTO_PATH + files[0].filename;
-            }
-
-            const { access_token, farms } = await this.authService.signup(dto, profileFN);
+            const { access_token, farms } = await this.authService.signup(dto);
 
             return { access_token, farms }; // Ensure correct token naming
         } catch (error) {
