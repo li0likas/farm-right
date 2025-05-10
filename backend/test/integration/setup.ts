@@ -6,11 +6,32 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as argon from 'argon2';
 import { cleanDatabase } from './helpers';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load test environment variables
+dotenv.config({ path: path.resolve(__dirname, '../../.env.test') });
+
+// Keep track of initialization state
+let isInitialized = false;
 
 export async function setupIntegrationTest() {
-  // Įkeliame testavimo aplinkos kintamuosius
-  process.env.NODE_ENV = 'test';
+  // Check if we need to initialize the database
+  if (!isInitialized) {
+    console.log('Initializing test database...');
+    
+    try {
+      // Import and run the database setup function
+      const setupTestDatabase = (await import('./setup-test-db')).default;
+      await setupTestDatabase();
+      isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize test database:', error);
+      throw new Error('Test database initialization failed');
+    }
+  }
   
+  // Create test application
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [TestAppModule],
   }).compile();
@@ -22,12 +43,12 @@ export async function setupIntegrationTest() {
   const prismaService = app.get<PrismaService>(PrismaService);
   const jwtService = app.get<JwtService>(JwtService);
 
-  // Išvalome duomenų bazę prieš testus
-  await cleanDatabase();
+  // Clean database before tests
+  await cleanDatabase(prismaService);
 
-  // Funkcija testiniams duomenims sukurti
+  // Function to create test data
   async function createTestData() {
-    // Sukuriame roles
+    // Create roles
     const ownerRole = await prismaService.role.create({
       data: { name: 'OWNER' },
     });
@@ -35,8 +56,12 @@ export async function setupIntegrationTest() {
     const workerRole = await prismaService.role.create({
       data: { name: 'WORKER' },
     });
+    
+    const agronomistRole = await prismaService.role.create({
+      data: { name: 'AGRONOMIST' },
+    });
 
-    // Sukuriame leidimus
+    // Create permissions
     const permissions = await prismaService.$transaction([
       prismaService.permission.create({ data: { name: 'FIELD_CREATE' } }),
       prismaService.permission.create({ data: { name: 'FIELD_READ' } }),
@@ -44,10 +69,14 @@ export async function setupIntegrationTest() {
       prismaService.permission.create({ data: { name: 'FIELD_DELETE' } }),
       prismaService.permission.create({ data: { name: 'TASK_CREATE' } }),
       prismaService.permission.create({ data: { name: 'TASK_READ' } }),
-      // ... kiti leidimai
+      prismaService.permission.create({ data: { name: 'TASK_STATS_READ' } }),
+      prismaService.permission.create({ data: { name: 'EQUIPMENT_CREATE' } }),
+      prismaService.permission.create({ data: { name: 'EQUIPMENT_READ' } }),
+      prismaService.permission.create({ data: { name: 'FARM_MEMBER_READ' } }),
+      prismaService.permission.create({ data: { name: 'FARM_MEMBER_INVITE' } }),
     ]);
 
-    // Pasirūpinkite standartiniais duomenimis
+    // Create users
     const hash = await argon.hash('testpassword');
     
     const owner = await prismaService.user.create({
@@ -66,6 +95,7 @@ export async function setupIntegrationTest() {
       },
     });
 
+    // Create farm
     const farm = await prismaService.farm.create({
       data: {
         name: 'Test Farm',
@@ -73,7 +103,7 @@ export async function setupIntegrationTest() {
       },
     });
 
-    // Priskiriame nariui ūkį su darbininko role
+    // Assign roles to members
     await prismaService.farmMember.create({
       data: {
         userId: owner.id,
@@ -90,35 +120,35 @@ export async function setupIntegrationTest() {
       },
     });
 
-    // Priskiriame savininkui visus leidimus
-    for (const perm of permissions) {
+    // Assign permissions to roles
+    for (const permission of permissions) {
       await prismaService.farmRolePermission.create({
         data: {
           farmId: farm.id,
           roleId: ownerRole.id,
-          permissionId: perm.id,
+          permissionId: permission.id,
         },
       });
     }
 
-    // Priskiriame darbuotojui tik skaitymo leidimus
-    const readPerms = permissions.filter(p => p.name.includes('READ'));
-    for (const perm of readPerms) {
+    // Assign read permissions to worker role
+    const readPermissions = permissions.filter(p => p.name.includes('READ'));
+    for (const permission of readPermissions) {
       await prismaService.farmRolePermission.create({
         data: {
           farmId: farm.id,
           roleId: workerRole.id,
-          permissionId: perm.id,
+          permissionId: permission.id,
         },
       });
     }
 
-    // Sukuriame pasėlius
+    // Create crops
     const wheat = await prismaService.fieldCropOptions.create({
       data: { name: 'Wheat' },
     });
 
-    // Sukuriame lauko objektus
+    // Create field
     const field = await prismaService.field.create({
       data: {
         name: 'Test Field',
@@ -128,16 +158,13 @@ export async function setupIntegrationTest() {
         farmId: farm.id,
         ownerId: owner.id,
         boundary: {
-          type: 'Feature',
-          geometry: {
-            type: 'Polygon',
-            coordinates: [[[24.123, 54.567], [24.234, 54.567], [24.234, 54.678], [24.123, 54.678], [24.123, 54.567]]]
-          }
+          type: 'Polygon',
+          coordinates: [[[24.123, 54.567], [24.234, 54.567], [24.234, 54.678], [24.123, 54.678], [24.123, 54.567]]]
         }
       },
     });
 
-    // Sukuriame sezoną
+    // Create season
     const season = await prismaService.season.create({
       data: {
         name: 'Test Season 2025',
@@ -147,7 +174,7 @@ export async function setupIntegrationTest() {
       },
     });
 
-    // Sukuriame užduoties tipus
+    // Create task types
     const taskTypes = await prismaService.$transaction([
       prismaService.taskTypeOptions.create({ data: { name: 'Planting' } }),
       prismaService.taskTypeOptions.create({ data: { name: 'Fertilizing' } }),
@@ -155,14 +182,14 @@ export async function setupIntegrationTest() {
       prismaService.taskTypeOptions.create({ data: { name: 'Harvesting' } }),
     ]);
 
-    // Sukuriame užduoties būsenas
+    // Create task statuses
     const taskStatuses = await prismaService.$transaction([
       prismaService.taskStatusOptions.create({ data: { name: 'Completed' } }),
       prismaService.taskStatusOptions.create({ data: { name: 'Pending' } }),
       prismaService.taskStatusOptions.create({ data: { name: 'Canceled' } }),
     ]);
     
-    // Sukuriame įrangos tipus
+    // Create equipment type
     const equipmentTypes = await prismaService.equipmentTypeOptions.create({
       data: { name: 'Tractor' },
     });
@@ -175,6 +202,7 @@ export async function setupIntegrationTest() {
       wheat,
       ownerRole,
       workerRole,
+      agronomistRole,
       permissions,
       season,
       taskTypes,
@@ -183,7 +211,7 @@ export async function setupIntegrationTest() {
     };
   }
 
-  // JWT generavimas
+  // Generate JWT token
   function getToken(userId, email) {
     return jwtService.signAsync(
       { sub: userId, email },
@@ -198,7 +226,7 @@ export async function setupIntegrationTest() {
     createTestData,
     getToken,
     cleanup: async () => {
-      await cleanDatabase();
+      await cleanDatabase(prismaService);
       await prismaService.$disconnect();
       await app.close();
     }
