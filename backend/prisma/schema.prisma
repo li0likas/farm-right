@@ -15,23 +15,14 @@ generator client {
 
 model User {
   username          String?   @unique
-  password          String?
   email             String?   @unique
   birthDate         DateTime?
-  gender            String?
-  address           String?
-  phoneNumber       String?
-  profile_picture   String?
-  registration_date DateTime?
-
   id             Int      @id @default(autoincrement())
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   hash           String
   resetPassToken String   @default("")
   isResetValid   Boolean  @default(false)
-  colourHex      String   @default("#000000")
-  emoji          String   @default("")
 
   fields         Field[]
   equipments     Equipment[]

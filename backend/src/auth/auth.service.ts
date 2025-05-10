@@ -71,7 +71,6 @@ export class AuthService {
           username: dto.name,
           email: dto.email,
           hash,
-          profile_picture: profileURL,
         },
       });
   
