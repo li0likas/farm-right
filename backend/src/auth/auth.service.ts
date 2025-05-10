@@ -54,7 +54,7 @@ export class AuthService {
     };
   }  
 
-  async signup(dto: AuthDto, profileURL: string) {
+  async signup(dto: AuthDto) {
     if (dto.password.length < 5) {
       throw new ForbiddenException('Password must be at least 5 characters long');
     }

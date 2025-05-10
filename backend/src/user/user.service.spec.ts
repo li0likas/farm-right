@@ -1,195 +1,261 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { RolesService } from '../../src/roles/roles.service';
+import { UserService } from '../../src/user/user.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { HttpException, HttpStatus } from '@nestjs/common';
 
-describe('RolesService', () => {
-  let service: RolesService;
+describe('UserService', () => {
+  let service: UserService;
   let prismaService: PrismaService;
 
   const mockPrismaService = {
-    role: {
+    user: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      update: jest.fn(),
+    },
+    farm: {
       findMany: jest.fn(),
     },
-    permission: {
-      findMany: jest.fn(),
-    },
-    farmRolePermission: {
-      create: jest.fn(),
-      deleteMany: jest.fn(),
+    farmMember: {
+      findUnique: jest.fn(),
     },
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        RolesService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
+        UserService,
+        { provide: PrismaService, useValue: mockPrismaService },
       ],
     }).compile();
 
-    service = module.get<RolesService>(RolesService);
+    service = module.get<UserService>(UserService);
     prismaService = module.get<PrismaService>(PrismaService);
 
-    // Reset mocks before each test
     jest.clearAllMocks();
   });
 
-  describe('getAllRoles', () => {
-    const farmId = 1;
+  describe('getUserById', () => {
+    it('should return a user by id', async () => {
+      // Arrange
+      const userId = 1;
+      const mockUser = { id: userId, username: 'testuser', email: 'test@example.com' };
 
-    it('should return all roles related to the farm', async () => {
-      const mockRoles = [
-        {
-          id: 1,
-          name: 'Admin',
-          farmPermissions: [
-            { id: 1, roleId: 1, permissionId: 1, farmId, permission: { id: 1, name: 'FIELD_READ' } },
-            { id: 2, roleId: 1, permissionId: 2, farmId, permission: { id: 2, name: 'FIELD_CREATE' } },
-          ],
-        },
-        {
-          id: 2,
-          name: 'User',
-          farmPermissions: [
-            { id: 3, roleId: 2, permissionId: 1, farmId, permission: { id: 1, name: 'FIELD_READ' } },
-          ],
-        },
+      mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
+
+      // Act
+      const result = await service.getUserById(userId);
+
+      // Assert
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should return null if user not found', async () => {
+      // Arrange
+      const userId = 999;
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result = await service.getUserById(userId);
+
+      // Assert
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+      expect(result).toBeNull();
+    });
+
+    it('should handle errors and throw', async () => {
+      // Arrange
+      const userId = 1;
+      const errorMessage = 'Database error';
+      mockPrismaService.user.findUnique.mockRejectedValue(new Error(errorMessage));
+
+      // Act & Assert
+      await expect(service.getUserById(userId)).rejects.toThrow(
+        `Error fetching user by ID: ${errorMessage}`
+      );
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: userId },
+      });
+    });
+  });
+
+  describe('findAllUsers', () => {
+    it('should return all users', async () => {
+      // Arrange
+      const mockUsers = [
+        { id: 1, username: 'user1', email: 'user1@example.com' },
+        { id: 2, username: 'user2', email: 'user2@example.com' },
       ];
 
-      mockPrismaService.role.findMany.mockResolvedValue(mockRoles);
+      mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
 
-      const result = await service.getAllRoles(farmId);
+      // Act
+      const result = await service.findAllUsers();
 
-      expect(mockPrismaService.role.findMany).toHaveBeenCalledWith({
+      // Assert
+      expect(mockPrismaService.user.findMany).toHaveBeenCalled();
+      expect(result).toEqual(mockUsers);
+    });
+
+    it('should return empty array if no users', async () => {
+      // Arrange
+      mockPrismaService.user.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await service.findAllUsers();
+
+      // Assert
+      expect(mockPrismaService.user.findMany).toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('changeUsername', () => {
+    it('should change username successfully', async () => {
+      // Arrange
+      const userId = 1;
+      const newUsername = 'newusername';
+      const mockUser = { id: userId, username: 'oldusername' };
+
+      mockPrismaService.user.findUnique.mockResolvedValue(null); // No user with this username
+      mockPrismaService.user.update.mockResolvedValue({ ...mockUser, username: newUsername });
+
+      // Act
+      await service.changeUsername(userId, newUsername);
+
+      // Assert
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { username: newUsername },
+      });
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { username: newUsername },
+      });
+    });
+
+    it('should throw error if username already taken', async () => {
+      // Arrange
+      const userId = 1;
+      const newUsername = 'existingUsername';
+      const existingUser = { id: 2, username: newUsername }; // Different user with same username
+
+      mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
+
+      // Act & Assert
+      await expect(service.changeUsername(userId, newUsername)).rejects.toThrow(
+        'Username is already taken'
+      );
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { username: newUsername },
+      });
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserFarms', () => {
+    it('should return farms a user belongs to', async () => {
+      // Arrange
+      const userId = 1;
+      const mockFarms = [
+        { id: 1, name: 'Farm 1', ownerId: userId },
+        { id: 2, name: 'Farm 2', ownerId: 2 }, // User is a member, not owner
+      ];
+
+      mockPrismaService.farm.findMany.mockResolvedValue(mockFarms);
+
+      // Act
+      const result = await service.getUserFarms(userId);
+
+      // Assert
+      expect(mockPrismaService.farm.findMany).toHaveBeenCalledWith({
         where: {
-          farmPermissions: {
-            some: { farmId },
-          },
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } },
+          ],
         },
+      });
+      expect(result).toEqual(mockFarms);
+    });
+
+    it('should return empty array if user has no farms', async () => {
+      // Arrange
+      const userId = 1;
+      mockPrismaService.farm.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await service.getUserFarms(userId);
+
+      // Assert
+      expect(mockPrismaService.farm.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } },
+          ],
+        },
+      });
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('getUserPermissions', () => {
+    it('should return user permissions for a farm', async () => {
+      // Arrange
+      const userId = 1;
+      const farmId = 1;
+      const mockFarmMember = {
+        userId,
+        farmId,
+        role: {
+          farmPermissions: [
+            { permission: { name: 'FIELD_READ' } },
+            { permission: { name: 'FIELD_CREATE' } },
+            { permission: { name: 'TASK_READ' } },
+          ],
+        },
+      };
+
+      mockPrismaService.farmMember.findUnique.mockResolvedValue(mockFarmMember);
+
+      // Act
+      const result = await service.getUserPermissions(userId, farmId);
+
+      // Assert
+      expect(mockPrismaService.farmMember.findUnique).toHaveBeenCalledWith({
+        where: { userId_farmId: { userId, farmId } },
         include: {
-          farmPermissions: {
-            where: { farmId },
+          role: {
             include: {
-              permission: true,
+              farmPermissions: {
+                where: { farmId },
+                include: { permission: true },
+              },
             },
           },
         },
       });
-
-      expect(result).toEqual(mockRoles);
+      expect(result).toEqual(['FIELD_READ', 'FIELD_CREATE', 'TASK_READ']);
     });
 
-    it('should return empty array when no roles exist for the farm', async () => {
-      mockPrismaService.role.findMany.mockResolvedValue([]);
+    it('should throw HttpException if user is not a farm member', async () => {
+      // Arrange
+      const userId = 1;
+      const farmId = 1;
 
-      const result = await service.getAllRoles(farmId);
+      mockPrismaService.farmMember.findUnique.mockResolvedValue(null);
 
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('getAllPermissions', () => {
-    const farmId = 1;
-
-    it('should return all permissions', async () => {
-      const mockPermissions = [
-        { id: 1, name: 'FIELD_READ' },
-        { id: 2, name: 'FIELD_CREATE' },
-        { id: 3, name: 'FIELD_UPDATE' },
-      ];
-
-      mockPrismaService.permission.findMany.mockResolvedValue(mockPermissions);
-
-      const result = await service.getAllPermissions(farmId);
-
-      expect(mockPrismaService.permission.findMany).toHaveBeenCalled();
-      expect(result).toEqual(mockPermissions);
-    });
-
-    it('should return empty array when no permissions exist', async () => {
-      mockPrismaService.permission.findMany.mockResolvedValue([]);
-
-      const result = await service.getAllPermissions(farmId);
-
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('assignPermission', () => {
-    const roleId = 1;
-    const permissionId = 2;
-    const farmId = 1;
-
-    it('should assign a permission to a role for the farm', async () => {
-      const mockFarmRolePermission = {
-        id: 1,
-        roleId,
-        permissionId,
-        farmId,
-      };
-
-      mockPrismaService.farmRolePermission.create.mockResolvedValue(mockFarmRolePermission);
-
-      const result = await service.assignPermission(roleId, permissionId, farmId);
-
-      expect(mockPrismaService.farmRolePermission.create).toHaveBeenCalledWith({
-        data: {
-          roleId,
-          permissionId,
-          farmId,
-        },
+      // Act & Assert
+      await expect(service.getUserPermissions(userId, farmId)).rejects.toThrow(HttpException);
+      expect(mockPrismaService.farmMember.findUnique).toHaveBeenCalledWith({
+        where: { userId_farmId: { userId, farmId } },
+        include: expect.any(Object),
       });
-
-      expect(result).toEqual(mockFarmRolePermission);
-    });
-
-    it('should handle database errors when assigning permissions', async () => {
-      const errorMessage = 'Database error';
-      mockPrismaService.farmRolePermission.create.mockRejectedValue(new Error(errorMessage));
-
-      await expect(service.assignPermission(roleId, permissionId, farmId)).rejects.toThrow(Error);
-    });
-  });
-
-  describe('removePermission', () => {
-    const roleId = 1;
-    const permissionId = 2;
-    const farmId = 1;
-
-    it('should remove a permission from a role for the farm', async () => {
-      const mockDeleteResult = { count: 1 };
-      mockPrismaService.farmRolePermission.deleteMany.mockResolvedValue(mockDeleteResult);
-
-      const result = await service.removePermission(roleId, permissionId, farmId);
-
-      expect(mockPrismaService.farmRolePermission.deleteMany).toHaveBeenCalledWith({
-        where: {
-          roleId,
-          permissionId,
-          farmId,
-        },
-      });
-
-      expect(result).toEqual(mockDeleteResult);
-    });
-
-    it('should return count 0 when permission was not assigned', async () => {
-      const mockDeleteResult = { count: 0 };
-      mockPrismaService.farmRolePermission.deleteMany.mockResolvedValue(mockDeleteResult);
-
-      const result = await service.removePermission(roleId, permissionId, farmId);
-
-      expect(result).toEqual(mockDeleteResult);
-    });
-
-    it('should handle database errors when removing permissions', async () => {
-      const errorMessage = 'Database error';
-      mockPrismaService.farmRolePermission.deleteMany.mockRejectedValue(new Error(errorMessage));
-
-      await expect(service.removePermission(roleId, permissionId, farmId)).rejects.toThrow(Error);
     });
   });
 });

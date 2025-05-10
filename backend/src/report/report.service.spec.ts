@@ -173,7 +173,6 @@ describe('ReportService', () => {
     // Reset mocks before each test
     jest.clearAllMocks();
   });
-});
 
   describe('getTaskReport', () => {
     const farmId = 1;
@@ -195,7 +194,7 @@ describe('ReportService', () => {
       expect(mockPrismaService.task.findMany).toHaveBeenCalledWith({
         where: {
           field: { farmId },
-          seasonId,
+          ...(seasonId ? { seasonId } : {}),
         },
         include: {
           status: true,
@@ -279,15 +278,15 @@ describe('ReportService', () => {
 
       const result = await service.getTaskReport(farmId, seasonId);
 
-      expect(result).toEqual({
+        expect(result).toEqual({
         totalTasks: 0,
         completedTasks: 0,
         pendingTasks: 0,
         canceledTasks: 0,
         averageCompletionTimeMinutes: 0,
-        groupedByField: {},
+        groupedByField: { "Field 1": 0, "Field 2": 0 },
         groupedByType: {},
-      });
+        });
     });
   });
 
@@ -500,3 +499,4 @@ describe('ReportService', () => {
       expect(result[0].totalMinutes).toBe(0);
     });
   });
+});

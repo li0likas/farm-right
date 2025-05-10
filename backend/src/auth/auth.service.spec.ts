@@ -78,13 +78,11 @@ describe('AuthService', () => {
         password: 'password123',
       };
       const hashedPassword = 'hashed-password';
-      const profileURL = 'http://example.com/profile.jpg';
       const createdUser = { 
         id: 1, 
         username: authDto.name, 
         email: authDto.email,
         hash: hashedPassword,
-        profile_picture: profileURL,
       };
       const token = 'jwt-token';
 
@@ -93,7 +91,7 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue(token);
 
       // Act
-      const result = await authService.signup(authDto, profileURL);
+      const result = await authService.signup(authDto);
 
       // Assert
       expect(argon.hash).toHaveBeenCalledWith(authDto.password);
@@ -102,7 +100,6 @@ describe('AuthService', () => {
           username: authDto.name,
           email: authDto.email,
           hash: hashedPassword,
-          profile_picture: profileURL,
         },
       });
       expect(mockJwtService.signAsync).toHaveBeenCalled();
@@ -119,10 +116,9 @@ describe('AuthService', () => {
         email: 'test@example.com',
         password: 'pwd', // Too short
       };
-      const profileURL = 'http://example.com/profile.jpg';
 
       // Act & Assert
-      await expect(authService.signup(authDto, profileURL)).rejects.toThrow(ForbiddenException);
+      await expect(authService.signup(authDto)).rejects.toThrow(ForbiddenException);
       expect(argon.hash).not.toHaveBeenCalled();
       expect(mockPrismaAuthService.user.create).not.toHaveBeenCalled();
     });
@@ -134,10 +130,9 @@ describe('AuthService', () => {
         email: 'invalid-email', // Invalid format
         password: 'password123',
       };
-      const profileURL = 'http://example.com/profile.jpg';
 
       // Act & Assert
-      await expect(authService.signup(authDto, profileURL)).rejects.toThrow(ForbiddenException);
+      await expect(authService.signup(authDto)).rejects.toThrow(ForbiddenException);
       expect(argon.hash).not.toHaveBeenCalled();
       expect(mockPrismaAuthService.user.create).not.toHaveBeenCalled();
     });
@@ -281,68 +276,77 @@ describe('AuthService', () => {
     });
   });
 
-  describe('passReset', () => {
-    it('should reset password successfully', async () => {
-      // Arrange
-      const authpassDto: AuthpassDto = {
-        newPassword: 'new-password123',
-      };
-      const email = 'test@example.com';
-      const user = {
-        id: 1,
-        username: 'testuser',
-        email,
-        hash: 'old-hash',
-        resetPassToken: 'valid-token',
-        isResetValid: true,
-      };
-      const newHash = 'new-hash';
+describe('passReset', () => {
+  beforeEach(() => {
+    // Important: Clear all mock function calls between tests
+    jest.clearAllMocks();
+  });
 
-      mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
-      (argon.hash as jest.Mock).mockResolvedValue(newHash);
-      mockPrismaAuthService.user.update.mockResolvedValue({
-        ...user,
-        hash: newHash,
-        resetPassToken: '',
-        isResetValid: false,
-      });
+  it('should reset password successfully', async () => {
+    // Arrange
+    const authpassDto: AuthpassDto = {
+      newPassword: 'new-password123',
+    };
+    const email = 'test@example.com';
+    const user = {
+      id: 1,
+      username: 'testuser',
+      email,
+      hash: 'old-hash',
+      resetPassToken: 'valid-token',
+      isResetValid: true,
+    };
+    const newHash = 'new-hash';
 
-      // Act
-      await authService.passReset(authpassDto, email);
-
-      // Assert
-      expect(mockPrismaAuthService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
-      expect(argon.hash).toHaveBeenCalledWith(authpassDto.newPassword);
-      expect(mockPrismaAuthService.user.update).toHaveBeenCalledWith({
-        where: { email },
-        data: { hash: newHash, resetPassToken: "", isResetValid: false },
-      });
+    mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
+    (argon.hash as jest.Mock).mockResolvedValue(newHash);
+    mockPrismaAuthService.user.update.mockResolvedValue({
+      ...user,
+      hash: newHash,
+      resetPassToken: '',
+      isResetValid: false,
     });
 
-    it('should throw ForbiddenException if user not found or reset token invalid', async () => {
-      // Arrange
-      const authpassDto: AuthpassDto = {
-        newPassword: 'new-password123',
-      };
-      const email = 'test@example.com';
-      const user = {
-        id: 1,
-        username: 'testuser',
-        email,
-        hash: 'old-hash',
-        resetPassToken: 'token',
-        isResetValid: false, // Invalid reset token
-      };
+    // Act
+    await authService.passReset(authpassDto, email);
 
-      mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
-
-      // Act & Assert
-      await expect(authService.passReset(authpassDto, email)).rejects.toThrow(ForbiddenException);
-      expect(mockPrismaAuthService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
-      expect(argon.hash).not.toHaveBeenCalled();
-      expect(mockPrismaAuthService.user.update).not.toHaveBeenCalled();
+    // Assert
+    expect(mockPrismaAuthService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
+    expect(argon.hash).toHaveBeenCalledWith(authpassDto.newPassword);
+    expect(mockPrismaAuthService.user.update).toHaveBeenCalledWith({
+      where: { email },
+      data: { hash: newHash, resetPassToken: "", isResetValid: false },
     });
   });
+
+  it('should throw ForbiddenException if user not found or reset token invalid', async () => {
+    // Arrange
+    const authpassDto: AuthpassDto = {
+      newPassword: 'new-password123',
+    };
+    const email = 'test@example.com';
+    const user = {
+      id: 1,
+      username: 'testuser',
+      email,
+      hash: 'old-hash',
+      resetPassToken: 'token',
+      isResetValid: false, // Invalid reset token
+    };
+
+    // Need to clear previous test's mock calls
+    jest.clearAllMocks();
+    
+    mockPrismaAuthService.user.findUnique.mockResolvedValue(user);
+
+    // Act & Assert
+    await expect(authService.passReset(authpassDto, email)).rejects.toThrow(ForbiddenException);
+    expect(mockPrismaAuthService.user.findUnique).toHaveBeenCalledWith({ where: { email } });
+    expect(argon.hash).not.toHaveBeenCalled();
+    expect(mockPrismaAuthService.user.update).not.toHaveBeenCalled();
+  });
+});
+
 
   describe('passChange', () => {
     it('should change password successfully', async () => {

@@ -1,55 +1,74 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
-import { HttpException } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { WeatherService } from '../../src/weather/weather.service';
 import { HttpService } from '@nestjs/axios';
 import { AiService } from '../../src/ai/ai.service';
 import { of, throwError } from 'rxjs';
-import { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
-
-// Create mocks for external dependencies
-const mockHttpService = {
-  get: jest.fn(),
-};
-
-const mockAiService = {
-  getOptimalDateInsights: jest.fn(),
-};
-
-const mockConfigService = {
-  get: jest.fn(),
-};
 
 describe('WeatherService', () => {
   let weatherService: WeatherService;
   let httpService: HttpService;
   let aiService: AiService;
+  let configService: ConfigService;
+
+  // Create mocks for external dependencies
+  const mockHttpService = {
+    get: jest.fn(() => of({
+      data: {
+        list: [
+          { 
+            dt_txt: '2023-05-01 12:00:00',
+            main: { temp: 20 },
+            wind: { speed: 5 },
+            rain: { '3h': 0 },
+          }
+        ]
+      }
+    }))
+  };
+
+  const mockAiService = {
+    getOptimalDateInsights: jest.fn().mockResolvedValue('Mocked insights')
+  };
+
+  const mockConfigService = {
+    get: jest.fn((key) => {
+      const config = {
+        'weather.apiKey': 'test-api-key',
+        'weather.forecastUrl': 'https://api.example.com/forecast',
+        'weather.currentWeatherUrl': 'https://api.example.com/weather',
+        'weather.units': 'metric'
+      };
+      return config[key];
+    })
+  };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        WeatherService,
-        { provide: HttpService, useValue: mockHttpService },
-        { provide: AiService, useValue: mockAiService },
-        { provide: ConfigService, useValue: mockConfigService },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService
+        },
+        {
+          provide: HttpService,
+          useValue: mockHttpService
+        },
+        {
+          provide: AiService,
+          useValue: mockAiService
+        },
+        WeatherService
       ],
     }).compile();
 
     weatherService = module.get<WeatherService>(WeatherService);
     httpService = module.get<HttpService>(HttpService);
     aiService = module.get<AiService>(AiService);
-
-    jest.clearAllMocks();
-
-    // Setup default mock implementation for config
-    mockConfigService.get.mockImplementation((key: string) => {
-      if (key === 'weather.apiKey') return 'test-api-key';
-      if (key === 'weather.forecastUrl') return 'https://api.example.com/forecast';
-      if (key === 'weather.currentWeatherUrl') return 'https://api.example.com/weather';
-      if (key === 'weather.units') return 'metric';
-      return undefined;
-    });
+    configService = module.get<ConfigService>(ConfigService);
   });
 
   describe('getWeatherForecast', () => {
@@ -67,24 +86,16 @@ describe('WeatherService', () => {
           }
         ]
       };
-      const mockResponse: AxiosResponse = {
-        data: mockWeatherData,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: { 
-          headers: undefined,
-          data: undefined
-        },
-      };
 
-      mockHttpService.get.mockReturnValue(of(mockResponse));
+      mockHttpService.get.mockReturnValue(of({
+        data: mockWeatherData
+      }));
 
       // Act
       const result = await weatherService.getWeatherForecast(lat, lon);
 
       // Assert
-      expect(mockHttpService.get).toHaveBeenCalledWith('https://api.example.com/forecast', {
+      expect(httpService.get).toHaveBeenCalledWith('https://api.example.com/forecast', {
         params: {
           lat,
           lon,
@@ -100,17 +111,22 @@ describe('WeatherService', () => {
       const lat = 55.123;
       const lon = 23.456;
 
-      // Override the config mock for this test only
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'weather.apiKey') return null; // Missing API key
-        if (key === 'weather.forecastUrl') return 'https://api.example.com/forecast';
-        if (key === 'weather.units') return 'metric';
-        return undefined;
+      // Override mock for this test only
+      jest.spyOn(configService, 'get').mockImplementation((key) => {
+        if (key === 'weather.apiKey') return null;
+        const config = {
+          'weather.forecastUrl': 'https://api.example.com/forecast',
+          'weather.currentWeatherUrl': 'https://api.example.com/weather',
+          'weather.units': 'metric'
+        };
+        return config[key];
       });
 
       // Act & Assert
-      await expect(weatherService.getWeatherForecast(lat, lon)).rejects.toThrow(HttpException);
-      expect(mockHttpService.get).not.toHaveBeenCalled();
+      await expect(weatherService.getWeatherForecast(lat, lon))
+        .rejects.toThrow(HttpException);
+      
+      expect(httpService.get).not.toHaveBeenCalled();
     });
 
     it('should throw HttpException if weather API request fails', async () => {
@@ -127,8 +143,10 @@ describe('WeatherService', () => {
       mockHttpService.get.mockReturnValue(throwError(() => errorResponse));
 
       // Act & Assert
-      await expect(weatherService.getWeatherForecast(lat, lon)).rejects.toThrow(HttpException);
-      expect(mockHttpService.get).toHaveBeenCalledWith('https://api.example.com/forecast', {
+      await expect(weatherService.getWeatherForecast(lat, lon))
+        .rejects.toThrow(HttpException);
+      
+      expect(httpService.get).toHaveBeenCalledWith('https://api.example.com/forecast', {
         params: {
           lat,
           lon,
@@ -149,24 +167,16 @@ describe('WeatherService', () => {
         wind: { speed: 5 },
         weather: [{ description: 'Sunny' }],
       };
-      const mockResponse: AxiosResponse = {
-        data: mockWeatherData,
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: { 
-          headers: undefined,
-          data: undefined
-        },
-      };
 
-      mockHttpService.get.mockReturnValue(of(mockResponse));
+      mockHttpService.get.mockReturnValue(of({
+        data: mockWeatherData
+      }));
 
       // Act
       const result = await weatherService.getForecast(lat, lng);
 
       // Assert
-      expect(mockHttpService.get).toHaveBeenCalledWith('https://api.example.com/weather', {
+      expect(httpService.get).toHaveBeenCalledWith('https://api.example.com/weather', {
         params: {
           lat,
           lon: lng,
@@ -182,22 +192,27 @@ describe('WeatherService', () => {
       const lat = 55.123;
       const lng = 23.456;
 
-      // Override the config mock for this test only
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'weather.apiKey') return null; // Missing API key
-        if (key === 'weather.currentWeatherUrl') return 'https://api.example.com/weather';
-        if (key === 'weather.units') return 'metric';
-        return undefined;
+      // Override mock for this test only
+      jest.spyOn(configService, 'get').mockImplementation((key) => {
+        if (key === 'weather.apiKey') return null;
+        const config = {
+          'weather.forecastUrl': 'https://api.example.com/forecast',
+          'weather.currentWeatherUrl': 'https://api.example.com/weather',
+          'weather.units': 'metric'
+        };
+        return config[key];
       });
 
       // Act & Assert
-      await expect(weatherService.getForecast(lat, lng)).rejects.toThrow(HttpException);
-      expect(mockHttpService.get).not.toHaveBeenCalled();
+      await expect(weatherService.getForecast(lat, lng))
+        .rejects.toThrow(HttpException);
+      
+      expect(httpService.get).not.toHaveBeenCalled();
     });
   });
 
   describe('getOptimalDate', () => {
-    it('should return optimal date for spraying task', () => {
+    it('should return optimal date for spraying task', async () => {
       // Arrange
       const weatherData = {
         list: [
@@ -231,7 +246,7 @@ describe('WeatherService', () => {
       expect(result).toBe('2023-05-02 12:00:00'); // Date with lowest wind speed
     });
 
-    it('should return optimal date for fertilizing task', () => {
+    it('should return optimal date for fertilizing task', async () => {
       // Arrange
       const weatherData = {
         list: [
@@ -265,7 +280,7 @@ describe('WeatherService', () => {
       expect(result).toBe('2023-05-02 12:00:00'); // Date with best combination of wind and rain
     });
 
-    it('should return optimal date for harvesting task', () => {
+    it('should return optimal date for harvesting task', async () => {
       // Arrange
       const weatherData = {
         list: [
@@ -299,7 +314,7 @@ describe('WeatherService', () => {
       expect(result).toBe('2023-05-02 12:00:00'); // Date with no rain
     });
 
-    it('should return null if no forecasts are available', () => {
+    it('should return null if no forecasts are available', async () => {
       // Arrange
       const weatherData = { list: [] }; // Empty list
       const dueDate = '2023-05-03 23:59:59';
@@ -312,13 +327,27 @@ describe('WeatherService', () => {
       expect(result).toBeNull();
     });
   });
-});
 
-//   describe('getOptimalDateInsights', () => {
-//     it('should get insights for optimal date from AI service', async () => {
-//       // Arrange
-//       const weatherData = { list: [] };
-//       const dueDate = '2023-05-03 23:59:59';
-//       const taskType = 4;
-//       const optimalDateTime = '2023-05-02 12:00:00';
-//       const mockInsights = 'This
+  describe('getOptimalDateInsights', () => {
+    it('should get insights for optimal date from AI service', async () => {
+      // Arrange
+      const weatherData = { list: [] };
+      const dueDate = '2023-05-03 23:59:59';
+      const taskType = 4;
+      const mockInsights = 'Mocked insights';
+      
+      const optimalDateTime = '2023-05-02 12:00:00';
+      jest.spyOn(weatherService, 'getOptimalDate').mockReturnValue(optimalDateTime);
+
+      // Act
+      const result = await weatherService.getOptimalDateInsights(weatherData, dueDate, taskType);
+
+      // Assert
+      expect(weatherService.getOptimalDate).toHaveBeenCalledWith(weatherData, dueDate, taskType);
+      expect(aiService.getOptimalDateInsights).toHaveBeenCalledWith(
+        weatherData, dueDate, taskType, optimalDateTime
+      );
+      expect(result).toBe(mockInsights);
+    });
+  });
+});

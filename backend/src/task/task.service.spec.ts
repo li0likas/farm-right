@@ -1,46 +1,34 @@
-
 import { Test, TestingModule } from '@nestjs/testing';
 import { TaskService } from '../../src/task/task.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { CreateTaskDto } from '../../src/task/dto/create-task.dto';
 
-// Create a mock for PrismaService
-const mockPrismaService = {
-  task: {
-    create: jest.fn(),
-    findMany: jest.fn(),
-    findFirst: jest.fn(),
-    findUnique: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    deleteMany: jest.fn(),
-  },
-  field: {
-    findFirst: jest.fn(),
-    findUnique: jest.fn(),
-  },
-  equipment: {
-    findMany: jest.fn(),
-  },
-  taskParticipant: {
-    create: jest.fn(),
-    delete: jest.fn(),
-    deleteMany: jest.fn(),
-    findFirst: jest.fn(),
-    update: jest.fn(),
-  },
-  farmMember: {
-    findFirst: jest.fn(),
-  },
-  taskEquipment: {
-    update: jest.fn(),
-  },
-};
-
-describe('TaskService', () => {
+describe('TaskService - Additional Tests', () => {
   let service: TaskService;
-  let prisma: PrismaService;
+  let prismaService: PrismaService;
+
+  const mockPrismaService = {
+    task: {
+      create: jest.fn(),
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    field: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+    },
+    farmMember: {
+      findFirst: jest.fn(),
+    },
+    taskParticipant: {
+      create: jest.fn(),
+      delete: jest.fn(),
+      findFirst: jest.fn(),
+    },
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -51,149 +39,73 @@ describe('TaskService', () => {
     }).compile();
 
     service = module.get<TaskService>(TaskService);
-    prisma = module.get<PrismaService>(PrismaService);
+    prismaService = module.get<PrismaService>(PrismaService);
 
-    // Clear all mocks between tests
     jest.clearAllMocks();
   });
 
-  describe('create', () => {
-    it('should create a task successfully', async () => {
-      // Arrange
-      const farmId = 1;
-      const createTaskDto: CreateTaskDto = {
-        fieldId: 1,
-        typeId: 1,
-        description: 'Test Task',
-        dueDate: new Date(),
-        statusId: 1,
-        seasonId: 1,
-        equipmentIds: [1, 2],
-      };
-
-      const mockField = { id: 1, farmId };
-      const mockEquipment = [{ id: 1 }, { id: 2 }];
-      const mockCreatedTask = { id: 1, ...createTaskDto };
-
-      mockPrismaService.field.findFirst.mockResolvedValue(mockField);
-      mockPrismaService.equipment.findMany.mockResolvedValue(mockEquipment);
-      mockPrismaService.task.create.mockResolvedValue(mockCreatedTask);
-
-      // Act
-      const result = await service.create(createTaskDto, farmId);
-
-      // Assert
-      expect(mockPrismaService.field.findFirst).toHaveBeenCalledWith({
-        where: { id: createTaskDto.fieldId, farmId },
-      });
-      expect(mockPrismaService.equipment.findMany).toHaveBeenCalledWith({
-        where: {
-          id: { in: createTaskDto.equipmentIds },
-          farmId,
-        },
-      });
-      expect(mockPrismaService.task.create).toHaveBeenCalled();
-      expect(result).toEqual(mockCreatedTask);
-    });
-
-    it('should throw NotFoundException when field not found', async () => {
-      // Arrange
-      const farmId = 1;
-      const createTaskDto: CreateTaskDto = {
-        fieldId: 1,
-        typeId: 1,
-        description: 'Test Task',
-        dueDate: new Date(),
-        statusId: 1,
-        seasonId: 1,
-        equipmentIds: [1, 2],
-      };
-
-      mockPrismaService.field.findFirst.mockResolvedValue(null);
-
-      // Act & Assert
-      await expect(service.create(createTaskDto, farmId)).rejects.toThrow(NotFoundException);
-      expect(mockPrismaService.field.findFirst).toHaveBeenCalledWith({
-        where: { id: createTaskDto.fieldId, farmId },
-      });
-      expect(mockPrismaService.task.create).not.toHaveBeenCalled();
-    });
-
-    it('should throw BadRequestException when equipment validation fails', async () => {
-      // Arrange
-      const farmId = 1;
-      const createTaskDto: CreateTaskDto = {
-        fieldId: 1,
-        typeId: 1,
-        description: 'Test Task',
-        dueDate: new Date(),
-        statusId: 1,
-        seasonId: 1,
-        equipmentIds: [1, 2, 3], // Requesting 3 equipment items
-      };
-
-      const mockField = { id: 1, farmId };
-      const mockEquipment = [{ id: 1 }, { id: 2 }]; // Only 2 are valid
-
-      mockPrismaService.field.findFirst.mockResolvedValue(mockField);
-      mockPrismaService.equipment.findMany.mockResolvedValue(mockEquipment);
-
-      // Act & Assert
-      await expect(service.create(createTaskDto, farmId)).rejects.toThrow(BadRequestException);
-      expect(mockPrismaService.field.findFirst).toHaveBeenCalledWith({
-        where: { id: createTaskDto.fieldId, farmId },
-      });
-      expect(mockPrismaService.equipment.findMany).toHaveBeenCalledWith({
-        where: {
-          id: { in: createTaskDto.equipmentIds },
-          farmId,
-        },
-      });
-      expect(mockPrismaService.task.create).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('findAll', () => {
-    it('should return all tasks for a farm', async () => {
-      // Arrange
-      const farmId = 1;
-      const mockTasks = [
-        { id: 1, description: 'Task 1' },
-        { id: 2, description: 'Task 2' },
-      ];
-
-      mockPrismaService.task.findMany.mockResolvedValue(mockTasks);
-
-      // Act
-      const result = await service.findAll(farmId);
-
-      // Assert
-      expect(mockPrismaService.task.findMany).toHaveBeenCalledWith({
-        where: {
-          field: { farmId },
-        },
-        include: expect.any(Object),
-      });
-      expect(result).toEqual(mockTasks);
-    });
-  });
-
-  describe('findOne', () => {
-    it('should find a task by id', async () => {
+  describe('update', () => {
+    it('should update a task successfully', async () => {
       // Arrange
       const taskId = 1;
       const farmId = 1;
-      const mockTask = { id: taskId, description: 'Test Task' };
+      const updateData = { description: 'Updated Task' };
+      const mockTask = { id: taskId, description: 'Original Task' };
+      const mockUpdatedTask = { id: taskId, description: 'Updated Task' };
 
       mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.task.update.mockResolvedValue(mockUpdatedTask);
 
       // Act
-      const result = await service.findOne(taskId, farmId);
+      const result = await service.update(taskId, updateData, farmId);
 
       // Assert
       expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
         where: { id: taskId, field: { farmId } },
-        include: expect.any(Object),
+      });
+      expect(mockPrismaService.task.update).toHaveBeenCalledWith({
+        where: { id: taskId },
+        data: updateData,
+      });
+      expect(result).toEqual(mockUpdatedTask);
+    });
+
+    it('should throw NotFoundException when task not found', async () => {
+      // Arrange
+      const taskId = 1;
+      const farmId = 1;
+      const updateData = { description: 'Updated Task' };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.update(taskId, updateData, farmId)).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, field: { farmId } },
+      });
+      expect(mockPrismaService.task.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete a task successfully', async () => {
+      // Arrange
+      const taskId = 1;
+      const farmId = 1;
+      const mockTask = { id: taskId, description: 'Task to delete' };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.task.delete.mockResolvedValue(mockTask);
+
+      // Act
+      const result = await service.delete(taskId, farmId);
+
+      // Assert
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, field: { farmId } },
+      });
+      expect(mockPrismaService.task.delete).toHaveBeenCalledWith({
+        where: { id: taskId },
       });
       expect(result).toEqual(mockTask);
     });
@@ -206,121 +118,289 @@ describe('TaskService', () => {
       mockPrismaService.task.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findOne(taskId, farmId)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(taskId, farmId)).rejects.toThrow(NotFoundException);
       expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
         where: { id: taskId, field: { farmId } },
-        include: expect.any(Object),
+      });
+      expect(mockPrismaService.task.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('changeTaskStatus', () => {
+    it('should change task status successfully', async () => {
+      // Arrange
+      const taskId = 1;
+      const newStatusId = 2;
+      const farmId = 1;
+      const mockTask = { id: taskId, statusId: 1 };
+      const mockUpdatedTask = { id: taskId, statusId: newStatusId };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.task.update.mockResolvedValue(mockUpdatedTask);
+
+      // Act
+      const result = await service.changeTaskStatus(taskId, newStatusId, farmId);
+
+      // Assert
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: taskId,
+          field: {
+            farmId,
+          },
+        },
+      });
+      expect(mockPrismaService.task.update).toHaveBeenCalledWith({
+        where: { id: taskId },
+        data: { statusId: newStatusId },
+      });
+      expect(result).toEqual(mockUpdatedTask);
+    });
+
+    it('should throw NotFoundException when task not found', async () => {
+      // Arrange
+      const taskId = 1;
+      const newStatusId = 2;
+      const farmId = 1;
+
+      mockPrismaService.task.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.changeTaskStatus(taskId, newStatusId, farmId)).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: taskId,
+          field: {
+            farmId,
+          },
+        },
+      });
+      expect(mockPrismaService.task.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCompletedTasks', () => {
+    it('should return completed and total task counts', async () => {
+      // Arrange
+      const farmId = 1;
+      const mockTasks = [
+        { status: { name: 'Completed' } },
+        { status: { name: 'Completed' } },
+        { status: { name: 'Pending' } },
+        { status: { name: 'Canceled' } },
+      ];
+
+      mockPrismaService.task.findMany.mockResolvedValue(mockTasks);
+
+      // Act
+      const result = await service.getCompletedTasks(farmId);
+
+      // Assert
+      expect(mockPrismaService.task.findMany).toHaveBeenCalledWith({
+        where: { field: { farmId } },
+        select: { status: true },
+      });
+      expect(result).toEqual({
+        completedTasks: 2,
+        totalTasks: 4,
+      });
+    });
+
+    it('should handle empty task list', async () => {
+      // Arrange
+      const farmId = 1;
+      mockPrismaService.task.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await service.getCompletedTasks(farmId);
+
+      // Assert
+      expect(result).toEqual({
+        completedTasks: 0,
+        totalTasks: 0,
       });
     });
   });
 
-  describe('markAsCompleted', () => {
-    it('should mark a task as completed with equipment and participant data', async () => {
+  describe('getTaskParticipants', () => {
+    it('should return task participants', async () => {
       // Arrange
       const taskId = 1;
       const farmId = 1;
-      const minutesWorked = 120;
-      const equipmentData = { 1: 25, 2: 30 }; // Equipment IDs mapped to fuel used
-
       const mockTask = {
         id: taskId,
-        participants: [{ farmMemberId: 1 }, { farmMemberId: 2 }],
-        equipments: [
-          { equipmentId: 1 },
-          { equipmentId: 2 },
+        participants: [
+          {
+            farmMember: {
+              user: { id: 1, username: 'user1' },
+            },
+          },
+          {
+            farmMember: {
+              user: { id: 2, username: 'user2' },
+            },
+          },
         ],
       };
 
-      mockPrismaService.task.findUnique.mockResolvedValue(mockTask);
-      mockPrismaService.task.update.mockResolvedValue({ ...mockTask, statusId: 1, completionDate: expect.any(Date) });
-      mockPrismaService.taskParticipant.update.mockResolvedValue({});
-      mockPrismaService.taskEquipment.update.mockResolvedValue({});
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
 
       // Act
-      const result = await service.markAsCompleted(taskId, farmId, minutesWorked, equipmentData);
+      const result = await service.getTaskParticipants(taskId, farmId);
 
       // Assert
-      expect(mockPrismaService.task.findUnique).toHaveBeenCalledWith({
-        where: { id: taskId },
-        include: {
-          participants: true,
-          equipments: true,
-        },
-      });
-      
-      expect(mockPrismaService.task.update).toHaveBeenCalledWith({
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
         where: { id: taskId, field: { farmId } },
-        data: {
-          statusId: 1,
-          completionDate: expect.any(Date),
+        include: {
+          participants: {
+            include: {
+              farmMember: {
+                include: { user: true },
+              },
+            },
+          },
         },
       });
-
-      // Verify each participant was updated
-      expect(mockPrismaService.taskParticipant.update).toHaveBeenCalledTimes(2);
-      
-      // Verify each equipment was updated
-      expect(mockPrismaService.taskEquipment.update).toHaveBeenCalledTimes(2);
-      
-      expect(result).toEqual({ message: 'Task marked as completed' });
+      expect(result).toEqual([
+        { id: 1, username: 'user1' },
+        { id: 2, username: 'user2' },
+      ]);
     });
 
     it('should throw NotFoundException when task not found', async () => {
       // Arrange
       const taskId = 1;
       const farmId = 1;
-      const minutesWorked = 120;
-      const equipmentData = { 1: 25, 2: 30 };
 
-      mockPrismaService.task.findUnique.mockResolvedValue(null);
+      mockPrismaService.task.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.markAsCompleted(taskId, farmId, minutesWorked, equipmentData))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.getTaskParticipants(taskId, farmId)).rejects.toThrow(NotFoundException);
     });
   });
 
-  describe('findAllTasksForField', () => {
-    it('should return all tasks for a field', async () => {
+  describe('addParticipant', () => {
+    it('should add participant to task', async () => {
       // Arrange
-      const fieldId = 1;
+      const taskId = 1;
+      const userId = 1;
       const farmId = 1;
-      const mockField = { id: fieldId, farmId };
-      const mockTasks = [
-        { id: 1, description: 'Task 1' },
-        { id: 2, description: 'Task 2' },
-      ];
+      const mockTask = { id: taskId };
+      const mockFarmMember = { id: 5, userId, farmId };
+      const mockTaskParticipant = { id: 1, taskId, farmMemberId: mockFarmMember.id };
 
-      mockPrismaService.field.findFirst.mockResolvedValue(mockField);
-      mockPrismaService.task.findMany.mockResolvedValue(mockTasks);
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.farmMember.findFirst.mockResolvedValue(mockFarmMember);
+      mockPrismaService.taskParticipant.create.mockResolvedValue(mockTaskParticipant);
 
       // Act
-      const result = await service.findAllTasksForField(fieldId, farmId);
+      const result = await service.addParticipant(taskId, userId, farmId);
 
       // Assert
-      expect(mockPrismaService.field.findFirst).toHaveBeenCalledWith({
-        where: { id: fieldId, farmId },
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, field: { farmId } },
       });
-      expect(mockPrismaService.task.findMany).toHaveBeenCalledWith({
-        where: { fieldId },
-        include: expect.any(Object),
+      expect(mockPrismaService.farmMember.findFirst).toHaveBeenCalledWith({
+        where: { userId, farmId },
       });
-      expect(result).toEqual(mockTasks);
+      expect(mockPrismaService.taskParticipant.create).toHaveBeenCalledWith({
+        data: {
+          taskId,
+          farmMemberId: mockFarmMember.id,
+        },
+      });
+      expect(result).toEqual(mockTaskParticipant);
     });
 
-    it('should throw NotFoundException when field not found', async () => {
+    it('should throw NotFoundException when task not found', async () => {
       // Arrange
-      const fieldId = 1;
+      const taskId = 1;
+      const userId = 1;
       const farmId = 1;
 
-      mockPrismaService.field.findFirst.mockResolvedValue(null);
+      mockPrismaService.task.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findAllTasksForField(fieldId, farmId)).rejects.toThrow(NotFoundException);
-      expect(mockPrismaService.field.findFirst).toHaveBeenCalledWith({
-        where: { id: fieldId, farmId },
+      await expect(service.addParticipant(taskId, userId, farmId)).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.farmMember.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.taskParticipant.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when user is not a farm member', async () => {
+      // Arrange
+      const taskId = 1;
+      const userId = 1;
+      const farmId = 1;
+      const mockTask = { id: taskId };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.farmMember.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.addParticipant(taskId, userId, farmId)).rejects.toThrow(BadRequestException);
+      expect(mockPrismaService.taskParticipant.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('removeParticipant', () => {
+    it('should remove participant from task', async () => {
+      // Arrange
+      const taskId = 1;
+      const userId = 1;
+      const farmId = 1;
+      const mockTask = { id: taskId };
+      const mockFarmMember = { id: 5, userId, farmId };
+      const mockTaskParticipant = { id: 1, taskId, farmMemberId: mockFarmMember.id };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.farmMember.findFirst.mockResolvedValue(mockFarmMember);
+      mockPrismaService.taskParticipant.delete.mockResolvedValue(mockTaskParticipant);
+
+      // Act
+      const result = await service.removeParticipant(taskId, userId, farmId);
+
+      // Assert
+      expect(mockPrismaService.task.findFirst).toHaveBeenCalledWith({
+        where: { id: taskId, field: { farmId } },
       });
-      expect(mockPrismaService.task.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.farmMember.findFirst).toHaveBeenCalledWith({
+        where: { userId, farmId },
+      });
+      expect(mockPrismaService.taskParticipant.delete).toHaveBeenCalledWith({
+        where: {
+          taskId_farmMemberId: { taskId, farmMemberId: mockFarmMember.id },
+        },
+      });
+      expect(result).toEqual(mockTaskParticipant);
+    });
+
+    it('should throw NotFoundException when task not found', async () => {
+      // Arrange
+      const taskId = 1;
+      const userId = 1;
+      const farmId = 1;
+
+      mockPrismaService.task.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.removeParticipant(taskId, userId, farmId)).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.farmMember.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.taskParticipant.delete).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when farm member not found', async () => {
+      // Arrange
+      const taskId = 1;
+      const userId = 1;
+      const farmId = 1;
+      const mockTask = { id: taskId };
+
+      mockPrismaService.task.findFirst.mockResolvedValue(mockTask);
+      mockPrismaService.farmMember.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(service.removeParticipant(taskId, userId, farmId)).rejects.toThrow(NotFoundException);
+      expect(mockPrismaService.taskParticipant.delete).not.toHaveBeenCalled();
     });
   });
 });
