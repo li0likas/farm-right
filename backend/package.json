@@ -94,7 +94,7 @@
       "**/*.service.ts",
       "**/*.controller.ts"
     ],    
-    "coverageDirectory": "../coverage-controllers-services",
+    "coverageDirectory": "../coverage-unit",
     "coverageReporters": ["text", "lcov"],
     "moduleNameMapper": {
       "^src/(.*)$": "<rootDir>/$1"

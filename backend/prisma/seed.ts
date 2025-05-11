@@ -377,6 +377,7 @@ async function main() {
       { username: 'worker3', email: 'worker3@example.com', hash: await argon.hash("gvidas123") },
       { username: 'agronomist', email: 'agronomist@example.com', hash: await argon.hash("gvidas123") },
       { username: 'gvidas', email: 'gvidas@gmail.com', hash: await argon.hash("gvidas123") },
+      { username: 'testuser', email: 'test@gmail.com', hash: await argon.hash("test123") },
     ],
     skipDuplicates: true,
   });

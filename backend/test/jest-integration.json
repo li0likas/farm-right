@@ -5,6 +5,17 @@
   "maxWorkers": 1,
   "testTimeout": 20000,
   "testRegex": ".integration.spec.ts$",
+  "collectCoverage": true,
+  "coverageDirectory": "coverage-integration",
+  "collectCoverageFrom": [
+    "src/**/*.ts",
+    "!src/*.ts"
+  ],
+  "coverageReporters": ["text", "lcov"],
+  "coveragePathIgnorePatterns": [
+    ".*\\.spec\\.ts$",
+    ".*\\.dto\\.ts$"
+  ],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
