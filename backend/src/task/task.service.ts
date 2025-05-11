@@ -299,43 +299,70 @@ export class TaskService {
     minutesWorked: number,
     equipmentData: { [equipmentId: number]: number }
   ) {
+    // Fetch the task and related data
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
       include: {
         participants: true,
         equipments: true,
+        field: true, // Needed to verify farm ownership
       },
     });
-  
-    if (!task) throw new NotFoundException("Task not found in selected farm");
-  
+
+    if (!task || task.field.farmId !== farmId) {
+      throw new NotFoundException('Task not found in selected farm');
+    }
+
+    // Get the status ID for 'Completed' dynamically
+    const completedStatus = await this.prisma.taskStatusOptions.findFirst({
+      where: { name: 'Completed' },
+    });
+
+    if (!completedStatus) {
+      throw new Error('Task status "Completed" not found');
+    }
+
+    // Update the task with completed status
     await this.prisma.task.update({
-      where: { id: taskId, field: { farmId } },
+      where: { id: taskId },
       data: {
-        statusId: 1, // 1 = Completed
+        statusId: completedStatus.id,
         completionDate: new Date(),
       },
     });
-  
+
+    // Update minutes worked for each participant
     for (const participant of task.participants) {
       await this.prisma.taskParticipant.update({
-        where: { taskId_farmMemberId: { taskId, farmMemberId: participant.farmMemberId } },
-        data: { minutesWorked },
-      });
-    }
-  
-    for (const equipment of task.equipments) {
-      const fuel = equipmentData[equipment.equipmentId] ?? null;
-      await this.prisma.taskEquipment.update({
-        where: { taskId_equipmentId: { taskId, equipmentId: equipment.equipmentId } },
+        where: {
+          taskId_farmMemberId: {
+            taskId,
+            farmMemberId: participant.farmMemberId,
+          },
+        },
         data: {
-          minutesUsed: minutesWorked,
-          fuelUsed: fuel,
+          minutesWorked,
         },
       });
     }
-  
+
+    // Update equipment usage
+    for (const equipment of task.equipments) {
+      const fuelUsed = equipmentData[equipment.equipmentId] ?? null;
+      await this.prisma.taskEquipment.update({
+        where: {
+          taskId_equipmentId: {
+            taskId,
+            equipmentId: equipment.equipmentId,
+          },
+        },
+        data: {
+          minutesUsed: minutesWorked,
+          fuelUsed,
+        },
+      });
+    }
+
     return { message: 'Task marked as completed' };
   }
-  
 }

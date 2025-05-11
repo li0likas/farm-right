@@ -59,7 +59,7 @@ describe('End-to-End Business Process (Integration)', () => {
         .set('x-selected-farm-id', testData.farm.id.toString())
         .send({
           name: 'Test Tractor',
-          typeId: 1, // Pridėkite tinkamą įrangos tipo ID
+          typeId: testData.equipmentTypes.id,
           description: 'Integration test equipment',
         })
         .expect(201)
@@ -125,7 +125,7 @@ describe('End-to-End Business Process (Integration)', () => {
         .send({
           minutesWorked: 120,
           equipmentData: {
-            [equipmentId]: 30, // 30 litrų kuro
+            [equipmentId]: 30,
           },
         })
         .expect(200);
@@ -169,7 +169,6 @@ describe('End-to-End Business Process (Integration)', () => {
           expect(Array.isArray(res.body)).toBe(true);
           expect(res.body.length).toBeGreaterThan(0);
           
-          // Patikrinkite įrangos duomenis
           const equipmentReport = res.body.find(e => e.id === equipmentId);
           expect(equipmentReport).toBeDefined();
           expect(equipmentReport.totalFuel).toBe(30);
@@ -187,10 +186,9 @@ describe('End-to-End Business Process (Integration)', () => {
         .then(res => {
           expect(Array.isArray(res.body)).toBe(true);
           
-          // Patikrinkite narių duomenis
           const memberReport = res.body.find(m => m.username === testData.worker.username);
           expect(memberReport).toBeDefined();
-          expect(memberReport.minutesWorked).toBe(120);
+          expect(memberReport.totalMinutes).toBe(120);
         });
     });
   });

@@ -1,21 +1,23 @@
-import { PrismaClient } from '@prisma/client';
 import * as dotenv from 'dotenv';
+
+const result = dotenv.config({ path: '.env.test' });
+console.log(result); // Check if { error, parsed } looks correct
+
+import { PrismaClient } from '@prisma/client';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-/**
- * Function to set up the test database for integration testing
- * This function will:
- * 1. Create the test database if it doesn't exist
- * 2. Run migrations on the test database
- */
+setupTestDatabase();
+
 async function setupTestDatabase() {
-  // Load test environment variables if not already loaded
   if (!process.env.DATABASE_URL) {
     dotenv.config({ path: '.env.test' });
   }
+
+  console.log(`Loaded DATABASE_URL: ${process.env.DATABASE_URL}`);
+
   
   const databaseUrl = process.env.DATABASE_URL;
   
@@ -23,17 +25,12 @@ async function setupTestDatabase() {
     throw new Error('DATABASE_URL is not defined in .env.test');
   }
   
-  // Extract database name from URL
-  const dbNameMatch = databaseUrl.match(/\/([^?]*)/);
-  if (!dbNameMatch || !dbNameMatch[1]) {
-    throw new Error('Could not extract database name from DATABASE_URL');
-  }
-  
-  const dbName = dbNameMatch[1];
+  const dbUrl = new URL(databaseUrl);
+  const dbName = dbUrl.pathname.replace('/', ''); // "farm-right-test-db"
+
   console.log(`Setting up test database: ${dbName}`);
   
   try {
-    // Create database if it doesn't exist
     const pgUrl = databaseUrl.replace(dbName, 'postgres');
     const prisma = new PrismaClient({
       datasources: {
@@ -43,7 +40,6 @@ async function setupTestDatabase() {
       }
     });
     
-    // Check if database exists and create it if it doesn't
     try {
       const result = await prisma.$queryRaw`SELECT 1 FROM pg_database WHERE datname = ${dbName}`;
       const exists = Array.isArray(result) && result.length > 0;
@@ -59,7 +55,6 @@ async function setupTestDatabase() {
       await prisma.$disconnect();
     }
     
-    // Run Prisma migrations on the test database
     console.log('Running Prisma migrations...');
     try {
       await execAsync(`npx prisma migrate deploy --schema=./prisma/schema.prisma`);
@@ -77,5 +72,4 @@ async function setupTestDatabase() {
   }
 }
 
-// Export as default function
 export default setupTestDatabase;

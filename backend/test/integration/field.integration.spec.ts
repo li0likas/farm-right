@@ -26,11 +26,11 @@ describe('Field API (Integration)', () => {
         .expect(401);
     });
 
-    it('should return 400 when no farm is selected', () => {
+    it('should return 403 when no farm is selected', () => {
       return request(testUtils.app.getHttpServer())
         .get('/fields')
         .set('Authorization', `Bearer ${ownerToken}`)
-        .expect(400);
+        .expect(403);
     });
 
     it('should return fields when authenticated as owner', () => {
@@ -125,7 +125,6 @@ describe('Field API (Integration)', () => {
         .expect(200)
         .then(res => {
           expect(res.body).toHaveProperty('totalArea');
-          // Patikrinti ar tai yra numeris ir ar bent apytiksliai atitinka testinius duomenis
           expect(typeof res.body.totalArea).toBe('number');
           expect(res.body.totalArea).toBeGreaterThanOrEqual(100);
         });

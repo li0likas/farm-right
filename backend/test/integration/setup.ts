@@ -44,10 +44,11 @@ export async function setupIntegrationTest() {
   const jwtService = app.get<JwtService>(JwtService);
 
   // Clean database before tests
-  await cleanDatabase(prismaService);
 
   // Function to create test data
   async function createTestData() {
+    await cleanDatabase(prismaService); // Do this every time
+
     // Create roles
     const ownerRole = await prismaService.role.create({
       data: { name: 'OWNER' },
@@ -62,19 +63,86 @@ export async function setupIntegrationTest() {
     });
 
     // Create permissions
-    const permissions = await prismaService.$transaction([
-      prismaService.permission.create({ data: { name: 'FIELD_CREATE' } }),
-      prismaService.permission.create({ data: { name: 'FIELD_READ' } }),
-      prismaService.permission.create({ data: { name: 'FIELD_UPDATE' } }),
-      prismaService.permission.create({ data: { name: 'FIELD_DELETE' } }),
-      prismaService.permission.create({ data: { name: 'TASK_CREATE' } }),
-      prismaService.permission.create({ data: { name: 'TASK_READ' } }),
-      prismaService.permission.create({ data: { name: 'TASK_STATS_READ' } }),
-      prismaService.permission.create({ data: { name: 'EQUIPMENT_CREATE' } }),
-      prismaService.permission.create({ data: { name: 'EQUIPMENT_READ' } }),
-      prismaService.permission.create({ data: { name: 'FARM_MEMBER_READ' } }),
-      prismaService.permission.create({ data: { name: 'FARM_MEMBER_INVITE' } }),
-    ]);
+  const permissions = await prismaService.$transaction([
+    // Field permissions
+    prismaService.permission.create({ data: { name: 'FIELD_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_READ' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_DELETE' } }),
+
+    // Field task permissions
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_READ' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_DELETE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TOTAL_AREA_READ' } }),
+
+    // Field task comment permissions
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_COMMENT_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_COMMENT_READ' } }),
+    prismaService.permission.create({ data: { name: 'FIELD_TASK_COMMENT_DELETE' } }),
+
+    // Season
+    prismaService.permission.create({ data: { name: 'SEASON_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'SEASON_READ' } }),
+    prismaService.permission.create({ data: { name: 'SEASON_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'SEASON_DELETE' } }),
+
+    // User management
+    prismaService.permission.create({ data: { name: 'USER_MANAGE' } }),
+
+    // Admin access
+    prismaService.permission.create({ data: { name: 'ADMIN_ACCESS' } }),
+
+    // Equipment permissions
+    prismaService.permission.create({ data: { name: 'EQUIPMENT_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'EQUIPMENT_READ' } }),
+    prismaService.permission.create({ data: { name: 'EQUIPMENT_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'EQUIPMENT_DELETE' } }),
+
+    // Task equipment
+    prismaService.permission.create({ data: { name: 'TASK_EQUIPMENT_READ' } }),
+    prismaService.permission.create({ data: { name: 'TASK_EQUIPMENT_ASSIGN' } }),
+    prismaService.permission.create({ data: { name: 'TASK_EQUIPMENT_REMOVE' } }),
+
+    // Farm permissions
+    prismaService.permission.create({ data: { name: 'FARM_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'FARM_READ' } }),
+    prismaService.permission.create({ data: { name: 'FARM_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'FARM_DELETE' } }),
+
+    // Crop permissions
+    prismaService.permission.create({ data: { name: 'CROP_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'CROP_READ' } }),
+    prismaService.permission.create({ data: { name: 'CROP_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'CROP_DELETE' } }),
+
+    // Task permissions
+    prismaService.permission.create({ data: { name: 'TASK_CREATE' } }),
+    prismaService.permission.create({ data: { name: 'TASK_READ' } }),
+    prismaService.permission.create({ data: { name: 'TASK_UPDATE' } }),
+    prismaService.permission.create({ data: { name: 'TASK_DELETE' } }),
+    prismaService.permission.create({ data: { name: 'TASK_STATS_READ' } }),
+    prismaService.permission.create({ data: { name: 'TASK_CHANGE_STATUS' } }),
+
+    prismaService.permission.create({ data: { name: 'TASK_READ_PARTICIPANTS' } }),
+    prismaService.permission.create({ data: { name: 'TASK_ASSIGN_PARTICIPANTS' } }),
+    prismaService.permission.create({ data: { name: 'TASK_REMOVE_PARTICIPANTS' } }),
+
+    // AI
+    prismaService.permission.create({ data: { name: 'DASHBOARD_AI_SUMMARY' } }),
+
+    // Permission permissions
+    prismaService.permission.create({ data: { name: 'PERMISSION_READ' } }),
+    prismaService.permission.create({ data: { name: 'PERMISSION_ASSIGN' } }),
+    prismaService.permission.create({ data: { name: 'PERMISSION_REMOVE' } }),
+
+    // Farm member
+    prismaService.permission.create({ data: { name: 'FARM_MEMBER_INVITE' } }),
+    prismaService.permission.create({ data: { name: 'FARM_MEMBER_READ' } }),
+    prismaService.permission.create({ data: { name: 'FARM_MEMBER_UPDATE_ROLE' } }),
+    prismaService.permission.create({ data: { name: 'FARM_MEMBER_REMOVE' } }),
+  ]);
 
     // Create users
     const hash = await argon.hash('testpassword');
@@ -131,8 +199,12 @@ export async function setupIntegrationTest() {
       });
     }
 
-    // Assign read permissions to worker role
-    const readPermissions = permissions.filter(p => p.name.includes('READ'));
+    // Assign read permissions to worker role, but exclude sensitive ones
+    const readPermissions = permissions.filter(
+      (p) =>
+        p.name.includes('READ') &&
+        !['FARM_MEMBER_READ', 'PERMISSION_READ', 'USER_MANAGE'].includes(p.name)
+    );
     for (const permission of readPermissions) {
       await prismaService.farmRolePermission.create({
         data: {

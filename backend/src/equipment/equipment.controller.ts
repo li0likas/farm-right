@@ -33,12 +33,12 @@ export class EquipmentController {
   @ApiResponse({ status: 200, description: 'Equipment retrieved successfully.' })
   @ApiResponse({ status: 404, description: 'Equipment not found.' })
   @ApiResponse({ status: 403, description: 'Forbidden.' })
-  async getEquipmentById(@Param('id') id: number, @Request() req) {
+  async getEquipmentById(@Param('id') id: string, @Request() req) {
     const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
     if (isNaN(selectedFarmId)) {
       throw new HttpException('Invalid farm ID', HttpStatus.BAD_REQUEST);
     }
-    return this.equipmentService.getEquipmentById(id, selectedFarmId);
+  return this.equipmentService.getEquipmentById(parseInt(id), selectedFarmId);
   }
 
   @Post()
