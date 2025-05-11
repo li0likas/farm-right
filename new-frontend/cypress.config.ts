@@ -1,3 +1,4 @@
+// cypress.config.ts
 import { defineConfig } from 'cypress';
 
 export default defineConfig({
@@ -10,6 +11,7 @@ export default defineConfig({
   viewportWidth: 1280,
   viewportHeight: 720,
   video: false,
-  screenshotOnRunFailure: true,
-  defaultCommandTimeout: 10000,
+  env: {
+    apiUrl: 'http://localhost:3333'
+  }
 });
