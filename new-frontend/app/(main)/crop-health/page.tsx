@@ -1,3 +1,4 @@
+// new-frontend/app/(main)/crop-health/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -11,9 +12,22 @@ import { useRouter } from 'next/navigation';
 import { Button } from 'primereact/button';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
-import { useTranslations } from 'next-intl'; // Import this
+import { useTranslations } from 'next-intl';
+import { Divider } from 'primereact/divider';
+import { Tag } from 'primereact/tag';
+import ProtectedRoute from "@/utils/ProtectedRoute";
+import { usePermissions } from "@/context/PermissionsContext";
+
+interface Disease {
+  name: string;
+  probability: number;
+  similar_images?: { url: string; url_small?: string }[];
+}
 
 const CropHealthPage = () => {
+  const router = useRouter();
+  const { hasPermission } = usePermissions();
+  
   // Get translations
   const t = useTranslations('common');
   const ch = useTranslations('cropHealth');
@@ -28,59 +42,37 @@ const CropHealthPage = () => {
   const [generating, setGenerating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const router = useRouter();
+  const [hasFields, setHasFields] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  
+  const canCreateTask = hasPermission("TASK_CREATE");
+  const canCreateField = hasPermission("FIELD_CREATE");
 
   useEffect(() => {
-    api.get('/fields')
-      .then(res => {
-        const options = res.data.map((field: any) => ({
-          label: field.name,
-          value: field.id,
-        }));
-        setFieldOptions(options);
-      })
-      .catch(() => toast.error('Failed to fetch fields'));
+    fetchFields();
   }, []);
 
-  const confirmDiseaseTask = async () => {
-    if (!selectedField || !selectedDisease) {
-      toast.warning("Please select a field");
-      return;
-    }
-
-    const fieldLabel = fieldOptions.find(f => f.value === selectedField)?.label || 'laukas';
-
-    setGenerating(true);
+  const fetchFields = async () => {
     try {
-      const response = await api.post("/ai/crop-health-task-description", {
-        rawText: `Liga: ${selectedDisease}. Laukas: ${fieldLabel}.`
-      });
-
-      const description = response.data.refinedTaskDescription;
-
-      localStorage.setItem("pendingTaskData", JSON.stringify({
-        description,
-        disease: selectedDisease,
-        fieldId: selectedField
+      const res = await api.get('/fields');
+      const options = res.data.map((field: any) => ({
+        label: field.name,
+        value: field.id,
       }));
-
-      setShowFieldDialog(false);
-      router.push('/create-task');
+      setFieldOptions(options);
+      setHasFields(options.length > 0);
     } catch (error) {
-      toast.error("Failed to generate task description");
+      toast.error(ch('fetchFieldsError'));
+      setHasFields(false);
     } finally {
-      setGenerating(false);
+      setInitialLoading(false);
     }
-  };
-
-  const handleCreateTaskFromDisease = (diseaseName: string) => {
-    setSelectedDisease(diseaseName);
-    setShowFieldDialog(true);
   };
 
   const handleImagePreview = (file: File) => {
     setUploadedFile(file);
     setUploadedFileName(file.name);
+    setResult(null); // Clear previous results
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -117,7 +109,7 @@ const CropHealthPage = () => {
 
         setResult(response.data);
       } catch (error) {
-        toast.error('Failed to analyze the plant.');
+        toast.error(ch('analysisError'));
       } finally {
         setLoading(false);
       }
@@ -126,137 +118,305 @@ const CropHealthPage = () => {
     reader.readAsDataURL(imageFile);
   };
 
+  const confirmDiseaseTask = async () => {
+    if (!selectedField || !selectedDisease) {
+      toast.warning(ch('selectFieldWarning'));
+      return;
+    }
+
+    const fieldLabel = fieldOptions.find(f => f.value === selectedField)?.label || 'laukas';
+
+    setGenerating(true);
+    try {
+      const response = await api.post("/ai/crop-health-task-description", {
+        rawText: `Liga: ${selectedDisease}. Laukas: ${fieldLabel}.`
+      });
+
+      const description = response.data.refinedTaskDescription;
+
+      localStorage.setItem("pendingTaskData", JSON.stringify({
+        description,
+        disease: selectedDisease,
+        fieldId: selectedField
+      }));
+
+      setShowFieldDialog(false);
+      toast.success(ch('taskPrepared'));
+      router.push('/create-task');
+    } catch (error) {
+      toast.error(ch('descriptionError'));
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleCreateTaskFromDisease = (diseaseName: string) => {
+    if (!hasFields) {
+      toast.warning(ch('needFieldsWarning'));
+      return;
+    }
+    setSelectedDisease(diseaseName);
+    setShowFieldDialog(true);
+  };
+  
+  if (initialLoading) {
+    return (
+      <ProtectedRoute>
+        <div className="flex justify-content-center align-items-center min-h-screen">
+          <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+          <span className="ml-3 text-lg">{ch('loading')}</span>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   return (
-    <div className="container mx-auto p-6">
-      <Card title={ch('title')} className="mb-6 shadow-md">
-        <p className="text-sm text-gray-600 mb-4">
-          {ch('subtitle')}
-        </p>
+    <ProtectedRoute>
+      <div className="container mx-auto p-6">
+        <Card 
+          title={
+            <div className="flex align-items-center">
+              <i className="pi pi-heart text-green-500 mr-2 text-xl"></i>
+              <span>{ch('title')}</span>
+            </div>
+          } 
+          subTitle={ch('subtitle')}
+          className="mb-6 shadow-2"
+        >
+          <div className="grid">
+            <div className="col-12 md:col-5">
+              <Card className="shadow-1 h-full">
+                <h3 className="text-xl font-semibold mb-3">{ch('uploadSection')}</h3>
+                
+                {/* Upload Area */}
+                <div className="flex flex-column align-items-center">
+                  <div className="p-4 border-dashed border-1 border-round w-full text-center mb-3 surface-200">
+                    <FileUpload
+                      name="plantImage"
+                      accept="image/*"
+                      customUpload={false}
+                      onSelect={(e) => handleImagePreview(e.files?.[0])}
+                      chooseLabel={ch('chooseCropImage')}
+                      mode="basic"
+                      className="mb-3"
+                    />
+                    <p className="text-sm text-500 mt-2 mb-0">{ch('acceptedFormats')}</p>
+                  </div>
 
-        <FileUpload
-          name="plantImage"
-          accept="image/*"
-          customUpload={false}
-          onSelect={(e) => handleImagePreview(e.files?.[0])}
-          chooseLabel={ch('chooseCropImage')}
-          mode="basic"
-        />
+                  {uploadedFile && (
+                    <div className="mt-4 text-center w-full">
+                      <Button
+                        label={`${ch('analyze')} "${uploadedFileName}"`}
+                        icon="pi pi-search"
+                        className="p-button-primary w-full"
+                        onClick={() => handleFileUpload({ files: [uploadedFile] })}
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
+                </div>
 
-        {uploadedFile && (
-          <div className="mt-4 text-center">
-            <Button
-              label={`${ch('analyze')} "${uploadedFileName}"`}
-              icon="pi pi-search"
-              className="p-button-primary"
-              onClick={() => handleFileUpload({ files: [uploadedFile] })}
-            />
-          </div>
-        )}
-
-        {imagePreview && (
-          <div className="mt-4 text-center">
-            <img src={imagePreview} alt="Uploaded crop" className="max-w-xs w-full h-auto rounded shadow mx-auto border" />
-          </div>
-        )}
-
-        {loading && (
-          <div className="flex justify-center mt-6">
-            <ProgressSpinner />
-          </div>
-        )}
-
-        {result && !loading && (
-          <div className="mt-6">
-            <h6 className="text-md font-semibold mb-3">{ch('diagnosisReport')}</h6>
-
-            <div className="mb-4">
-              <p><strong>{ch('plantDetected')}:</strong> {result.is_plant ? ch('yes') : ch('no')} ({(result.is_plant_probability * 100).toFixed(1)}%)</p>
-              <p><strong>{ch('healthStatus')}:</strong> {result.health_assessment.is_healthy ? ch('healthy') : ch('unhealthy')} ({(result.health_assessment.is_healthy_probability * 100).toFixed(1)}%)</p>
+                {/* Preview */}
+                {imagePreview && (
+                  <div className="mt-4 text-center">
+                    <h3 className="text-md font-semibold">{ch('preview')}</h3>
+                    <div className="border-1 border-round p-2 surface-50">
+                      <img 
+                        src={imagePreview} 
+                        alt="Uploaded crop" 
+                        className="max-w-full h-auto rounded shadow-1 border-1" 
+                        style={{ maxHeight: '300px', objectFit: 'contain' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </Card>
             </div>
 
-            <div className="mb-4">
-              <p className="font-semibold mb-2">{ch('detectedDiseases')}:</p>
-              <table className="w-full text-sm text-left border">
-                <thead className="bg-gray-100 text-gray-700">
-                  <tr>
-                    <th className="p-2">{ch('disease')}</th>
-                    <th className="p-2">{ch('probability')}</th>
-                    <th className="p-2">{ch('similarImages')}</th>
-                    <th className="p-2">{ch('action')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.health_assessment.diseases.map((disease: any, index: number) => (
-                    <tr key={index} className="border-b hover:bg-gray-50 align-top">
-                      <td className="p-2 font-medium">{disease.name}</td>
-                      <td className="p-2">{(disease.probability * 100).toFixed(1)}%</td>
-                      <td className="p-2">
-                        <div className="flex flex-wrap gap-2">
-                          {disease.similar_images?.map((img: any, i: number) => (
-                            <a key={i} href={img.url} target="_blank" rel="noopener noreferrer">
-                              <img
-                                src={img.url_small || img.url}
-                                alt={`Similar example ${i + 1}`}
-                                className="w-16 h-16 object-cover rounded border hover:scale-105 transition-transform"
-                              />
-                            </a>
-                          ))}
+            <div className="col-12 md:col-7">
+              {/* Results Area */}
+              <Card className="shadow-1 h-full">
+                <h3 className="text-xl font-semibold mb-3">{ch('diagnosisReport')}</h3>
+                
+                {loading && (
+                  <div className="flex flex-column justify-content-center align-items-center py-8">
+                    <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                    <span className="mt-3 text-md">{ch('analyzing')}</span>
+                  </div>
+                )}
+
+                {!loading && !result && !imagePreview && (
+                  <div className="flex flex-column justify-content-center align-items-center py-8 text-center">
+                    <i className="pi pi-image text-500" style={{ fontSize: '3rem' }}></i>
+                    <p className="mt-3 text-500">{ch('noImageUploaded')}</p>
+                    <p className="text-sm text-600 mt-2">{ch('uploadInstruction')}</p>
+                  </div>
+                )}
+
+                {!loading && !result && imagePreview && (
+                  <div className="flex flex-column justify-content-center align-items-center py-8 text-center">
+                    <i className="pi pi-search text-500" style={{ fontSize: '3rem' }}></i>
+                    <p className="mt-3 text-500">{ch('readyToAnalyze')}</p>
+                    <Button
+                      label={ch('startAnalysis')}
+                      icon="pi pi-search"
+                      className="p-button-outlined p-button-primary mt-3"
+                      onClick={() => handleFileUpload({ files: [uploadedFile] })}
+                    />
+                  </div>
+                )}
+
+                {result && !loading && (
+                  <div className="mt-4">
+                    <div className="grid">
+                      <div className="col-12 md:col-6">
+                        <div className="p-3 surface-50 border-round mb-3">
+                          <p>
+                            <strong>{ch('plantDetected')}:</strong>{' '}
+                            <Tag 
+                              value={result.is_plant ? ch('yes') : ch('no')} 
+                              severity={result.is_plant ? 'success' : 'danger'} 
+                            />
+                            <span className="text-500 ml-2">
+                              ({(result.is_plant_probability * 100).toFixed(1)}%)
+                            </span>
+                          </p>
+                          <p>
+                            <strong>{ch('healthStatus')}:</strong>{' '}
+                            <Tag 
+                              value={result.health_assessment.is_healthy ? ch('healthy') : ch('unhealthy')} 
+                              severity={result.health_assessment.is_healthy ? 'success' : 'warning'} 
+                            />
+                            <span className="text-500 ml-2">
+                              ({(result.health_assessment.is_healthy_probability * 100).toFixed(1)}%)
+                            </span>
+                          </p>
                         </div>
-                      </td>
-                      <td className="p-2">
-                        <Button
-                          label={ch('createTask')}
-                          icon="pi pi-plus"
-                          className="p-button-sm p-button-outlined p-button-success"
-                          onClick={() => handleCreateTaskFromDisease(disease.name)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </div>
 
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-500 mt-2">Submitted on: {result.meta_data.date}</p>
+                    <Divider>
+                      <span className="p-tag">{ch('detectedDiseases')}</span>
+                    </Divider>
+
+                    {result.health_assessment.diseases.length > 0 ? (
+                      <div className="mt-3">
+                        {result.health_assessment.diseases.map((disease: Disease, index: number) => (
+                          <Card 
+                            key={index} 
+                            className={`mb-3 shadow-1 border-left-3 ${index % 2 === 0 ? 'border-red-500' : 'border-orange-500'}`}
+                          >
+                            <div className="flex justify-content-between align-items-center mb-3">
+                              <div className="flex align-items-center">
+                                <i className="pi pi-exclamation-triangle text-orange-500 mr-2"></i>
+                                <h4 className="m-0 font-bold">{disease.name}</h4>
+                              </div>
+                              <Tag 
+                                value={`${(disease.probability * 100).toFixed(1)}%`} 
+                                severity={disease.probability > 0.7 ? 'danger' : disease.probability > 0.4 ? 'warning' : 'info'} 
+                              />
+                            </div>
+                            
+                            {disease.similar_images && disease.similar_images.length > 0 && (
+                              <div className="mt-2">
+                                <p className="text-sm font-medium">{ch('similarImages')}:</p>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {disease.similar_images.map((img: any, i: number) => (
+                                    <a key={i} href={img.url} target="_blank" rel="noopener noreferrer">
+                                      <img
+                                        src={img.url_small || img.url}
+                                        alt={`Similar example ${i + 1}`}
+                                        className="w-4rem h-4rem object-cover rounded border hover:shadow-3 transition-all transition-duration-300"
+                                      />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            <div className="flex justify-content-end mt-3">
+                              <Button
+                                label={ch('createTask')}
+                                icon="pi pi-plus"
+                                className="p-button-sm p-button-outlined p-button-success"
+                                onClick={() => handleCreateTaskFromDisease(disease.name)}
+                                disabled={!canCreateTask}
+                              />
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-5">
+                        <i className="pi pi-check-circle text-green-500" style={{ fontSize: '2rem' }}></i>
+                        <p className="mt-2">{ch('noDiseasesDetected')}</p>
+                      </div>
+                    )}
+
+                    <div className="mt-4 text-center">
+                      <p className="text-sm text-500 mt-2">
+                        {ch('submittedOn')}: {new Date(result.meta_data.date).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </Card>
             </div>
           </div>
-        )}
-      </Card>
+        </Card>
 
-      <Dialog
-        header={ch('selectField')}
-        visible={showFieldDialog}
-        onHide={() => setShowFieldDialog(false)}
-        footer={
-          <>
-            <Button label={t('cancel')} className="p-button-text" onClick={() => setShowFieldDialog(false)} />
-            <Button
-              label={ch('confirm')}
-              icon="pi pi-check"
-              className="p-button-success"
-              onClick={confirmDiseaseTask}
-              disabled={!selectedField || generating}
-            />
-          </>
-        }
-      >
-        {generating ? (
-          <div className="flex justify-center my-4">
-            <ProgressSpinner />
-            <span className="ml-3">{ch('generatingDescription')}</span>
-          </div>
-        ) : (
-          <Dropdown
-            value={selectedField}
-            options={fieldOptions}
-            onChange={(e) => setSelectedField(e.value)}
-            placeholder={ch('selectField')}
-            className="w-full"
-          />
-        )}
-      </Dialog>
-    </div>
+        {/* Field Selection Dialog */}
+        <Dialog
+          header={ch('selectField')}
+          visible={showFieldDialog}
+          onHide={() => setShowFieldDialog(false)}
+          className="w-full md:w-30rem"
+          footer={
+            <>
+              <Button label={t('cancel')} className="p-button-text" onClick={() => setShowFieldDialog(false)} />
+              <Button
+                label={ch('confirm')}
+                icon="pi pi-check"
+                className="p-button-success"
+                onClick={confirmDiseaseTask}
+                disabled={!selectedField || generating}
+              />
+            </>
+          }
+        >
+          {generating ? (
+            <div className="flex flex-column justify-content-center align-items-center my-4">
+              <ProgressSpinner style={{ width: '40px', height: '40px' }} />
+              <span className="ml-3 mt-2">{ch('generatingDescription')}</span>
+            </div>
+          ) : (
+            <>
+              <p className="mb-3">{ch('fieldSelectionHelp')}</p>
+              
+              <Dropdown
+                value={selectedField}
+                options={fieldOptions}
+                onChange={(e) => setSelectedField(e.value)}
+                placeholder={ch('selectField')}
+                className="w-full"
+              />
+              
+              {!hasFields && canCreateField && (
+                <div className="mt-3 p-3 surface-100 border-round text-center">
+                  <p className="text-600 mb-2">{ch('noFieldsAvailable')}</p>
+                  <Button
+                    label={ch('createField')}
+                    icon="pi pi-plus"
+                    className="p-button-outlined p-button-sm"
+                    onClick={() => router.push('/create-field')}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </Dialog>
+      </div>
+    </ProtectedRoute>
   );
 };
 

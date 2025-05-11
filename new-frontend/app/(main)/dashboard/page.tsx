@@ -7,54 +7,79 @@ import { Button } from "primereact/button";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Tag } from "primereact/tag";
+import { Card } from "primereact/card";
+import { ProgressSpinner } from "primereact/progressspinner";
 import ProtectedRoute from "@/utils/ProtectedRoute";
-import api from "@/utils/api"; // ✅ API instance with interceptor
-import { usePermissions } from "@/context/PermissionsContext"; // ✅ Import PermissionsContext
-import { useTranslations } from "next-intl"; // Import this
+import api from "@/utils/api";
+import { usePermissions } from "@/context/PermissionsContext";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 
 interface Task {
     id: string;
     title: string;
     status: { name: string };
     field: { name: string };
+    type: { name: string };
     dueDate?: string;
     completionDate?: string;
 }
 
+interface WeatherData {
+    temperature?: number;
+    condition?: string;
+    icon?: string;
+}
+
 const Dashboard = () => {
     const { hasPermission } = usePermissions();
+    const router = useRouter();
 
     const t = useTranslations('common');
     const dt = useTranslations('dashboard');
+    const taskT = useTranslations('tasks');
 
     const canReadTasks = hasPermission("TASK_READ");
     const canReadTaskStats = hasPermission("TASK_STATS_READ");
     const canReadFields = hasPermission("FIELD_TOTAL_AREA_READ");
     const canReadAiSummary = hasPermission("DASHBOARD_AI_SUMMARY");
+    const canCreateTask = hasPermission("TASK_CREATE");
+    const canCreateField = hasPermission("FIELD_CREATE");
 
     const [tasks, setTasks] = useState<Task[]>([]);
     const [totalFieldArea, setTotalFieldArea] = useState(0);
     const [completedPercentage, setCompletedPercentage] = useState(0);
+    const [fieldsCount, setFieldsCount] = useState(0);
+    const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
+    const [loadingWeather, setLoadingWeather] = useState(false);
 
     const [aiInsight, setAiInsight] = useState<string | null>(null);
     const [loadingInsight, setLoadingInsight] = useState(false);
+    const [loadingData, setLoadingData] = useState(true);
 
     useEffect(() => {
-        if (canReadFields) fetchFieldData();
-        if (canReadTasks) {
-            fetchTasks();
-        } else if (canReadTaskStats) {
-            fetchTaskStats();
-        }
-    
-        if (canReadAiSummary) {
-            const storedInsight = sessionStorage.getItem("aiInsight");
-            if (storedInsight) {
-                setAiInsight(storedInsight);
-            } else {
-                fetchAiInsight(); // Generate it on first visit
+        const loadData = async () => {
+            setLoadingData(true);
+            
+            if (canReadFields) await fetchFieldData();
+            if (canReadTasks) await fetchTasks();
+            else if (canReadTaskStats) await fetchTaskStats();
+            
+            if (canReadAiSummary) {
+                const storedInsight = sessionStorage.getItem("aiInsight");
+                if (storedInsight) {
+                    setAiInsight(storedInsight);
+                } else {
+                    fetchAiInsight();
+                }
             }
-        }
+            
+            fetchWeatherData();
+            setLoadingData(false);
+        };
+        
+        loadData();
     }, [canReadTasks, canReadTaskStats, canReadFields, canReadAiSummary]);
     
     const fetchTasks = async () => {
@@ -69,14 +94,13 @@ const Dashboard = () => {
 
             setTasks(sortedTasks);
 
-            // Calculate completion percentage locally
-            const completedTasksCount = sortedTasks.filter((task: { status: { name: string; }; }) => task.status.name === "Completed").length;
+            const completedTasksCount = sortedTasks.filter((task: Task) => task.status.name === "Completed").length;
             const totalTasksCount = sortedTasks.length;
             const percentage = totalTasksCount > 0 ? (completedTasksCount / totalTasksCount) * 100 : 0;
 
             setCompletedPercentage(percentage);
         } catch (error) {
-            toast.error("Failed to fetch tasks.");
+            toast.error(dt('fetchTasksError'));
         }
     };
 
@@ -88,16 +112,21 @@ const Dashboard = () => {
 
             setCompletedPercentage(percentage);
         } catch (error) {
-            toast.error("Failed to fetch task statistics.");
+            toast.error(dt('fetchStatsError'));
         }
     };
 
     const fetchFieldData = async () => {
         try {
-            const response = await api.get("/fields/total-area");
-            setTotalFieldArea(response.data.totalArea);
+            const [areaResponse, fieldsResponse] = await Promise.all([
+                api.get("/fields/total-area"),
+                api.get("/fields")
+            ]);
+            
+            setTotalFieldArea(areaResponse.data.totalArea);
+            setFieldsCount(fieldsResponse.data.length);
         } catch (error) {
-            toast.error("Failed to fetch field area.");
+            toast.error(dt('fetchFieldsError'));
         }
     };
 
@@ -107,26 +136,113 @@ const Dashboard = () => {
             const response = await api.post("/ai/farm-summary");
             const insight = response.data.insights;
             setAiInsight(insight);
-            sessionStorage.setItem("aiInsight", insight); // <-- Store in session
+            sessionStorage.setItem("aiInsight", insight);
         } catch (error) {
-            toast.error("Failed to load AI insight.");
+            toast.error(dt('aiInsightError'));
         } finally {
             setLoadingInsight(false);
         }
     };
+    
+    const fetchWeatherData = async () => {
+        setLoadingWeather(true);
+        try {
+            // Assuming we have a weather endpoint or using a mock
+            // This would typically use a geolocation API to get the user's location
+            // For simplicity, we're just setting some mock data here
+            setTimeout(() => {
+                setWeatherData({
+                    temperature: 12,
+                    condition: "Cloudy",
+                    icon: "cloud"
+                });
+                setLoadingWeather(false);
+            }, 1000);
+            
+            // Real implementation would be something like:
+            // const response = await api.get("/weather");
+            // setWeatherData(response.data);
+        } catch (error) {
+            toast.error(dt('weatherError'));
+            setLoadingWeather(false);
+        }
+    };
+    
+    const getTranslatedStatus = (statusName: string) => {
+        const statusKey = statusName.toLowerCase();
+        return statusKey === "pending" ? taskT('taskStatusPending') :
+            statusKey === "completed" ? taskT('taskStatusCompleted') :
+            statusKey === "canceled" ? taskT('taskStatusCanceled') :
+            statusName;
+    };
+    
+    const getStatusSeverity = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'completed':
+                return 'success';
+            case 'pending':
+                return 'warning';
+            case 'canceled':
+                return 'danger';
+            default:
+                return 'info';
+        }
+    };
+
+    if (loadingData) {
+        return (
+            <ProtectedRoute>
+                <div className="flex justify-content-center align-items-center min-h-screen">
+                    <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                    <span className="ml-3 text-lg">{dt('loading')}</span>
+                </div>
+            </ProtectedRoute>
+        );
+    }
 
     return (
         <ProtectedRoute>
             <div className="grid">
-                {/* AI Summary */}
+                <div className="col-12">
+                    <Card className="bg-primary-50 border-left-3 border-primary shadow-2">
+                        <div className="flex justify-content-between align-items-center">
+                            <div>
+                                <h2 className="m-0 text-primary font-medium text-2xl">
+                                    {dt('welcomeMessage')}
+                                </h2>
+                                <p className="text-700 mt-2 mb-0">{dt('todayDate')}: {new Date().toLocaleDateString()}</p>
+                            </div>
+                            
+                            {weatherData && (
+                                <div className="flex align-items-center bg-white p-3 border-round shadow-1">
+                                    <i className={`pi pi-${weatherData.icon || 'cloud'} text-primary text-2xl mr-2`}></i>
+                                    <div>
+                                        <span className="text-xl font-medium">{weatherData.temperature}°C</span>
+                                        <p className="m-0 text-500">{weatherData.condition}</p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {loadingWeather && (
+                                <ProgressSpinner style={{ width: '30px', height: '30px' }} />
+                            )}
+                        </div>
+                    </Card>
+                </div>
+                
                 {canReadAiSummary && (
                     <div className="col-12 lg:col-6 xl:col-6">
-                        <div className="card mb-0">
+                        <Card className="mb-0 shadow-2 h-full">
                             <div className="flex justify-content-between mb-3">
                                 <div>
                                     <span className="block text-500 font-medium mb-3">{dt('aiSummary')}</span>
                                     <div className="text-900 font-medium text-base whitespace-pre-wrap">
-                                        {loadingInsight ? dt('generatingSummary') : aiInsight || dt('noSummaryAvailable')}
+                                        {loadingInsight ? (
+                                            <div className="flex flex-column align-items-center">
+                                                <ProgressSpinner style={{ width: '30px', height: '30px' }} />
+                                                <span className="mt-2">{dt('generatingSummary')}</span>
+                                            </div>
+                                        ) : aiInsight || dt('noSummaryAvailable')}
                                     </div>
                                 </div>
 
@@ -146,96 +262,143 @@ const Dashboard = () => {
                                     />
                                 </div>
                             )}
-                        </div>
+                        </Card>
                     </div>
                 )}
     
-                {/* 📌 Task Completion */}
-                {(canReadTaskStats || canReadTasks) && (
-                    <div className="col-12 lg:col-6 xl:col-3">
-                        <div className="card mb-0">
-                            <div className="flex justify-content-between mb-3">
-                                <div>
-                                    <span className="block text-500 font-medium mb-3">{dt('taskCompletion')}</span>
-                                    <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
-                                </div>
-                                <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
-                                    <i className="pi pi-check text-green-500 text-xl" />
-                                </div>
+                <div className="col-12 lg:col-6 xl:col-6">
+                    <div className="grid">
+                        {(canReadTaskStats || canReadTasks) && (
+                            <div className="col-12 md:col-6">
+                                <Card className="mb-0 shadow-2 h-full">
+                                    <div className="flex justify-content-between mb-3">
+                                        <div>
+                                            <span className="block text-500 font-medium mb-3">{dt('taskCompletion')}</span>
+                                            <div className="text-900 font-medium text-xl">{completedPercentage.toFixed(0)}%</div>
+                                        </div>
+                                        <div className="flex align-items-center justify-content-center bg-green-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
+                                            <i className="pi pi-check text-green-500 text-xl" />
+                                        </div>
+                                    </div>
+                                    <PieChart
+                                        slotProps={{ legend: { hidden: true } }}
+                                        series={[
+                                            {
+                                                data: [
+                                                    { id: 0, value: completedPercentage, color: "#61E9B1", label: dt('completed') },
+                                                    { id: 1, value: 100 - completedPercentage, color: "#e1e1e1", label: dt('notDone') },
+                                                ],
+                                                innerRadius: 20,
+                                                outerRadius: 30,
+                                                paddingAngle: 0,
+                                                cornerRadius: 5,
+                                                startAngle: 0,
+                                                endAngle: 360,
+                                                cx: 70,
+                                            },
+                                        ]}
+                                        height={70}
+                                    />
+                                </Card>
                             </div>
-                            <PieChart
-                                slotProps={{ legend: { hidden: true } }}
-                                series={[
-                                    {
-                                        data: [
-                                            { id: 0, value: completedPercentage, color: "#61E9B1", label: dt('completed') },
-                                            { id: 1, value: 100 - completedPercentage, color: "#e1e1e1", label: dt('notDone') },
-                                        ],
-                                        innerRadius: 20,
-                                        outerRadius: 30,
-                                        paddingAngle: 0,
-                                        cornerRadius: 5,
-                                        startAngle: 0,
-                                        endAngle: 360,
-                                        cx: 70,
-                                    },
-                                ]}
-                                height={70}
-                            />
-                        </div>
-                    </div>
-                )}
+                        )}
 
-                {/* 📌 Total Field Area */}
-                {canReadFields && (
-                    <div className="col-12 lg:col-6 xl:col-3">
-                        <div className="card mb-0">
-                            <div className="flex justify-content-between mb-3">
-                                <div>
-                                    <span className="block text-500 font-medium mb-3">{dt('totalFieldArea')}</span>
-                                    <div className="text-900 font-medium text-xl">{totalFieldArea.toFixed(2)} ha</div>
-                                </div>
-                                <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
-                                    <i className="pi pi-map-marker text-blue-500 text-xl" />
-                                </div>
+                        {canReadFields && (
+                            <div className="col-12 md:col-6">
+                                <Card className="mb-0 shadow-2 h-full">
+                                    <div className="flex justify-content-between mb-3">
+                                        <div>
+                                            <span className="block text-500 font-medium mb-3">{dt('totalFieldArea')}</span>
+                                            {fieldsCount > 0 ? (
+                                                <>
+                                                    <div className="text-900 font-medium text-xl">{totalFieldArea.toFixed(2)} ha</div>
+                                                    <div className="text-600 mt-2">{dt('totalFields')}: {fieldsCount}</div>
+                                                </>
+                                            ) : (
+                                                <div className="text-600">{dt('noFields')}</div>
+                                            )}
+                                        </div>
+                                        <div className="flex align-items-center justify-content-center bg-blue-100 border-round" style={{ width: "2.5rem", height: "2.5rem" }}>
+                                            <i className="pi pi-map-marker text-blue-500 text-xl" />
+                                        </div>
+                                    </div>
+                                    
+                                    {fieldsCount === 0 && canCreateField && (
+                                        <Button 
+                                            label={dt('createField')} 
+                                            icon="pi pi-plus"
+                                            className="p-button-outlined p-button-primary mt-2"
+                                            onClick={() => router.push('/create-field')}
+                                        />
+                                    )}
+                                </Card>
                             </div>
-                        </div>
+                        )}
                     </div>
-                )}
+                </div>
 
-                {/* 📌 Tasks timeline */}
                 {canReadTasks && (
                     <div className="col-12">
-                        <div className="card">
+                        <Card className="shadow-2 mt-4">
                             <h5>{dt('tasksTimeline')}</h5>
-                            <DataTable value={tasks} responsiveLayout="scroll">
-                                <Column field="type.name" header={dt('task')} />
-                                <Column field="field.name" header={t('field')} />
-                                <Column field="status.name" header={dt('status')} />
-                                <Column
-                                    header={dt('date')}
-                                    body={(data) => {
-                                        const isDue = !!data.dueDate;
-                                        const date = isDue ? data.dueDate : data.completionDate;
-                                        return date ? (
-                                            <>
-                                                <span className="text-sm text-gray-700">{isDue ? dt('due') : dt('completed')}:</span>
-                                                <br />
-                                                {new Date(date).toLocaleDateString("en-CA")}
-                                            </>
-                                        ) : "N/A";
-                                    }}
-                                />
-                                <Column
-                                    header={dt('view')}
-                                    body={(data) => (
-                                        <Link href={`/tasks/${data.id}`}>
-                                            <Button icon="pi pi-eye" text />
-                                        </Link>
+                            
+                            {tasks.length > 0 ? (
+                                <DataTable 
+                                    value={tasks} 
+                                    responsiveLayout="scroll"
+                                    className="p-datatable-sm"
+                                >
+                                    <Column field="type.name" header={dt('task')} />
+                                    <Column field="field.name" header={t('field')} />
+                                    <Column 
+                                        header={dt('status')}
+                                        body={(data) => (
+                                            <Tag
+                                                value={getTranslatedStatus(data.status.name)}
+                                                severity={getStatusSeverity(data.status.name)}
+                                            />
+                                        )}
+                                    />
+                                    <Column
+                                        header={dt('date')}
+                                        body={(data) => {
+                                            const isDue = !!data.dueDate;
+                                            const date = isDue ? data.dueDate : data.completionDate;
+                                            return date ? (
+                                                <>
+                                                    <span className="text-sm text-gray-700">{isDue ? dt('due') : dt('completed')}:</span>
+                                                    <br />
+                                                    {new Date(date).toLocaleDateString("en-CA")}
+                                                </>
+                                            ) : "N/A";
+                                        }}
+                                    />
+                                    <Column
+                                        header={dt('view')}
+                                        body={(data) => (
+                                            <Link href={`/tasks/${data.id}`}>
+                                                <Button icon="pi pi-eye" text />
+                                            </Link>
+                                        )}
+                                    />
+                                </DataTable>
+                            ) : (
+                                <div className="text-center py-6">
+                                    <div className="mb-3">
+                                        <i className="pi pi-inbox text-500" style={{ fontSize: '3rem' }}></i>
+                                    </div>
+                                    <p className="text-500 mb-3">{dt('noTasks')}</p>
+                                    {canCreateTask && (
+                                        <Button 
+                                            label={dt('createTask')}
+                                            icon="pi pi-plus"
+                                            className="p-button-primary"
+                                            onClick={() => router.push('/create-task')}
+                                        />
                                     )}
-                                />
-                            </DataTable>
-                        </div>
+                                </div>
+                            )}
+                        </Card>
                     </div>
                 )}
             </div>
