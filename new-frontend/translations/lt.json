@@ -10,7 +10,11 @@
         "backToDashboard": "Grįžti į valdymo skydelį",
         "clearSearch": "Išvalyti paiešką",
         "backToReports": "Grįžti į ataskaitas",
-        "minutes": "minutės"
+        "minutes": "minutės",
+        "ha": "ha",
+        "m": "m",
+        "liters": "litrai",
+        "selectSeason": "Pasirinkite sezoną"
     },
     "dashboard": {
         "aiSummary": "AI Santrauka",
@@ -40,6 +44,19 @@
         "noFields": "Laukų nėra.",
         "createTask": "Sukurti užduotį",
         "createField": "Sukurti lauką"
+    },
+    "weather": {
+        "title": "Orai",
+        "temperature": "Temperatūra",
+        "humidity": "Drėgmė",
+        "wind": "Vėjas",
+        "conditions": "Sąlygos",
+        "sunrise": "Saulėtekis",
+        "sunset": "Saulėlydis",
+        "loadingWeather": "Kraunami orų duomenys...",
+        "noWeatherData": "Orų duomenys neprieinami.",
+        "fetchWeatherError": "Nepavyko gauti orų duomenų.",
+        "currentWeather": "Dabartiniai orai"
     },
     "roles": {
         "title": "Rolės ir Leidimai",
@@ -308,7 +325,20 @@
         "locationError": "Nepavyko nustatyti jūsų vietos.",
         "geolocationNotSupported": "Jūsų naršyklė nepalaiko geolokacijos.",
         "failedToLoadWeather": "Nepavyko užkrauti orų duomenų.",
-        "noPermission": "Jūs neturite teisių peržiūrėti laukus."
+        "noPermission": "Jūs neturite teisių peržiūrėti laukus.",
+        "recentTasks": "Naujausios užduotys",
+        "noTasks": "Užduočių nėra",
+        "viewAllTasks": "Peržiūrėti visas užduotis",
+        "weatherLayer": "Orų sluoksnis",
+        "loadingWeather": "Kraunami orai...",
+        "dueDate": "Terminas",
+        "completedDate": "Užbaigimo data",
+        "noDate": "Nėra datos",
+        "noFieldsTitle": "Nėra laukų",
+        "noFieldsDescription": "Sukurkite savo pirmąjį lauką, kad pamatytumėte jį žemėlapyje.",
+        "backToFields": "Grįžti į laukus",
+        "noDataFound": "Duomenų nerasta",
+        "noDataDescription": "Nėra duomenų rodymui."
     },
     "tasks": {
         "title": "Sukurti užduotį",
@@ -540,7 +570,13 @@
         "areaPerTaskType": "Padengtas plotas pagal užduočių tipus",
         "fuelUsedLabel": "Sunaudoti degalai (litrai)",
         "minutesWorkedLabel": "Dirbtos minutės",
-        "areaCoveredLabel": "Padengtas plotas (ha)"
+        "areaCoveredLabel": "Padengtas plotas (ha)",
+        "noPermission": "Neturite teisės peržiūrėti šią ataskaitą.",
+        "contactAdmin": "Susisiekite su administratoriumi dėl prieigos.",
+        "loadingData": "Kraunami ataskaitos duomenys...",
+        "noSeasonsAvailable": "Nėra prieinamų sezonų.",
+        "noDataFound": "Duomenų nerasta",
+        "noDataDescription": "Pasirinktam sezonui nerasta įrangos naudojimo duomenų."
     },
     "activityReport": {
         "title": "Ūkio narių veiklos ataskaita",
@@ -550,7 +586,13 @@
         "role": "Vaidmuo:",
         "tasksParticipated": "Dalyvauta užduotyse:",
         "totalMinutesWorked": "Iš viso dirbta minučių:",
-        "tasks": "Užduotys:"
+        "tasks": "Užduotys:",
+        "andMore": "ir dar {count}...",
+        "noPermission": "Neturite teisės peržiūrėti šią ataskaitą.",
+        "loadingData": "Kraunami veiklos duomenys...",
+        "noSeasonsFound": "Sezonų nerasta",
+        "noSeasonsDescription": "Sistemoje nėra jokių sezonų.",
+        "noActivityDescription": "Pasirinktam sezonui nėra narių veiklos duomenų."
     },
     "tasksReport": {
         "title": "Užduočių ataskaita",

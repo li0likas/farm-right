@@ -106,19 +106,6 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
 
     const profileMenuItems = [
         {
-            label: t('menu.profile'),
-            icon: 'pi pi-user',
-            command: () => router.push('/profile')
-        },
-        {
-            label: t('menu.settings'),
-            icon: 'pi pi-cog',
-            command: () => router.push('/settings')
-        },
-        {
-            separator: true
-        },
-        {
             label: t('menu.switchFarm'),
             icon: 'pi pi-refresh',
             items: farms.length > 1
@@ -188,13 +175,6 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                         </button>
                         <Menu model={profileMenuItems} popup ref={profileMenuRef} />
                     </div>
-
-                    <Link href="/documentation">
-                        <button type="button" className="p-link layout-topbar-button">
-                            <i className="pi pi-cog"></i>
-                            <span>{t('menu.settings')}</span>
-                        </button>
-                    </Link>
                 </div>
             </div>
 

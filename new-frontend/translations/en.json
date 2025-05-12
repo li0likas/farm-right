@@ -10,7 +10,11 @@
         "backToDashboard": "Back to Dashboard",
         "clearSearch": "Clear search",
         "backToReports": "Back to Reports",
-        "minutes": "minutes"
+        "minutes": "minutes",    
+        "ha": "ha",
+        "m": "m", 
+        "liters": "liters",
+        "selectSeason": "Select Season"
     },
     "dashboard": {
         "aiSummary": "AI Summary",
@@ -35,7 +39,11 @@
         "fetchStatsError": "Failed to fetch task statistics.",
         "fetchFieldsError": "Failed to fetch field data.",
         "aiInsightError": "Failed to load AI insight.",
-        "weatherError": "Failed to load weather data."
+        "weatherError": "Failed to load weather data.",
+        "noTasks": "No tasks found.",
+        "noFields": "No fields found.",
+        "createTask": "Create Task",
+        "createField": "Create Field"
     },
     "weather": {
         "title": "Weather",
@@ -47,7 +55,8 @@
         "sunset": "Sunset",
         "loadingWeather": "Loading weather data...",
         "noWeatherData": "No weather data available.",
-        "fetchWeatherError": "Failed to fetch weather data."
+        "fetchWeatherError": "Failed to fetch weather data.",
+        "currentWeather": "Current Weather"
     },
     "roles": {
         "title": "Roles & Permissions",
@@ -316,7 +325,20 @@
         "locationError": "Unable to retrieve your location.",
         "geolocationNotSupported": "Geolocation is not supported by your browser",
         "failedToLoadWeather": "Failed to load weather data.",
-        "noPermission": "You do not have permission to view fields."
+        "noPermission": "You do not have permission to view fields.",
+        "weatherLayer": "Weather Layer",
+        "loadingWeather": "Loading weather...",
+        "recentTasks": "Recent Tasks",
+        "noTasks": "No tasks",
+        "viewAllTasks": "View All Tasks",
+        "dueDate": "Due date",
+        "completedDate": "Completed date",
+        "noDate": "No date",
+        "noFieldsTitle": "No Fields",
+        "noFieldsDescription": "Create your first field to see it on the map.",
+        "backToFields": "Back to Fields",
+        "noDataFound": "No data found",
+        "noDataDescription": "No data is available for display."
     },
     "tasks": {
         "title": "Create a Task",
@@ -493,7 +515,10 @@
         "fetchFieldsError": "Failed to load fields",
         "fieldSelectionHelp": "Select a field where this disease was detected:",
         "noFieldsAvailable": "You don't have any fields yet",
-        "createField": "Create Field"
+        "createField": "Create Field",
+        "uploadSection": "Upload Section",
+        "preview": "Image Preview",
+        "acceptedFormats": "Accepted formats: JPG, PNG, up to 10MB"
     },
     "farmMembers": {
         "title": "Farm Members",
@@ -545,7 +570,13 @@
         "areaPerTaskType": "Area Covered per Task Type",
         "fuelUsedLabel": "Fuel Used (L)",
         "minutesWorkedLabel": "Minutes Worked",
-        "areaCoveredLabel": "Area Covered (ha)"
+        "areaCoveredLabel": "Area Covered (ha)",
+        "noPermission": "You do not have permission to view this report.",
+        "contactAdmin": "Please contact your administrator for access.",
+        "loadingData": "Loading report data...",
+        "noSeasonsAvailable": "No seasons available.",
+        "noDataFound": "No data found",
+        "noDataDescription": "No equipment usage data found for the selected season."
     },
     "activityReport": {
         "title": "Farm Members Activity Report",
@@ -555,7 +586,13 @@
         "role": "Role:",
         "tasksParticipated": "Tasks Participated:",
         "totalMinutesWorked": "Total Minutes Worked:",
-        "tasks": "Tasks:"
+        "tasks": "Tasks:",
+        "andMore": "and {count} more...",
+        "noPermission": "You do not have permission to view this report.",
+        "loadingData": "Loading activity data...",
+        "noSeasonsFound": "No seasons found",
+        "noSeasonsDescription": "No seasons are available in the system.",
+        "noActivityDescription": "No member activity data is available for the selected season."
     },
     "tasksReport": {
         "title": "Task Report",

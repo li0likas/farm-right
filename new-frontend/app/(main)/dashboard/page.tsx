@@ -147,23 +147,49 @@ const Dashboard = () => {
     const fetchWeatherData = async () => {
         setLoadingWeather(true);
         try {
-            // Assuming we have a weather endpoint or using a mock
-            // This would typically use a geolocation API to get the user's location
-            // For simplicity, we're just setting some mock data here
-            setTimeout(() => {
-                setWeatherData({
-                    temperature: 12,
-                    condition: "Cloudy",
-                    icon: "cloud"
-                });
-                setLoadingWeather(false);
-            }, 1000);
+            // Use the user's location from Kaunas, Lithuania (or we could get it from navigator.geolocation)
+            // Based on the fact that the system seems to be designed for Lithuanian farms
+            // You could also check if the field has coordinates and use those
+            const defaultCoordinates = { lat: 54.8985, lng: 23.9036 }; // Kaunas coordinates
             
-            // Real implementation would be something like:
-            // const response = await api.get("/weather");
-            // setWeatherData(response.data);
+            // First, try to get coordinates from farm's first field
+            try {
+                const fieldsResponse = await api.get("/fields");
+                if (fieldsResponse.data.length > 0 && fieldsResponse.data[0].boundary) {
+                    const boundary = fieldsResponse.data[0].boundary;
+                    if (boundary.geometry?.coordinates?.[0]?.[0]) {
+                        defaultCoordinates.lng = boundary.geometry.coordinates[0][0][0];
+                        defaultCoordinates.lat = boundary.geometry.coordinates[0][0][1];
+                    }
+                }
+            } catch (fieldError) {
+                console.log("Using default coordinates for weather");
+            }
+            
+            const response = await api.get("/weather/forecast", {
+                headers: {
+                    'x-coordinates-lat': defaultCoordinates.lat.toString(),
+                    'x-coordinates-lng': defaultCoordinates.lng.toString(),
+                }
+            });
+            
+            if (response.data) {
+                setWeatherData({
+                    temperature: Math.round(response.data.main?.temp || 0),
+                    condition: response.data.weather?.[0]?.description || "Unknown",
+                    icon: response.data.weather?.[0]?.icon || "cloud"
+                });
+            }
         } catch (error) {
+            console.error("Failed to fetch weather data:", error);
             toast.error(dt('weatherError'));
+            // Fallback to mock data if API fails
+            setWeatherData({
+                temperature: 12,
+                condition: "Unable to load weather",
+                icon: "cloud"
+            });
+        } finally {
             setLoadingWeather(false);
         }
     };

@@ -2,15 +2,15 @@ import { Metadata } from "next";
 import ClientLayout from "./ClientLayout";
 
 export const metadata: Metadata = {
-    title: "ŽŪVS - Ūkio Valdymo Sistema",
-    description: "ŽŪVS - Modernūs ūkio valdymo sprendimai",
+    title: "ŽŪVS",
+    description: "ŽŪVS – žemės ūkio valdymo sistema",
     robots: { index: false, follow: false },
     viewport: { initialScale: 1, width: "device-width" },
     openGraph: {
         type: "website",
-        title: "ŽŪVS - Ūkio Valdymo Sistema",
+        title: "ŽŪVS",
         url: "https://zuvs.lt/",
-        description: "ŽŪVS - Modernūs ūkio valdymo sprendimai",
+        description: "ŽŪVS – žemės ūkio valdymo sistema",
         images: ["/images/og-image.png"], // Update with your actual image
         ttl: 604800,
     },

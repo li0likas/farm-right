@@ -8,8 +8,8 @@ interface SimpleLayoutProps {
 }
 
 export const metadata: Metadata = {
-    title: 'ŽŪVS - Ūkio Valdymo Sistema',
-    description: 'ŽŪVS - Modernūs ūkio valdymo sprendimai'
+    title: 'ŽŪVS',
+    description: 'Žemės ūkio valdymo sistema',
 };
 
 export default function SimpleLayout({ children }: SimpleLayoutProps) {

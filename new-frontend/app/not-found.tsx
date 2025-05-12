@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import LanguageProviderWrapper from './LanguageProviderWrapper';
 
-const NotFoundPage = () => {
+const NotFoundContent = () => {
     const t = useTranslations('notFound');
 
     return (
@@ -60,4 +61,10 @@ const NotFoundPage = () => {
     );
 };
 
-export default NotFoundPage;
+export default function NotFound() {
+    return (
+        <LanguageProviderWrapper>
+            <NotFoundContent />
+        </LanguageProviderWrapper>
+    );
+}

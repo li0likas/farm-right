@@ -8,7 +8,7 @@ const AppFooter = () => {
 
     return (
         <div className="layout-footer">
-            <span className="font-medium">© 2024 ŽŪVS - Ūkio Valdymo Sistema</span>
+            <span className="font-medium">© 2025 ŽŪVS – žemės ūkio valdymo sistema</span>
         </div>
     );
 };
