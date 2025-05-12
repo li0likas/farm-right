@@ -1,17 +1,15 @@
-'use client';
-
-import { Metadata } from 'next';
 import AppConfig from '../../layout/AppConfig';
 import React from 'react';
 import LanguageProviderWrapper from '../LanguageProviderWrapper';
+import { Metadata } from 'next';
 
 interface SimpleLayoutProps {
     children: React.ReactNode;
 }
 
 export const metadata: Metadata = {
-    title: 'PrimeReact Sakai',
-    description: 'The ultimate collection of design-agnostic, flexible and accessible React UI Components.'
+    title: 'ŽŪVS - Ūkio Valdymo Sistema',
+    description: 'ŽŪVS - Modernūs ūkio valdymo sprendimai'
 };
 
 export default function SimpleLayout({ children }: SimpleLayoutProps) {

@@ -6,7 +6,11 @@
         "create": "Sukurti",
         "name": "Pavadinimas",
         "description": "Aprašymas",
-        "optional": "neprivaloma"
+        "optional": "neprivaloma",
+        "backToDashboard": "Grįžti į valdymo skydelį",
+        "clearSearch": "Išvalyti paiešką",
+        "backToReports": "Grįžti į ataskaitas",
+        "minutes": "minutės"
     },
     "dashboard": {
         "aiSummary": "AI Santrauka",
@@ -184,6 +188,16 @@
         "noPermissionView": "Jūs neturite teisių peržiūrėti įrangą.",
         "noEquipmentFound": "Nerasta jokios įrangos.",
         "edit": "Redaguoti įrangą",
+        "loadingEquipment": "Kraunami įrangos duomenys...",
+        "noEquipmentDescription": "Įranga dar nebuvo pridėta. Sukurkite pirmąją įrangą, kad pradėtumėte.",
+        "createFirstEquipment": "Sukurti pirmąją įrangą",
+        "editEquipment": "Redaguoti įrangą",
+        "deleteEquipment": "Ištrinti įrangą",
+        "contactAdmin": "Susisiekite su administratoriumi dėl prieigos",
+        "backToEquipment": "Grįžti į įrangą",
+        "loadingEquipmentTypes": "Kraunami įrangos tipai...",
+        "contactAdminForAccess": "Susisiekite su administratoriumi dėl prieigos",
+        "summary": "Įrangos santrauka",
     
     "types": {
         "Tractor": "Traktorius",
@@ -494,7 +508,14 @@
         "updateRoleError": "Nepavyko atnaujinti vaidmens.",
         "removeSuccess": "Narys pašalintas!",
         "removeError": "Nepavyko pašalinti nario.",
-        "noPermission": "Neturite leidimo peržiūrėti ūkio narius."
+        "noPermission": "Neturite leidimo peržiūrėti ūkio narius.",
+        "noMembersFound": "Narių nerasta",
+        "noMembersDescription": "Šiame ūkyje dar nėra narių. Pakvieskite pirmąjį narį, kad pradėtumėte.",
+        "inviteFirstMember": "Pakviesti pirmąjį narį",
+        "removeMember": "Pašalinti narį",
+        "editRole": "Redaguoti vaidmenį",
+        "actions": "Veiksmai",
+        "contactAdmin": "Susisiekite su administratoriumi dėl prieigos"
     },
     "equipmentReport": {
         "title": "Įrangos naudojimo ataskaita",
@@ -546,7 +567,10 @@
         "noTaskData": "Šiam sezonui nėra užduočių duomenų.",
         "noTaskTypeData": "Šiam sezonui nėra užduočių tipų duomenų.",
         "noData": "Pasirinktam sezonui duomenų nėra.",
-        "tasksByTypeLabel": "Užduotys pagal tipą"
+        "tasksByTypeLabel": "Užduotys pagal tipą",
+        "loadingReport": "Kraunami ataskaitos duomenys...",
+        "noDataDescription": "Pasirinktam sezonui užduočių duomenų nėra. Pabandykite pasirinkti kitą sezoną.",
+        "fetchTaskTypesError": "Nepavyko įkelti užduočių tipų"
     },
     "mapDraw": {
         "cancelDrawing": "Atšaukti braižymą",

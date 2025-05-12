@@ -24,8 +24,8 @@ describe('Field Creation', () => {
     // Don't mock the field creation API
     cy.intercept('POST', '/fields').as('createField');
     
-    // Fill out the field form
-    cy.get('input[placeholder*="field name"]').type(fieldName);
+    // Fill out the field form - use the exact placeholder text
+    cy.get('input[placeholder="Enter field name"]').type(fieldName);
     
     // Select crop type (first option)
     cy.get('.p-dropdown').first().click();
@@ -45,6 +45,10 @@ describe('Field Creation', () => {
       
       // Use the app's functions to set the boundary
       win.eval(`
+        // First find the setBoundary function in the component scope
+        const fieldCreateComponent = document.querySelector('input[placeholder="Enter field name"]')?.closest('form') || document;
+        
+        // Create a custom event to simulate setting the boundary, area and perimeter
         const event = new CustomEvent('test:setBoundary', { 
           detail: {
             boundary: ${JSON.stringify(mockBoundary)},
@@ -52,9 +56,22 @@ describe('Field Creation', () => {
             perimeter: "1450.00"
           }
         });
+        
+        // Dispatch the event on the document
         document.dispatchEvent(event);
+        
+        // As a fallback, if the app has global state setters, try to set them directly
+        if (window.setBoundary) {
+          window.setBoundary(${JSON.stringify(mockBoundary)});
+          window.setFieldArea("10.50");
+          window.setFieldPerimeter("1450.00");
+        }
       `);
     });
+    
+    // Add a verification step to check if the area and perimeter values appear in the UI
+    cy.contains(/10.50 ha|10.50 га/).should('exist');
+    cy.contains(/1450.00 m|1450.00 м/).should('exist');
     
     // Now submit the form using regex for both English and Lithuanian
     cy.contains('button', /Create Field|Sukurti Lauką/).click();

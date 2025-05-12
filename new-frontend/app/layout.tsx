@@ -16,6 +16,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
     return (
         <html lang="en" suppressHydrationWarning>
             <head>
+                <title>ŽŪVS - Žemės ūkio valdymo sistema</title>
+                <meta name="description" content="ŽŪVS - Modernūs ūkio valdymo sprendimai" />
                 <link id="theme-css" href={`/themes/lara-light-indigo/theme.css`} rel="stylesheet"></link>
             </head>
             <body>

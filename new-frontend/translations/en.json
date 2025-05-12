@@ -6,7 +6,11 @@
         "create": "Create",
         "name": "Name",
         "description": "Description",
-        "optional": "optional"
+        "optional": "optional",
+        "backToDashboard": "Back to Dashboard",
+        "clearSearch": "Clear search",
+        "backToReports": "Back to Reports",
+        "minutes": "minutes"
     },
     "dashboard": {
         "aiSummary": "AI Summary",
@@ -192,6 +196,16 @@
         "noPermissionView": "You do not have permission to view equipment.",
         "noEquipmentFound": "No equipment found.",
         "edit": "Edit Equipment",
+        "loadingEquipment": "Loading equipment data...",
+        "noEquipmentDescription": "No equipment has been added yet. Create your first equipment to get started.",
+        "createFirstEquipment": "Create First Equipment",
+        "editEquipment": "Edit Equipment",
+        "deleteEquipment": "Delete Equipment",
+        "contactAdmin": "Please contact your administrator for access",
+        "backToEquipment": "Back to Equipment",
+        "loadingEquipmentTypes": "Loading equipment types...",
+        "contactAdminForAccess": "Please contact your administrator for access",
+        "summary": "Equipment Summary",
     
     "types": {
         "Tractor": "Tractor",
@@ -499,7 +513,14 @@
         "updateRoleError": "Failed to update role.",
         "removeSuccess": "Member removed!",
         "removeError": "Failed to remove member.",
-        "noPermission": "You do not have permission to view farm members."
+        "noPermission": "You do not have permission to view farm members.",
+        "noMembersFound": "No Members Found",
+        "noMembersDescription": "There are no members in this farm yet. Invite your first member to get started.",
+        "inviteFirstMember": "Invite First Member",
+        "removeMember": "Remove Member",
+        "editRole": "Edit Role",
+        "actions": "Actions",
+        "contactAdmin": "Please contact your administrator for access"
     },
     "equipmentReport": {
         "title": "Equipment Usage Report",
@@ -551,7 +572,10 @@
         "noTaskData": "No task data available for this season.",
         "noTaskTypeData": "No task type data available for this season.",
         "noData": "No data available for selected season.",
-        "tasksByTypeLabel": "Tasks by Type"
+        "tasksByTypeLabel": "Tasks by Type",
+        "loadingReport": "Loading report data...",
+        "noDataDescription": "No task data is available for the selected season. Try selecting a different season.",
+        "fetchTaskTypesError": "Failed to load task types"
     },
     "mapDraw": {
         "cancelDrawing": "Cancel Drawing",
