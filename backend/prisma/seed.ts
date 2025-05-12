@@ -383,7 +383,7 @@ async function main() {
   });
 
   // ✅ Fetch created users
-  const [adminUser, ownerUser, workerUser1, workerUser2, workerUser3, agronomistUser, gvidasUser] = await prisma.user.findMany();
+  const [adminUser, ownerUser, workerUser1, workerUser2, workerUser3, agronomistUser, gvidasUser, testUser] = await prisma.user.findMany();
 
   // Create a new farm for user 'gvidas'
   const farm = await prisma.farm.create({
@@ -398,6 +398,14 @@ async function main() {
     data: {
       name: 'Fermerio ūkis',
       ownerId: ownerUser.id,
+    },
+  });
+
+  // Create a new farm for user 'testuser'
+  const farm3 = await prisma.farm.create({
+    data: {
+      name: 'Test farm',
+      ownerId: testUser.id,
     },
   });
 
@@ -420,6 +428,14 @@ async function main() {
     data: [
       { userId: gvidasUser.id, farmId: farm2.id, roleId: agronomistRole.id },
       { userId: ownerUser.id, farmId: farm2.id, roleId: ownerRole.id },
+    ],
+    skipDuplicates: true
+  });
+
+  // Assign Users to 'Test farm' Farm with Roles
+  await prisma.farmMember.createMany({
+    data: [
+      { userId: testUser.id, farmId: farm3.id, roleId: adminRole.id },
     ],
     skipDuplicates: true
   });

@@ -8,36 +8,134 @@ export class FarmService {
   async createFarm(user: any, name: string) {
     const userId = user.id;
     if (!userId) throw new Error('User ID missing');
-  
+
     const farmCount = await this.prisma.farm.count({
       where: { ownerId: userId },
     });
-  
+
     if (farmCount >= 3) {
       throw new ForbiddenException('Maximum of 3 farms allowed per user');
     }
-  
+
+    // Create the farm
     const farm = await this.prisma.farm.create({
       data: {
         name,
         ownerId: userId,
       },
     });
-  
-    const role = await this.prisma.role.findUnique({
+
+    // Get all available roles
+    const ownerRole = await this.prisma.role.findUnique({
       where: { name: 'OWNER' },
     });
-  
-    if (!role) throw new ForbiddenException('OWNER role not found');
-  
+    
+    const workerRole = await this.prisma.role.findUnique({
+      where: { name: 'WORKER' },
+    });
+    
+    const agronomistRole = await this.prisma.role.findUnique({
+      where: { name: 'AGRONOMIST' },
+    });
+
+    if (!ownerRole) throw new ForbiddenException('OWNER role not found');
+    if (!workerRole) throw new ForbiddenException('WORKER role not found');
+    if (!agronomistRole) throw new ForbiddenException('AGRONOMIST role not found');
+
+    // Make the user a farm member with OWNER role
     await this.prisma.farmMember.create({
       data: {
         userId,
         farmId: farm.id,
-        roleId: role.id,
+        roleId: ownerRole.id,
       },
     });
-  
+
+    // Get all permissions except ADMIN_ACCESS
+    const allPermissions = await this.prisma.permission.findMany({
+      where: {
+        name: { not: 'ADMIN_ACCESS' },
+      },
+    });
+
+    // Get WORKER permissions (basic read permissions)
+    const workerPermissions = await this.prisma.permission.findMany({
+      where: {
+        name: {
+          in: [
+            'FIELD_READ',
+            'FIELD_TASK_READ',
+            'FIELD_TASK_COMMENT_CREATE',
+            'FIELD_TASK_COMMENT_READ',
+            'TASK_READ',
+            'EQUIPMENT_READ',
+            'CROP_READ',
+            'TASK_STATS_READ',
+          ],
+        },
+      },
+    });
+
+    // Get AGRONOMIST permissions (worker permissions + some additional ones)
+    const agronomistPermissions = await this.prisma.permission.findMany({
+      where: {
+        name: {
+          in: [
+            // Worker permissions
+            'FIELD_READ',
+            'FIELD_TASK_READ',
+            'FIELD_TASK_COMMENT_CREATE',
+            'FIELD_TASK_COMMENT_READ',
+            'TASK_READ',
+            'EQUIPMENT_READ',
+            'CROP_READ',
+            'TASK_STATS_READ',
+            // Additional agronomist permissions
+            'FIELD_TASK_COMMENT_UPDATE',
+            'FIELD_TASK_COMMENT_DELETE',
+            'TASK_CHANGE_STATUS',
+            'TASK_CREATE',
+            'TASK_UPDATE',
+            'FIELD_TOTAL_AREA_READ',
+            'DASHBOARD_AI_SUMMARY',
+          ],
+        },
+      },
+    });
+
+    // Assign ALL permissions to OWNER role
+    for (const permission of allPermissions) {
+      await this.prisma.farmRolePermission.create({
+        data: {
+          farmId: farm.id,
+          roleId: ownerRole.id,
+          permissionId: permission.id,
+        },
+      });
+    }
+
+    // Assign default WORKER permissions
+    for (const permission of workerPermissions) {
+      await this.prisma.farmRolePermission.create({
+        data: {
+          farmId: farm.id,
+          roleId: workerRole.id,
+          permissionId: permission.id,
+        },
+      });
+    }
+
+    // Assign default AGRONOMIST permissions
+    for (const permission of agronomistPermissions) {
+      await this.prisma.farmRolePermission.create({
+        data: {
+          farmId: farm.id,
+          roleId: agronomistRole.id,
+          permissionId: permission.id,
+        },
+      });
+    }
+
     return farm;
   }
 
