@@ -33,9 +33,13 @@ const CreateEquipmentPage = () => {
     const [equipmentTypes, setEquipmentTypes] = useState<EquipmentType[]>([]);
     const [loading, setLoading] = useState(false);
     const [fetchingTypes, setFetchingTypes] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!hasPermission("EQUIPMENT_CREATE")) return;
+        if (!hasPermission("EQUIPMENT_CREATE")) {
+            setFetchingTypes(false);
+            return;
+        }
         fetchEquipmentTypes();
     }, [hasPermission]);
 
@@ -54,12 +58,10 @@ const CreateEquipmentPage = () => {
 
     // Function to get localized type name
     const getLocalizedTypeName = (type: EquipmentType) => {
-        const translation = e(`types.${type.name}`);
-        // If translation key doesn't exist, return original name
-        if (translation === `types.${type.name}`) {
-            return type.name;
-        }
-        return translation;
+        const translationKey = `types.${type.name}`;
+        const translation = e(translationKey);
+        // If translation doesn't exist, return original name
+        return translation !== translationKey ? translation : type.name;
     };
 
     const handleCreateEquipment = async () => {
@@ -70,7 +72,7 @@ const CreateEquipmentPage = () => {
             return;
         }
 
-        setLoading(true);
+        setSubmitting(true);
       
         const formData = {
           name: name,
@@ -85,15 +87,29 @@ const CreateEquipmentPage = () => {
         } catch (error) {
           toast.error(e('createError'));
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
     if (!hasPermission("EQUIPMENT_CREATE")) {
         return (
             <ProtectedRoute>
-                <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-                    {e('noPermission')}
+                <div className="grid">
+                    <div className="col-12">
+                        <Card className="shadow-4">
+                            <div className="flex flex-column align-items-center py-6">
+                                <i className="pi pi-lock text-yellow-500 text-5xl mb-4"></i>
+                                <h3 className="text-xl font-semibold mb-2">{e('noPermission')}</h3>
+                                <p className="text-gray-600 mb-4">{e('contactAdminForAccess')}</p>
+                                <Button
+                                    label={t('backToDashboard')}
+                                    icon="pi pi-home"
+                                    className="p-button-outlined"
+                                    onClick={() => router.push('/dashboard')}
+                                />
+                            </div>
+                        </Card>
+                    </div>
                 </div>
             </ProtectedRoute>
         );
@@ -101,63 +117,105 @@ const CreateEquipmentPage = () => {
 
     return (
         <ProtectedRoute>
-            <div className="container mx-auto p-6">
-                <Card title={e('title')} className="mb-6">
-                    {fetchingTypes ? (
-                        <div className="flex justify-content-center">
-                            <ProgressSpinner />
-                        </div>
-                    ) : (
-                        <>
-                            {/* Equipment Name */}
-                            <div className="mb-4">
-                                <label className="block font-bold mb-2">{e('equipmentName')}</label>
-                                <InputText 
-                                    value={name} 
-                                    onChange={(e) => setName(e.target.value)} 
-                                    placeholder={e('enterEquipmentName')} 
-                                    className="w-full" 
-                                />
-                            </div>
-
-                            {/* Equipment Type Selection */}
-                            <div className="mb-4">
-                                <label className="block font-bold mb-2">{e('selectEquipmentType')}</label>
-                                <Dropdown
-                                    value={type}
-                                    options={equipmentTypes.map((t) => ({ 
-                                        label: getLocalizedTypeName(t), 
-                                        value: t.id 
-                                    }))}
-                                    onChange={(e) => setType(e.value)}
-                                    placeholder={e('selectType')}
-                                    className="w-full"
-                                />
-                            </div>
-
-                            {/* Equipment Description */}
-                            <div className="mb-4">
-                                <label className="block font-bold mb-2">{e('description')} ({t('optional')})</label>
-                                <InputTextarea 
-                                    value={description} 
-                                    onChange={(e) => setDescription(e.target.value)} 
-                                    placeholder={e('enterDescription')} 
-                                    className="w-full" 
-                                    rows={3} 
-                                />
-                            </div>
-
-                            {/* Create Equipment Button */}
+            <div className="grid">
+                <div className="col-12">
+                    <div className="card">
+                        <div className="flex align-items-center mb-4">
                             <Button 
-                                label={loading ? e('creating') : e('createButton')} 
-                                icon={loading ? "pi pi-spin pi-spinner" : "pi pi-plus"}
-                                className="p-button-success w-full" 
-                                onClick={handleCreateEquipment} 
-                                disabled={loading || !name || !type} 
+                                icon="pi pi-arrow-left" 
+                                className="p-button-text p-button-rounded mr-2" 
+                                onClick={() => router.push('/equipment')}
+                                tooltip={e('backToEquipment')}
                             />
-                        </>
-                    )}
-                </Card>
+                            <h2 className="text-2xl font-bold m-0">
+                                <i className="pi pi-plus-circle text-green-500 mr-2"></i>
+                                {e('title')}
+                            </h2>
+                        </div>
+
+                        {fetchingTypes ? (
+                            <div className="flex flex-column justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                                <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                                <span className="mt-3 text-lg text-600">{e('loadingEquipmentTypes')}</span>
+                            </div>
+                        ) : (
+                            <div className="p-fluid">
+                                <div className="grid">
+                                    <div className="col-12 md:col-6">
+                                        {/* Equipment Name */}
+                                        <div className="field mb-4">
+                                            <label htmlFor="name" className="block font-bold mb-2">
+                                                {e('equipmentName')} <span className="text-red-500">*</span>
+                                            </label>
+                                            <InputText 
+                                                id="name"
+                                                value={name} 
+                                                onChange={(e) => setName(e.target.value)} 
+                                                placeholder={e('enterEquipmentName')} 
+                                                className="w-full" 
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-12 md:col-6">
+                                        {/* Equipment Type Selection */}
+                                        <div className="field mb-4">
+                                            <label htmlFor="type" className="block font-bold mb-2">
+                                                {e('selectEquipmentType')} <span className="text-red-500">*</span>
+                                            </label>
+                                            <Dropdown
+                                                id="type"
+                                                value={type}
+                                                options={equipmentTypes.map((t) => ({ 
+                                                    label: getLocalizedTypeName(t), 
+                                                    value: t.id 
+                                                }))}
+                                                onChange={(e) => setType(e.value)}
+                                                placeholder={e('selectType')}
+                                                className="w-full"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="col-12">
+                                        {/* Equipment Description */}
+                                        <div className="field mb-4">
+                                            <label htmlFor="description" className="block font-bold mb-2">
+                                                {e('description')} ({t('optional')})
+                                            </label>
+                                            <InputTextarea 
+                                                id="description"
+                                                value={description} 
+                                                onChange={(e) => setDescription(e.target.value)} 
+                                                placeholder={e('enterDescription')} 
+                                                className="w-full" 
+                                                rows={4} 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex justify-content-between gap-2 mt-4">
+                                    <Button 
+                                        label={t('cancel')}
+                                        icon="pi pi-times"
+                                        className="p-button-text"
+                                        onClick={() => router.push('/equipment')}
+                                    />
+                                    <Button 
+                                        label={submitting ? e('creating') : e('createButton')} 
+                                        icon={submitting ? "pi pi-spin pi-spinner" : "pi pi-check"}
+                                        className="p-button-success" 
+                                        onClick={handleCreateEquipment} 
+                                        disabled={submitting || !name || !type} 
+                                        loading={submitting}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </ProtectedRoute>
     );

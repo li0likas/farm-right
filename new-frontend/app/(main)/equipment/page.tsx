@@ -14,12 +14,17 @@ import api from '@/utils/api';
 import { usePermissions } from "@/context/PermissionsContext";
 import { useTranslations } from "next-intl";
 import { ProgressSpinner } from "primereact/progressspinner";
+import { Card } from "primereact/card";
 
 interface Equipment {
     id: number;
     name: string;
     typeId: number;
     description: string | null;
+    type?: {
+        id: number;
+        name: string;
+    };
 }
 
 interface EquipmentType {
@@ -54,8 +59,9 @@ const EquipmentPage = () => {
 
     useEffect(() => {
         if (canRead) {
-            fetchEquipment();
-            fetchEquipmentTypes();
+            loadData();
+        } else {
+            setLoading(false);
         }
     }, [permissions]);
 
@@ -63,17 +69,27 @@ const EquipmentPage = () => {
         filterEquipment();
     }, [searchQuery, selectedType, equipment]);
 
-    const fetchEquipment = async () => {
-        if (!canRead) return;
+    const loadData = async () => {
         setLoading(true);
+        try {
+            await Promise.all([
+                fetchEquipment(),
+                fetchEquipmentTypes()
+            ]);
+        } catch (error) {
+            console.error("Error loading data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchEquipment = async () => {
         try {
             const response = await api.get('/equipment');
             setEquipment(response.data);
             setFilteredEquipment(response.data);
         } catch (error) {
             toast.error(et('fetchError'));
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -102,15 +118,12 @@ const EquipmentPage = () => {
         const type = equipmentTypes.find((t) => t.id === typeId);
         if (!type) return et('unknown');
         
-        // First try direct translation with type.name
-        const translation = et(`types.${type.name}`);
+        // Translation key pattern: "equipment.types.Tractor"
+        const translationKey = `types.${type.name}`;
+        const translation = et(translationKey);
         
-        // If it's not directly in our translations, return the original name
-        if (translation === `types.${type.name}`) {
-            return type.name;
-        }
-        
-        return translation;
+        // If translation doesn't exist, return original name
+        return translation !== translationKey ? translation : type.name;
     };
 
     const enableEdit = (equip: Equipment) => {
@@ -157,8 +170,22 @@ const EquipmentPage = () => {
     if (!canRead) {
         return (
             <ProtectedRoute>
-                <div className="container mx-auto p-6 text-center text-lg text-red-600 font-semibold">
-                    {et('noPermission')}
+                <div className="grid">
+                    <div className="col-12">
+                        <Card className="shadow-4">
+                            <div className="flex flex-column align-items-center py-6">
+                                <i className="pi pi-lock text-yellow-500 text-5xl mb-4"></i>
+                                <h3 className="text-xl font-semibold mb-2">{et('noPermission')}</h3>
+                                <p className="text-gray-600 mb-4">{et('contactAdmin')}</p>
+                                <Button
+                                    label={t('backToDashboard')}
+                                    icon="pi pi-home"
+                                    className="p-button-outlined"
+                                    onClick={() => router.push('/dashboard')}
+                                />
+                            </div>
+                        </Card>
+                    </div>
                 </div>
             </ProtectedRoute>
         );
@@ -169,97 +196,150 @@ const EquipmentPage = () => {
             <div className="grid">
                 <div className="col-12">
                     <div className="card">
-                        <h5>{et('myEquipment')}</h5>
-
-                        <div className="flex flex-column md:flex-row mb-4 gap-3">
-                            <InputText
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder={et('searchPlaceholder')}
-                                className="w-full md:w-15rem mb-2 md:mb-0"
-                            />
-                            <Dropdown
-                                value={selectedType}
-                                options={[
-                                    { label: et('showAll'), value: null }, 
-                                    ...equipmentTypes.map((t) => ({ 
-                                        label: getTypeName(t.id), 
-                                        value: t.id 
-                                    }))
-                                ]}
-                                onChange={(e) => setSelectedType(e.value)}
-                                placeholder={et('filterByType')}
-                                className="w-full md:w-15rem mb-2 md:mb-0"
-                            />
+                        <div className="flex justify-content-between align-items-center mb-4">
+                            <h2 className="text-2xl font-bold m-0 text-primary">{et('myEquipment')}</h2>
                             {canCreate && (
                                 <Button
                                     label={et('createEquipment')}
                                     icon="pi pi-plus"
-                                    className="p-button-success ml-auto"
+                                    className="p-button-success"
                                     onClick={() => router.push('/create-equipment')}
                                 />
                             )}
                         </div>
 
+                        {!loading && (
+                            <div className="grid mb-4">
+                                <div className="col-12 md:col-6 lg:col-4">
+                                    <div className="p-inputgroup">
+                                        <span className="p-inputgroup-addon">
+                                            <i className="pi pi-search"></i>
+                                        </span>
+                                        <InputText
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder={et('searchPlaceholder')}
+                                            className="w-full"
+                                        />
+                                        {searchQuery && (
+                                            <Button 
+                                                icon="pi pi-times" 
+                                                className="p-button-outlined" 
+                                                onClick={() => setSearchQuery('')}
+                                                tooltip={t('clearSearch')}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="col-12 md:col-6 lg:col-4">
+                                    <Dropdown
+                                        value={selectedType}
+                                        options={[
+                                            { label: et('showAll'), value: null }, 
+                                            ...equipmentTypes.map((t) => ({ 
+                                                label: getTypeName(t.id), 
+                                                value: t.id 
+                                            }))
+                                        ]}
+                                        onChange={(e) => setSelectedType(e.value)}
+                                        placeholder={et('filterByType')}
+                                        className="w-full"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         {loading ? (
-                            <div className="flex justify-content-center">
-                                <ProgressSpinner />
+                            <div className="flex flex-column justify-content-center align-items-center" style={{ minHeight: '400px' }}>
+                                <ProgressSpinner style={{ width: '50px', height: '50px' }} />
+                                <span className="mt-3 text-lg text-600">{et('loadingEquipment')}</span>
+                            </div>
+                        ) : filteredEquipment.length === 0 ? (
+                            <div className="flex flex-column align-items-center justify-content-center py-6">
+                                <i className="pi pi-cog text-gray-300 text-6xl mb-4"></i>
+                                <h3 className="text-xl font-semibold text-gray-600 mb-2">{et('noEquipmentFound')}</h3>
+                                <p className="text-gray-500 mb-4">{et('noEquipmentDescription')}</p>
+                                {canCreate && searchQuery === "" && selectedType === null && (
+                                    <Button
+                                        label={et('createFirstEquipment')}
+                                        icon="pi pi-plus"
+                                        className="p-button-primary"
+                                        onClick={() => router.push('/create-equipment')}
+                                    />
+                                )}
                             </div>
                         ) : (
                             <DataTable 
                                 value={filteredEquipment} 
                                 paginator 
-                                rows={5} 
+                                paginatorTemplate="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+                                currentPageReportTemplate="{first} - {last} {totalRecords}"
+                                rows={10} 
                                 rowsPerPageOptions={[5, 10, 25]} 
                                 emptyMessage={et('noEquipmentFound')}
-                                responsiveLayout="stack" 
-                                breakpoint="960px"
+                                responsiveLayout="scroll"
+                                className="p-datatable-striped"
                                 sortField="name"
                                 sortOrder={1}
                             >
-                                <Column field="name" header={et('equipmentName')} body={(data) => (
-                                    editingEquipmentId === data.id ? (
-                                        <InputText
-                                            value={editedEquipment.name || ""}
-                                            onChange={(e) => setEditedEquipment({ ...editedEquipment, name: e.target.value })}
-                                            className="w-full"
-                                        />
-                                    ) : (
-                                        data.name
-                                    )
-                                )} sortable />
+                                <Column 
+                                    field="name" 
+                                    header={et('equipmentName')} 
+                                    body={(data) => (
+                                        editingEquipmentId === data.id ? (
+                                            <InputText
+                                                value={editedEquipment.name || ""}
+                                                onChange={(e) => setEditedEquipment({ ...editedEquipment, name: e.target.value })}
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <span className="font-medium">{data.name}</span>
+                                        )
+                                    )} 
+                                    sortable 
+                                />
 
-                                <Column field="typeId" header={et('type')} body={(data) => (
-                                    editingEquipmentId === data.id ? (
-                                        <Dropdown
-                                            value={editedEquipment.typeId || data.typeId}
-                                            options={equipmentTypes.map((t) => ({ 
-                                                label: getTypeName(t.id), 
-                                                value: t.id 
-                                            }))}
-                                            onChange={(e) => setEditedEquipment({ ...editedEquipment, typeId: e.value })}
-                                            className="w-full"
-                                        />
-                                    ) : (
-                                        getTypeName(data.typeId)
-                                    )
-                                )} sortable />
+                                <Column 
+                                    field="typeId" 
+                                    header={et('type')} 
+                                    body={(data) => (
+                                        editingEquipmentId === data.id ? (
+                                            <Dropdown
+                                                value={editedEquipment.typeId || data.typeId}
+                                                options={equipmentTypes.map((t) => ({ 
+                                                    label: getTypeName(t.id), 
+                                                    value: t.id 
+                                                }))}
+                                                onChange={(e) => setEditedEquipment({ ...editedEquipment, typeId: e.value })}
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <span>{getTypeName(data.typeId)}</span>
+                                        )
+                                    )} 
+                                    sortable 
+                                />
 
-                                <Column field="description" header={t('description')} body={(data) => (
-                                    editingEquipmentId === data.id ? (
-                                        <InputText
-                                            value={editedEquipment.description || ""}
-                                            onChange={(e) => setEditedEquipment({ ...editedEquipment, description: e.target.value })}
-                                            className="w-full"
-                                        />
-                                    ) : (
-                                        data.description || "-"
-                                    )
-                                )} />
+                                <Column 
+                                    field="description" 
+                                    header={t('description')} 
+                                    body={(data) => (
+                                        editingEquipmentId === data.id ? (
+                                            <InputText
+                                                value={editedEquipment.description || ""}
+                                                onChange={(e) => setEditedEquipment({ ...editedEquipment, description: e.target.value })}
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <span className="text-gray-600">{data.description || "-"}</span>
+                                        )
+                                    )} 
+                                />
 
                                 {showActionsColumn && (
                                     <Column
                                         header={et('actions')}
+                                        style={{ width: '150px', textAlign: 'center' }}
                                         body={(data) => (
                                             <div className="flex gap-2 justify-content-center">
                                                 {editingEquipmentId === data.id ? (
@@ -284,16 +364,16 @@ const EquipmentPage = () => {
                                                         {canEdit && (
                                                             <Button 
                                                                 icon="pi pi-pencil" 
-                                                                tooltip={et('edit')}
-                                                                className="p-button-warning p-button-sm" 
+                                                                tooltip={et('editEquipment')}
+                                                                className="p-button-primary p-button-sm p-button-text" 
                                                                 onClick={() => enableEdit(data)} 
                                                             />
                                                         )}
                                                         {canDelete && (
                                                             <Button 
                                                                 icon="pi pi-trash" 
-                                                                tooltip={et('delete')}
-                                                                className="p-button-danger p-button-sm" 
+                                                                tooltip={et('deleteEquipment')}
+                                                                className="p-button-danger p-button-sm p-button-text" 
                                                                 onClick={() => confirmDeleteEquipment(data)} 
                                                             />
                                                         )}
@@ -313,10 +393,17 @@ const EquipmentPage = () => {
                 visible={deleteDialogVisible}
                 onHide={() => setDeleteDialogVisible(false)}
                 header={et('confirmDelete')}
+                style={{ width: '450px' }}
+                modal
                 footer={
-                    <div>
-                        <Button label={t('cancel')} icon="pi pi-times" className="p-button-text" onClick={() => setDeleteDialogVisible(false)} />
-                        {hasPermission("EQUIPMENT_DELETE") && (
+                    <div className="flex justify-content-end gap-2">
+                        <Button 
+                            label={t('cancel')} 
+                            icon="pi pi-times" 
+                            className="p-button-text" 
+                            onClick={() => setDeleteDialogVisible(false)} 
+                        />
+                        {canDelete && (
                             <Button
                                 label={et('delete')}
                                 icon="pi pi-check"
@@ -328,10 +415,13 @@ const EquipmentPage = () => {
                 }
             >
                 {equipmentToDelete && (
-                    <p>
-                        {et('deleteConfirmation')}
-                        <strong>{equipmentToDelete.name}</strong>?
-                    </p>
+                    <div className="flex align-items-center gap-3">
+                        <i className="pi pi-exclamation-triangle text-yellow-500 text-4xl"></i>
+                        <div>
+                            <p className="m-0">{et('deleteConfirmation')}</p>
+                            <p className="mt-2 font-bold">{equipmentToDelete.name}</p>
+                        </div>
+                    </div>
                 )}
             </Dialog>
         </ProtectedRoute>
