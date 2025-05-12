@@ -6,37 +6,21 @@ import {
   UseGuards, 
   HttpException, 
   HttpStatus, 
-  UseInterceptors, 
-  UploadedFiles 
+  Param
 } from "@nestjs/common";
 
 import { AuthService } from "./auth.service";
 import { AuthDto, AuthlogDto, AuthForgDto, AuthpassDto } from "./dto";
 import { AuthGuard } from "@nestjs/passport";
-import { AnyFilesInterceptor } from "@nestjs/platform-express";
 import path = require('path');
-import { diskStorage, Multer } from 'multer';
-import { v4 as uuidv4 } from 'uuid';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) {}
 
     @Post('signup')
-    @UseInterceptors(AnyFilesInterceptor({
-      storage: diskStorage({
-        destination: (req, file, cb) => {
-          const destination = "./uploads/userimages";
-          cb(null, destination);
-        },
-        filename: (req, file, cb) => {
-          const filename = path.parse(file.originalname).name.replace(/\s/g, '') + uuidv4();
-          const extension = path.parse(file.originalname).ext;
-          cb(null, `${filename}${extension}`);
-        },
-      }),
-    }))
-    async signup(@Body() dto: AuthDto, @UploadedFiles() files: Array<Multer.File>) {
+  
+    async signup(@Body() dto: AuthDto) {
         try {
             const { access_token, farms } = await this.authService.signup(dto);
 
@@ -78,6 +62,16 @@ export class AuthController {
             return this.authService.passReset(dto, req.user.email);
         } catch (error) {
             console.error("Password Reset Error:", error);
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Post('resetPasswordWithToken/:token')
+    async resetPasswordWithToken(@Param('token') token: string, @Body() dto: AuthpassDto) {
+        try {
+            return this.authService.resetPasswordWithToken(token, dto);
+        } catch (error) {
+            console.error("Reset Password with Token Error:", error);
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
         }
     }

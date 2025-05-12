@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException, Injectable } from "@nestjs/common"; 
+import { ForbiddenException, NotFoundException, Injectable, UnauthorizedException } from "@nestjs/common"; 
 import { PrismaService } from "src/prisma/prisma.service";
 import { AuthDto, AuthlogDto, AuthForgDto, AuthpassDto } from "./dto";
 import * as argon from 'argon2'
@@ -139,6 +139,47 @@ export class AuthService {
       where: { email },
       data: { hash, resetPassToken: "", isResetValid: false },
     });
+  }
+
+  // New method for resetting password with token
+  async resetPasswordWithToken(token: string, dto: AuthpassDto) {
+    try {
+      // Verify the token and extract the payload
+      const payload = await this.jwt.verifyAsync(token, { secret: this.jwtSecret });
+      
+      if (!payload || !payload.email) {
+        throw new UnauthorizedException('Invalid token');
+      }
+
+      // Find the user by email from the token
+      const user = await this.prisma.user.findUnique({ 
+        where: { email: payload.email } 
+      });
+
+      if (!user || user.resetPassToken !== token || !user.isResetValid) {
+        throw new ForbiddenException('Invalid or expired reset token');
+      }
+
+      // Hash the new password
+      const hash = await argon.hash(dto.newPassword);
+
+      // Update the user's password and invalidate the reset token
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          hash, 
+          resetPassToken: "", 
+          isResetValid: false 
+        },
+      });
+
+      return { message: 'Password reset successfully' };
+    } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      throw new ForbiddenException('Invalid or expired reset token');
+    }
   }
 
   async passChange(oldPassword: string, newPassword: string, email: string) {

@@ -2,23 +2,24 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useContext, useEffect } from 'react';
-import { useTranslations } from 'next-intl'; // ✅ Add this
+import { useTranslations } from 'next-intl';
 import api from '@/utils/api';
 import { toast } from 'sonner';
 import { Checkbox } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
 import { Password } from 'primereact/password';
 import { InputText } from 'primereact/inputtext';
+import { Dialog } from 'primereact/dialog';
 import { classNames } from 'primereact/utils';
 import { LayoutContext } from '../../../../layout/context/layoutcontext';
 import { login as handleLogin, isLoggedIn } from '../../../../utils/auth';
-import LanguageToggle from '@/app/components/LanguageToggle'; // ✅ Import here
+import LanguageToggle from '@/app/components/LanguageToggle';
 
 const LoginPage = () => {
     const router = useRouter();
     const { layoutConfig } = useContext(LayoutContext);
 
-    const t = useTranslations('login'); // ✅ Create a "login" section
+    const t = useTranslations('login');
 
     // Login State
     const [username, setUsername] = useState('');
@@ -29,6 +30,11 @@ const LoginPage = () => {
     // Farm Selection State
     const [farms, setFarms] = useState([]); 
     const [selectedFarm, setSelectedFarm] = useState<number | null>(null);
+
+    // Forgot Password State
+    const [showForgotDialog, setShowForgotDialog] = useState(false);
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [forgotLoading, setForgotLoading] = useState(false);
 
     useEffect(() => {
         if (isLoggedIn()) {
@@ -116,6 +122,42 @@ const LoginPage = () => {
         }
     };
 
+    const handleForgotPassword = async () => {
+        if (!forgotEmail || !forgotEmail.match(/^\S+@\S+\.\S+$/)) {
+            toast.error(t('enterValidEmail'));
+            return;
+        }
+
+        setForgotLoading(true);
+        try {
+            await api.post('/auth/forgotPass', { email: forgotEmail });
+            toast.success(t('resetEmailSent'));
+            setShowForgotDialog(false);
+            setForgotEmail('');
+        } catch (error: any) {
+            if (error.response?.status === 403 && error.response?.data?.message === "Email does not exist") {
+                toast.error(t('emailNotFound'));
+            } else {
+                toast.error(t('forgotPasswordError'));
+            }
+        } finally {
+            setForgotLoading(false);
+        }
+    };
+
+    const forgotPasswordFooter = (
+        <div>
+            <Button label={t('cancel')} icon="pi pi-times" className="p-button-text" onClick={() => setShowForgotDialog(false)} />
+            <Button 
+                label={forgotLoading ? t('sending') : t('sendResetEmail')} 
+                icon={forgotLoading ? "pi pi-spin pi-spinner" : "pi pi-envelope"} 
+                onClick={handleForgotPassword} 
+                loading={forgotLoading}
+                disabled={forgotLoading || !forgotEmail}
+            />
+        </div>
+    );
+
     return (
         <div className={classNames(
             'surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden',
@@ -177,7 +219,11 @@ const LoginPage = () => {
                                             />
                                             <label htmlFor="rememberme">{t('rememberMe')}</label>
                                         </div>
-                                        <a className="font-medium no-underline text-right cursor-pointer" style={{ color: 'var(--primary-color)' }}>
+                                        <a 
+                                            className="font-medium no-underline text-right cursor-pointer" 
+                                            style={{ color: 'var(--primary-color)' }}
+                                            onClick={() => setShowForgotDialog(true)}
+                                        >
                                             {t('forgotPassword')}
                                         </a>
                                     </div>
@@ -223,6 +269,31 @@ const LoginPage = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Forgot Password Dialog */}
+            <Dialog
+                header={t('forgotPassword')}
+                visible={showForgotDialog}
+                style={{ width: '450px' }}
+                footer={forgotPasswordFooter}
+                onHide={() => {
+                    setShowForgotDialog(false);
+                    setForgotEmail('');
+                }}
+            >
+                <div className="field">
+                    <label htmlFor="forgotEmail" className="block mb-2">{t('enterEmailForReset')}</label>
+                    <InputText
+                        id="forgotEmail"
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        type="email"
+                        placeholder={t('email')}
+                        className="w-full"
+                        onKeyDown={(e) => handleKeyPress(e, handleForgotPassword)}
+                    />
+                </div>
+            </Dialog>
         </div>
     );
 };

@@ -168,15 +168,15 @@ const AppTopbar = forwardRef<AppTopbarRef>((props, ref) => {
                     
                     <LanguageToggle />
 
-                    <div className="relative">
-                        <button type="button" className="p-link layout-topbar-button" onClick={(event) => profileMenuRef.current?.toggle(event)}>
+                    <div className="relative mx-2">
+                        <button type="button" className="p-link layout-topbar-button flex align-items-center" onClick={(event) => profileMenuRef.current?.toggle(event)}>
                             <i className="pi pi-user"></i>
                             <span>{t('menu.profile')}</span>
                         </button>
-                        <Menu model={profileMenuItems} popup ref={profileMenuRef} />
+                        <Menu model={profileMenuItems} popup ref={profileMenuRef} style={{ minWidth: '300px' }} />
                     </div>
                 </div>
-            </div>
+            </div>   
 
             <Dialog header={t('manageFarms.title')} visible={showManageFarmsModal} onHide={() => setShowManageFarmsModal(false)} style={{ width: '40vw' }}>
                 <div className="flex flex-column gap-4">

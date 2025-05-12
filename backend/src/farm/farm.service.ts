@@ -136,6 +136,36 @@ export class FarmService {
       });
     }
 
+    // Create default seasons for the farm
+    const seasons = [
+      {
+        name: '2024-2025',
+        startDate: new Date('2024-09-01'),
+        endDate: new Date('2025-08-31'),
+      },
+      {
+        name: '2025-2026',
+        startDate: new Date('2025-09-01'),
+        endDate: new Date('2026-08-31'),
+      },
+      {
+        name: '2026-2027',
+        startDate: new Date('2026-09-01'),
+        endDate: new Date('2027-08-31'),
+      },
+    ];
+
+    for (const season of seasons) {
+      await this.prisma.season.create({
+        data: {
+          name: season.name,
+          startDate: season.startDate,
+          endDate: season.endDate,
+          farmId: farm.id,
+        },
+      });
+    }
+
     return farm;
   }
 
