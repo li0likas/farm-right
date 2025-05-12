@@ -67,6 +67,9 @@ const TaskPage = () => {
   // Load translations
   const t = useTranslations('common');
   const taskT = useTranslations('tasks');
+  const fieldT = useTranslations('fields');
+  const weatherT = useTranslations('weather');
+  const equipmentT = useTranslations('equipment');
 
   // State variables
   const [task, setTask] = useState<Task | null>(null);
@@ -104,6 +107,7 @@ const TaskPage = () => {
   const canAssignParticipants = hasPermission("TASK_ASSIGN_PARTICIPANTS");
   const canRemoveParticipants = hasPermission("TASK_REMOVE_PARTICIPANTS");
   const canReadParticipants = hasPermission("TASK_READ_PARTICIPANTS");
+  const canChangeStatus = hasPermission("TASK_CHANGE_STATUS");
 
   // Load data on component mount
   useEffect(() => {
@@ -150,7 +154,7 @@ const TaskPage = () => {
       const response = await api.get(`/tasks/${taskId}/comments`);
       setComments(response.data);
     } catch (error) {
-      toast.error("Failed to fetch comments.");
+      toast.error(taskT('fetchCommentsError'));
     }
   };
 
@@ -167,7 +171,7 @@ const TaskPage = () => {
   
       setFarmMembers(filtered);
     } catch (err) {
-      toast.error("Failed to load farm members");
+      toast.error(taskT('fetchMembersError'));
     }
   };  
 
@@ -177,7 +181,7 @@ const TaskPage = () => {
       setEquipment(response.data);
       return response.data;
     } catch (error) {
-      toast.error("Failed to fetch equipment.");
+      toast.error(taskT('fetchEquipmentError'));
       return [];
     }
   };
@@ -194,7 +198,7 @@ const TaskPage = () => {
 
       setAvailableEquipment(available);
     } catch (error) {
-      toast.error("Failed to load available equipment.");
+      toast.error(taskT('loadEquipmentError'));
     }
   };
 
@@ -225,25 +229,25 @@ const TaskPage = () => {
 
   const handleAssignEquipment = async () => {
     if (!selectedEquipmentId) {
-      toast.warning("Please select equipment to assign.");
+      toast.warning(taskT('selectEquipmentWarning'));
       return;
     }
 
     if (equipment.some(e => e.id === selectedEquipmentId)) {
-      toast.warning("This equipment is already assigned.");
+      toast.warning(taskT('equipmentAlreadyAssigned'));
       return;
     }        
 
     try {
       await api.post(`/tasks/${taskId}/equipment`, { equipmentId: selectedEquipmentId });
-      toast.success("Equipment assigned.");
+      toast.success(taskT('equipmentAssignSuccess'));
       setSelectedEquipmentId(null);
 
       const updatedEquipment = await fetchEquipment();
       await fetchAvailableEquipment(updatedEquipment);
 
     } catch (error) {
-      toast.error("Failed to assign equipment.");
+      toast.error(taskT('equipmentAssignError'));
     }
   };
 
@@ -254,40 +258,40 @@ const TaskPage = () => {
           api.post(`/tasks/${taskId}/participants`, { userId })
         )
       );
-      toast.success("Participants added");
+      toast.success(taskT('participantsAddedSuccess'));
       setSelectedParticipants([]);
       await refreshTaskAndMembers();
     } catch (err) {
-      toast.error("Failed to assign participants");
+      toast.error(taskT('participantsAddedError'));
     }
   };
     
   const handleRemoveParticipant = async (userId: number) => {
     try {
       await api.delete(`/tasks/${taskId}/participants/${userId}`);
-      toast.success("Participant removed");
+      toast.success(taskT('participantRemovedSuccess'));
       await refreshTaskAndMembers();
     } catch (err) {
-      toast.error("Failed to remove participant");
+      toast.error(taskT('participantRemovedError'));
     }
   };  
   
   const handleRemoveEquipment = async (equipmentId: number) => {
     try {
       await api.delete(`/tasks/${taskId}/equipment/${equipmentId}`);
-      toast.success("Equipment removed.");
+      toast.success(taskT('equipmentRemovedSuccess'));
 
       const updatedEquipment = await fetchEquipment();
       await fetchAvailableEquipment(updatedEquipment);
       
     } catch (error) {
-      toast.error("Failed to remove equipment.");
+      toast.error(taskT('equipmentRemovedError'));
     }
   };  
 
   const handlePostComment = async () => {
     if (!commentContent.trim()) {
-      toast.warning("Comment cannot be empty.");
+      toast.warning(taskT('emptyCommentWarning'));
       return;
     }
 
@@ -295,8 +299,9 @@ const TaskPage = () => {
       await api.post(`/tasks/${taskId}/comments`, { taskId, content: commentContent });
       setCommentContent("");
       fetchComments();
+      toast.success(taskT('commentPostedSuccess'));
     } catch (error) {
-      toast.error("Failed to post comment.");
+      toast.error(taskT('commentPostedError'));
     }
   };
 
@@ -310,9 +315,9 @@ const TaskPage = () => {
     try {
       await api.delete(`/tasks/${taskId}/comments/${commentToDelete}`);
       setComments((prev) => prev.filter((comment) => comment.id !== commentToDelete));
-      toast.success("Comment deleted.");
+      toast.success(taskT('commentDeletedSuccess'));
     } catch (error) {
-      toast.error("Failed to delete comment.");
+      toast.error(taskT('commentDeletedError'));
     } finally {
       setShowDeleteDialog(false);
       setCommentToDelete(null);
@@ -341,22 +346,30 @@ const TaskPage = () => {
           payload = { statusId: 2 }; // Task Back to Pending
           break;
         default:
-          toast.error('Invalid action.');
+          toast.error(taskT('invalidAction'));
           return;
       }
 
       await (method === 'post' ? api.post(url, payload) : api.patch(url, payload));
 
       fetchTask();
-      toast.success(`Task ${action.replace('-', ' ')} successfully.`);
+      
+      const successMessages = {
+        'participate': taskT('participateSuccess'),
+        'cancel-participation': taskT('cancelParticipationSuccess'),
+        'cancel-task': taskT('cancelTaskSuccess'),
+        'uncancel-task': taskT('uncancelTaskSuccess')
+      };
+      
+      toast.success(successMessages[action as keyof typeof successMessages] || taskT('actionSuccess'));
     } catch (error) {
-      toast.error(`Failed to ${action}.`);
+      toast.error(taskT('actionError', { action }));
     }
   };
 
   const handleMarkCompleted = async () => {
     if (!minutesWorked) {
-      toast.warning("Please enter minutes worked.");
+      toast.warning(taskT('enterMinutesWarning'));
       return;
     }
     
@@ -366,11 +379,11 @@ const TaskPage = () => {
         equipmentData: equipmentFuelData,
       });
     
-      toast.success("Task marked as completed.");
+      toast.success(taskT('taskCompletedSuccess'));
       setShowCompleteDialog(false);
       fetchTask();
     } catch (error) {
-      toast.error("Failed to mark task as completed.");
+      toast.error(taskT('taskCompletedError'));
     }
   };
 
@@ -381,6 +394,14 @@ const TaskPage = () => {
       case 'canceled': return 'danger';
       default: return 'info';
     }
+  };
+
+  const getTranslatedStatus = (statusName: string) => {
+    const statusKey = statusName.toLowerCase();
+    return statusKey === "pending" ? taskT('taskStatusPending') :
+        statusKey === "completed" ? taskT('taskStatusCompleted') :
+        statusKey === "canceled" ? taskT('taskStatusCanceled') :
+        statusName;
   };
 
   const getTaskTypeIcon = (typeName: string) => {
@@ -455,7 +476,7 @@ const TaskPage = () => {
       <ProtectedRoute>
         <div className="flex justify-content-center align-items-center min-h-screen">
           <ProgressSpinner />
-          <span className="ml-3 text-lg">Loading task details...</span>
+          <span className="ml-3 text-lg">{taskT('loadingTask')}</span>
         </div>
       </ProtectedRoute>
     );
@@ -502,7 +523,7 @@ const TaskPage = () => {
                   </div>
                   <h1 className="text-2xl font-bold m-0">{task.type.name}</h1>
                   <Tag 
-                    value={task.status.name} 
+                    value={getTranslatedStatus(task.status.name)} 
                     severity={getStatusSeverity(task.status.name)}
                     className="ml-2"
                   />
@@ -555,48 +576,50 @@ const TaskPage = () => {
           </div>
 
           {/* Task Actions */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {isPending && (
-              <>
-                {task.isParticipating ? (
+          {canChangeStatus && (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {isPending && (
+                <>
+                  {task.isParticipating ? (
+                    <Button
+                      label={taskT('cancelParticipation')}
+                      icon="pi pi-times"
+                      className="p-button-danger"
+                      onClick={() => handleTaskAction("cancel-participation")}
+                    />
+                  ) : (
+                    <Button
+                      label={taskT('participate')}
+                      icon="pi pi-user-plus"
+                      className="p-button-primary"
+                      onClick={() => handleTaskAction("participate")}
+                    />
+                  )}
                   <Button
-                    label={taskT('cancelParticipation')}
-                    icon="pi pi-times"
-                    className="p-button-danger"
-                    onClick={() => handleTaskAction("cancel-participation")}
+                    label={taskT('cancelTask')}
+                    icon="pi pi-ban"
+                    className="p-button-warning"
+                    onClick={() => handleTaskAction("cancel-task")}
                   />
-                ) : (
                   <Button
-                    label={taskT('participate')}
-                    icon="pi pi-user-plus"
-                    className="p-button-primary"
-                    onClick={() => handleTaskAction("participate")}
+                    label={taskT('markCompleted')}
+                    icon="pi pi-check"
+                    className="p-button-success"
+                    onClick={() => setShowCompleteDialog(true)}
                   />
-                )}
-                <Button
-                  label={taskT('cancelTask')}
-                  icon="pi pi-ban"
-                  className="p-button-warning"
-                  onClick={() => handleTaskAction("cancel-task")}
-                />
-                <Button
-                  label={taskT('markCompleted')}
-                  icon="pi pi-check"
-                  className="p-button-success"
-                  onClick={() => setShowCompleteDialog(true)}
-                />
-              </>
-            )}
+                </>
+              )}
 
-            {isCanceled && (
-              <Button
-                label={taskT('uncancelTask')}
-                icon="pi pi-refresh"
-                className="p-button-success"
-                onClick={() => handleTaskAction("uncancel-task")}
-              />
-            )}
-          </div>
+              {isCanceled && (
+                <Button
+                  label={taskT('uncancelTask')}
+                  icon="pi pi-refresh"
+                  className="p-button-success"
+                  onClick={() => handleTaskAction("uncancel-task")}
+                />
+              )}
+            </div>
+          )}
           
           <Divider />
 
@@ -626,7 +649,7 @@ const TaskPage = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-lg m-0">{equip.name}</p>
-                            {equip.type?.name && <p className="text-600 m-0">{equip.type.name}</p>}
+                            {equip.type?.name && <p className="text-600 m-0">{equipmentT(`types.${equip.type.name}`) || equip.type.name}</p>}
                           </div>
                         </div>
                         
@@ -775,6 +798,7 @@ const TaskPage = () => {
                         icon="pi pi-trash"
                         className="p-button-text p-button-danger p-button-sm mt-1"
                         onClick={() => confirmDeleteComment(comment.id)}
+                        tooltip={taskT('deleteComment')}
                       />
                     )}
                     <div className="flex-1">
@@ -783,7 +807,7 @@ const TaskPage = () => {
                           <i className="pi pi-user text-blue-600"></i>
                         </div>
                         <div>
-                          <p className="font-bold m-0">{comment.createdBy?.username ?? "Unknown"}</p>
+                          <p className="font-bold m-0">{comment.createdBy?.username ?? taskT('unknownUser')}</p>
                           <p className="text-xs text-gray-500 m-0">
                             {new Date(comment.createdAt).toLocaleString('lt-LT', {
                               year: 'numeric',
@@ -875,7 +899,7 @@ const TaskPage = () => {
               value={minutesWorked ?? ''}
               onChange={(e) => setMinutesWorked(parseInt(e.target.value))}
               className="p-inputtext w-full p-3"
-              placeholder="e.g., 90"
+              placeholder={taskT('minutesPlaceholder')}
             />
           </div>
 
@@ -884,7 +908,7 @@ const TaskPage = () => {
             .map((equip) => (
               <div key={equip.id} className="p-field">
                 <label className="font-bold mb-2 block">
-                  {taskT('fuelUsedFor')} {equip.name} (liters):
+                  {taskT('fuelUsedFor')} {equip.name} ({t('liters')}):
                 </label>
                 <input
                   type="number"
@@ -896,7 +920,7 @@ const TaskPage = () => {
                     }))
                   }
                   className="p-inputtext w-full p-3"
-                  placeholder="e.g., 12.5"
+                  placeholder={taskT('fuelPlaceholder')}
                 />
               </div>
             ))}
