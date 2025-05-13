@@ -789,6 +789,172 @@
         "invalidOrExpired": "Šis kvietimas negalioja arba yra pasibaigęs.",
         "pleaseLoginOrRegister": "Prašome prisijungti arba užsiregistruoti, kad priimtumėte kvietimą."
     },
+    "landing": {
+        "nav": {
+        "features": "Funkcijos",
+        "howItWorks": "Kaip tai veikia",
+        "pricing": "Kainos",
+        "testimonials": "Atsiliepimai",
+        "login": "Prisijungti",
+        "signup": "Registruotis"
+        },
+        "hero": {
+        "title": "Išmani ūkio valdymo sistema",
+        "subtitle": "Transformuokite savo žemės ūkio veiklą su mūsų intuityvia ūkio valdymo sistema. Sekite laukus, valdykite užduotis, stebėkite techniką ir maksimizuokite savo ūkio produktyvumą.",
+        "cta": {
+            "primary": "Pradėti nemokamai",
+            "secondary": "Žiūrėti demonstraciją"
+        }
+        },
+        "features": {
+        "title": "Viskas, ko reikia jūsų ūkiui valdyti",
+        "subtitle": "Mūsų išsamus įrankių rinkinys padeda supaprastinti veiklą ir priimti duomenimis pagrįstus sprendimus",
+        "fieldManagement": {
+            "title": "Laukų valdymas",
+            "description": "Tiksliai kartografuokite ir stebėkite savo laukus. Sekite sėjomainą, dirvožemio sveikatą ir laukų ribas vienoje vietoje."
+        },
+        "taskManagement": {
+            "title": "Užduočių valdymas",
+            "description": "Kurkite, priskirkite ir sekite užduotis visame ūkyje. Niekada nepraleiskite svarbių veiklų kaip sėja, purškimas ar derliaus nuėmimas."
+        },
+        "equipment": {
+            "title": "Technikos sekimas",
+            "description": "Stebėkite technikos naudojimą, planuokite priežiūrą ir sekite degalų sąnaudas, kad optimizuotumėte savo išteklius."
+        },
+        "weather": {
+            "title": "Orų integracija",
+            "description": "Gaukite realaus laiko orų duomenis ir prognozes jūsų laukams. Planuokite užduotis pagal optimalias oro sąlygas."
+        },
+        "analytics": {
+            "title": "Analitika ir ataskaitos",
+            "description": "Gaukite įžvalgas su išsamiomis ataskaitomis apie užduočių vykdymą, technikos naudojimą ir ūkio veiklą."
+        },
+        "collaboration": {
+            "title": "Komandos bendradarbiavimas",
+            "description": "Dirbkite kartu su savo komanda. Priskirkite roles, dalinkitės užduotimis ir efektyviai komunikuokite visose ūkio operacijose."
+        }
+        },
+        "howItWorks": {
+        "title": "Pradėkite 4 paprastais žingsniais",
+        "subtitle": "Skaitmeninio ūkio kūrimas dar niekada nebuvo toks paprastas",
+        "step1": {
+            "title": "Registracija",
+            "description": "Sukurkite paskyrą ir nustatykite savo ūkio profilį per kelias minutes"
+        },
+        "step2": {
+            "title": "Laukų kartografavimas",
+            "description": "Nubrėžkite laukų ribas ir pridėkite pasėlių informaciją naudodami mūsų intuityvų kartografavimo įrankį"
+        },
+        "step3": {
+            "title": "Užduočių planavimas",
+            "description": "Kurkite ir planuokite sėjos, apdorojimo ir derliaus nuėmimo užduotis"
+        },
+        "step4": {
+            "title": "Progreso stebėjimas",
+            "description": "Stebėkite užduočių vykdymą, analizuokite ataskaitas ir optimizuokite savo veiklą"
+        }
+        },
+        "pricing": {
+        "title": "Pasirinkite savo planą",
+        "subtitle": "Lankstūs kainų pasiūlymai visų dydžių ūkiams",
+        "popular": "Populiariausias",
+        "basic": {
+            "name": "Pradinis",
+            "price": "19€/mėn",
+            "description": "Tobulas mažiems ūkiams",
+            "features": {
+            "feature1": "Iki 5 laukų",
+            "feature2": "Bazinis užduočių valdymas",
+            "feature3": "Technikos sekimas",
+            "feature4": "El. pašto palaikymas"
+            },
+            "button": "Pradėti nemokamai"
+        },
+        "professional": {
+            "name": "Profesionalus",
+            "price": "49€/mėn",
+            "description": "Idealus augantiems ūkiams",
+            "features": {
+            "feature1": "Neriboti laukai",
+            "feature2": "Išplėstinis užduočių valdymas",
+            "feature3": "Technikos ir degalų sekimas",
+            "feature4": "Orų integracija",
+            "feature5": "Prioritetinis palaikymas"
+            },
+            "button": "Pradėti nemokamai"
+        },
+        "enterprise": {
+            "name": "Verslo",
+            "price": "Individuali",
+            "description": "Didelėms operacijoms",
+            "features": {
+            "feature1": "Viskas iš Profesionalaus",
+            "feature2": "Individualios integracijos",
+            "feature3": "Išplėstinė analitika",
+            "feature4": "Asmeninis vadybininkas",
+            "feature5": "Diegimas vietoje",
+            "feature6": "24/7 telefono palaikymas"
+            },
+            "button": "Susisiekti"
+        }
+        },
+        "testimonials": {
+        "title": "Ką ūkininkai sako apie ŽŪVS",
+        "subtitle": "Prisijunkite prie tūkstančių ūkininkų, kurie transformavo savo veiklą",
+        "testimonial1": {
+            "role": "Grūdų augintojas, 500 ha",
+            "content": "ŽŪVS pakeitė tai, kaip valdome savo grūdų ūkį. Užduočių sekimas ir orų integracija sutaupė mums begales valandų ir pagerino derlingumą."
+        },
+        "testimonial2": {
+            "role": "Pieno ūkio vadovas",
+            "content": "Vien technikos sekimo funkcija atsipirko. Sumažinome priežiūros išlaidas 30% ir niekada nepraleidžiame suplanuotų aptarnavimų."
+        },
+        "testimonial3": {
+            "role": "Žemės ūkio kooperatyvo direktorius",
+            "content": "Kelių ūkių valdymas dar niekada nebuvo toks paprastas. Bendradarbiavimo funkcijos leidžia mūsų komandoms dirbti sklandžiai visose vietose."
+        }
+        },
+        "cta": {
+        "title": "Pasiruošę transformuoti savo ūkį?",
+        "subtitle": "Prisijunkite prie tūkstančių ūkininkų, jau naudojančių ŽŪVS savo veiklai optimizuoti",
+        "start": "Pradėti nemokamai",
+        "contact": "Susisiekti"
+        },
+        "contact": {
+        "title": "Susisiekite",
+        "email": "El. paštas",
+        "emailPlaceholder": "jusu@elpastas.lt",
+        "message": "Žinutė",
+        "messagePlaceholder": "Papasakokite apie savo ūkį ir kaip galime padėti...",
+        "send": "Siųsti žinutę",
+        "cancel": "Atšaukti",
+        "fillFields": "Prašome užpildyti visus laukus",
+        "success": "Žinutė sėkmingai išsiųsta!"
+        },
+        "footer": {
+        "about": {
+            "title": "Apie ŽŪVS",
+            "description": "ŽŪVS yra išsami ūkio valdymo sistema, sukurta padėti šiuolaikiniams ūkininkams optimizuoti savo veiklą naudojant pažangias technologijas ir duomenimis pagrįstas įžvalgas."
+        },
+        "links": {
+            "title": "Nuorodos",
+            "features": "Funkcijos",
+            "pricing": "Kainos",
+            "login": "Prisijungti",
+            "signup": "Registruotis"
+        },
+        "contact": {
+            "title": "Kontaktai",
+            "email": "info@zuvs.lt",
+            "phone": "+370 600 12345",
+            "address": "Vilnius, Lietuva"
+        },
+        "social": {
+            "title": "Sekite mus"
+        },
+        "copyright": "© {year} ŽŪVS. Visos teisės saugomos."
+        }
+    },
     "menu": {
         "home": "Pradžia",
         "dashboard": "Valdymo skydelis",
