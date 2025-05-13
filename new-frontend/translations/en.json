@@ -14,7 +14,9 @@
         "ha": "ha",
         "m": "m", 
         "liters": "liters",
-        "selectSeason": "Select Season"
+        "selectSeason": "Select Season",
+        "yourFarm": "your farm",
+        "user": "User"
     },
     "dashboard": {
         "aiSummary": "AI Summary",
@@ -32,7 +34,7 @@
         "due": "Due",
         "view": "View",
         "loading": "Loading dashboard data...",
-        "welcomeMessage": "Welcome to Your Farm Dashboard",
+        "welcomeMessage": "Welcome to {farmName} Farm Dashboard, {userName}!",
         "todayDate": "Today's date",
         "totalFields": "Total Fields",
         "fetchTasksError": "Failed to fetch tasks.",

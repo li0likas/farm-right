@@ -125,7 +125,7 @@ const ResetPasswordPage = () => {
       </div>
       
       <div className="flex flex-column align-items-center justify-content-center">
-        <img src="/layout/images/logo-dark.svg" alt="Logo" className="mb-5 w-6rem flex-shrink-0" />
+        <img src="/layout/images/zuvs-logo.png" alt="Zuvs logo" className="mb-5 w-6rem flex-shrink-0" />
         
         <div style={{ borderRadius: '56px', padding: '0.3rem', background: 'linear-gradient(180deg, var(--primary-color) 10%, rgba(33, 150, 243, 0) 30%)' }}>
           <div className="w-full surface-card py-8 px-5 sm:px-8" style={{ borderRadius: '53px' }}>

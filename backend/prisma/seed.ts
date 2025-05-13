@@ -436,6 +436,7 @@ async function main() {
   await prisma.farmMember.createMany({
     data: [
       { userId: testUser.id, farmId: farm3.id, roleId: adminRole.id },
+      { userId: workerUser2.id, farmId: farm3.id, roleId: workerRole.id },
     ],
     skipDuplicates: true
   });
@@ -624,6 +625,30 @@ async function main() {
     },
   });
 
+  
+  const fieldTest = await prisma.field.create({
+    data: {
+      name: 'Prie Editos',
+      area: 45.0,
+      perimeter: 1800.0,
+      cropId: 3,
+      ownerId: ownerUser.id,
+      farmId: farm3.id,
+      boundary: {
+        type: 'Polygon',
+        coordinates: [
+          [
+            [23.7284381, 56.3450718],
+            [23.7584381, 56.3550718],
+            [23.7184381, 56.1450718],
+            [23.7684381, 56.3410718],
+            [23.7254381, 56.3490718]
+          ]
+        ]
+      }
+    },
+  });
+
   // Create seasons
   const season2023_garadauskas = await prisma.season.create({
     data: {
@@ -677,6 +702,34 @@ async function main() {
       startDate: new Date('2025-09-01'),
       endDate: new Date('2026-08-31'),
       farmId: farm2.id,
+    },
+  });
+
+    // test farm's seasons
+  const season2023_test = await prisma.season.create({
+    data: {
+      name: '2023-2024',
+      startDate: new Date('2023-09-01'),
+      endDate: new Date('2024-08-31'),
+      farmId: farm3.id,
+    },
+  });
+
+  const season2024_test = await prisma.season.create({
+    data: {
+      name: '2024-2025',
+      startDate: new Date('2024-09-01'),
+      endDate: new Date('2025-08-31'),
+      farmId: farm3.id,
+    },
+  });
+
+  const season2025_test = await prisma.season.create({
+    data: {
+      name: '2025-2026',
+      startDate: new Date('2025-09-01'),
+      endDate: new Date('2026-08-31'),
+      farmId: farm3.id,
     },
   });
 

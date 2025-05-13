@@ -165,8 +165,8 @@ const TasksPage = () => {
                             <p className="text-xs text-gray-500">
                                 <i className="pi pi-calendar mr-1"></i> 
                                 {task.dueDate 
-                                    ? `${taskT('dueDate')}: ${new Date(task.dueDate).toLocaleDateString("en-CA")}` 
-                                    : `${taskT('completedDate')}: ${new Date(task.completionDate!).toLocaleDateString("en-CA")}`}
+                                    ? `${taskT('dueDate')}: ${new Date(task.dueDate).toLocaleDateString('lt-LT')}`
+                                    : `${taskT('completedDate')}: ${new Date(task.completionDate!).toLocaleDateString('lt-LT')}`}
                             </p>
                         )}
                         <div className="mt-2">

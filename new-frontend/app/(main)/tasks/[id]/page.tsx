@@ -433,7 +433,7 @@ const TaskPage = () => {
     if (!dateString) return null;
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString("en-CA");
+      return date.toLocaleDateString('lt-LT')
     } catch (error) {
       return null;
     }

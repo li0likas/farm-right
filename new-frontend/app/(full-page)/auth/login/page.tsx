@@ -86,7 +86,7 @@ const LoginPage = () => {
                     router.push('/create-farm');
                 } else if (farms.length === 1) {
                     localStorage.setItem('x-selected-farm-id', farms[0].farmId);
-                    toast.success(t('welcomeFarm', { farmName: farms[0].farmName }));
+                    toast.success(t('welcomeBack', { farmName: farms[0].farmName }));
                     router.push('/dashboard');
                 } else {
                     setFarms(farms);
@@ -170,7 +170,7 @@ const LoginPage = () => {
             
             <div className="flex flex-column align-items-center justify-content-center">
                 <img
-                    src={`/layout/images/logo-${layoutConfig.colorScheme === 'light' ? 'dark' : 'white'}.svg`}
+                    src={`/layout/images/zuvs-logo.png`}
                     alt="Logo"
                     className="mb-5 w-6rem flex-shrink-0"
                 />
@@ -179,7 +179,6 @@ const LoginPage = () => {
                         {farms.length === 0 ? (
                             <>
                                 <div className="text-center mb-5">
-                                    <img src="/demo/images/login/avatar.png" alt="Avatar" height="50" className="mb-3" />
                                     <div className="text-900 text-3xl font-medium mb-3">{t('welcomeBack')}</div>
                                     <span className="text-600 font-medium">{t('signInToContinue')}</span>
                                 </div>

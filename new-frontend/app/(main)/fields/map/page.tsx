@@ -744,9 +744,9 @@ const FieldsMapView = () => {
                             <div className="font-medium">{task.type.name}</div>
                             <div className="text-sm text-gray-600">
                               {task.dueDate 
-                                ? `${taskT('dueDate')}: ${new Date(task.dueDate).toLocaleDateString()}`
+                                ? `${taskT('dueDate')}: ${new Date(task.dueDate).toLocaleDateString('lt-LT')}`
                                 : task.completionDate
-                                  ? `${taskT('completedDate')}: ${new Date(task.completionDate).toLocaleDateString()}`
+                                  ? `${taskT('completedDate')}: ${new Date(task.completionDate).toLocaleDateString('lt-LT')}`
                                   : taskT('noDate')
                               }
                             </div>

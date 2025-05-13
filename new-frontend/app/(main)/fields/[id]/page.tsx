@@ -335,8 +335,8 @@ const FieldViewPage = () => {
                                 <div className="text-500 mt-1">
                                     ID: {fieldInfo.id} • {f('lastUpdated')}: {
                                         fieldInfo.updatedAt 
-                                            ? new Date(fieldInfo.updatedAt).toLocaleDateString() 
-                                            : new Date().toLocaleDateString()
+                                            ? new Date(fieldInfo.updatedAt).toLocaleDateString('lt-LT')
+                                            : new Date().toLocaleDateString('lt-LT')
                                     }
                                 </div>
                             </div>
@@ -591,7 +591,7 @@ const FieldViewPage = () => {
                                                                             <div className="flex align-items-center">
                                                                                 <i className="pi pi-clock mr-2 text-primary"></i>
                                                                                 <span>
-                                                                                    {d('due')}: {new Date(task.dueDate).toLocaleDateString()}
+                                                                                    {d('due')}: {new Date(task.dueDate).toLocaleDateString('lt-LT')}
                                                                                 </span>
                                                                             </div>
                                                                         )}
@@ -600,7 +600,7 @@ const FieldViewPage = () => {
                                                                             <div className="flex align-items-center">
                                                                                 <i className="pi pi-check-circle mr-2 text-green-500"></i>
                                                                                 <span>
-                                                                                    {tasksT('completedDate')}: {new Date(task.completionDate).toLocaleDateString()}
+                                                                                    {tasksT('completedDate')}: {new Date(task.completionDate).toLocaleDateString('lt-LT')}
                                                                                 </span>
                                                                             </div>
                                                                         )}

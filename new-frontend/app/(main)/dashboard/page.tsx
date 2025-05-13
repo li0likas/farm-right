@@ -15,6 +15,7 @@ import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { getUser } from "@/utils/user";
 
 interface Task {
     id: string;
@@ -30,6 +31,11 @@ interface WeatherData {
     temperature?: number;
     condition?: string;
     icon?: string;
+}
+
+interface FarmData {
+    id: number;
+    name: string;
 }
 
 const Dashboard = () => {
@@ -58,7 +64,64 @@ const Dashboard = () => {
     const [loadingInsight, setLoadingInsight] = useState(false);
     const [loadingData, setLoadingData] = useState(true);
 
+    const [userName, setUserName] = useState<string>("");
+    const [farmName, setFarmName] = useState<string>("");
+    const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
+
     useEffect(() => {
+        // Get user data
+        const user = getUser();
+        if (user) {
+            setUserName(user.username || user.email?.split('@')[0] || "User");
+        }
+
+        // Fetch farm details
+        const fetchFarmDetails = async () => {
+            const selectedFarmId = localStorage.getItem('x-selected-farm-id');
+            if (selectedFarmId) {
+                try {
+                    const farmResponse = await api.get(`/farms/${selectedFarmId}`);
+                    if (farmResponse.data) {
+                        setFarmName(farmResponse.data.name);
+                    }
+                } catch (error) {
+                    console.error("Error fetching farm details:", error);
+                    // Try to get farm name from user's farms list
+                    try {
+                        const farmsResponse = await api.get('/users/farms');
+                        const selectedFarm = farmsResponse.data.find((farm: any) => farm.id === parseInt(selectedFarmId));
+                        if (selectedFarm) {
+                            setFarmName(selectedFarm.name);
+                        }
+                    } catch (farmListError) {
+                        console.error("Error fetching user farms:", farmListError);
+                    }
+                }
+            }
+        };
+
+        fetchFarmDetails();
+
+        // Get user's current location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    console.error("Error getting location:", error);
+                    // If location access is denied, use default coordinates (Kaunas)
+                    setUserLocation({ lat: 54.8985, lng: 23.9036 });
+                }
+            );
+        } else {
+            // If geolocation is not supported, use default coordinates
+            setUserLocation({ lat: 54.8985, lng: 23.9036 });
+        }
+
         const loadData = async () => {
             setLoadingData(true);
             
@@ -75,12 +138,18 @@ const Dashboard = () => {
                 }
             }
             
-            fetchWeatherData();
             setLoadingData(false);
         };
         
         loadData();
     }, [canReadTasks, canReadTaskStats, canReadFields, canReadAiSummary]);
+
+    useEffect(() => {
+        // Fetch weather data when user location is available
+        if (userLocation) {
+            fetchWeatherData();
+        }
+    }, [userLocation]);
     
     const fetchTasks = async () => {
         try {
@@ -145,31 +214,33 @@ const Dashboard = () => {
     };
     
     const fetchWeatherData = async () => {
+        if (!userLocation) return;
+        
         setLoadingWeather(true);
         try {
-            // Use the user's location from Kaunas, Lithuania (or we could get it from navigator.geolocation)
-            // Based on the fact that the system seems to be designed for Lithuanian farms
-            // You could also check if the field has coordinates and use those
-            const defaultCoordinates = { lat: 54.8985, lng: 23.9036 }; // Kaunas coordinates
+            const coordinates = { 
+                lat: userLocation.lat, 
+                lng: userLocation.lng 
+            };
             
-            // First, try to get coordinates from farm's first field
+            // If we have fields, try to get coordinates from farm's first field instead
             try {
                 const fieldsResponse = await api.get("/fields");
                 if (fieldsResponse.data.length > 0 && fieldsResponse.data[0].boundary) {
                     const boundary = fieldsResponse.data[0].boundary;
                     if (boundary.geometry?.coordinates?.[0]?.[0]) {
-                        defaultCoordinates.lng = boundary.geometry.coordinates[0][0][0];
-                        defaultCoordinates.lat = boundary.geometry.coordinates[0][0][1];
+                        coordinates.lng = boundary.geometry.coordinates[0][0][0];
+                        coordinates.lat = boundary.geometry.coordinates[0][0][1];
                     }
                 }
             } catch (fieldError) {
-                console.log("Using default coordinates for weather");
+                console.log("Using user's current location for weather");
             }
             
             const response = await api.get("/weather/forecast", {
                 headers: {
-                    'x-coordinates-lat': defaultCoordinates.lat.toString(),
-                    'x-coordinates-lng': defaultCoordinates.lng.toString(),
+                    'x-coordinates-lat': coordinates.lat.toString(),
+                    'x-coordinates-lng': coordinates.lng.toString(),
                 }
             });
             
@@ -234,9 +305,12 @@ const Dashboard = () => {
                         <div className="flex justify-content-between align-items-center">
                             <div>
                                 <h2 className="m-0 text-primary font-medium text-2xl">
-                                    {dt('welcomeMessage')}
+                                    {dt('welcomeMessage', { 
+                                        farmName: farmName || t('common:yourFarm', 'your farm'), 
+                                        userName: userName || t('common:user', 'User') 
+                                    })}
                                 </h2>
-                                <p className="text-700 mt-2 mb-0">{dt('todayDate')}: {new Date().toLocaleDateString()}</p>
+                                <p className="text-700 mt-2 mb-0">{dt('todayDate')}: {new Date().toLocaleDateString('lt-LT')}</p>
                             </div>
                             
                             {weatherData && (
@@ -394,7 +468,7 @@ const Dashboard = () => {
                                                 <>
                                                     <span className="text-sm text-gray-700">{isDue ? dt('due') : dt('completed')}:</span>
                                                     <br />
-                                                    {new Date(date).toLocaleDateString("en-CA")}
+                                                    {new Date(date).toLocaleDateString('lt-LT')}
                                                 </>
                                             ) : "N/A";
                                         }}
