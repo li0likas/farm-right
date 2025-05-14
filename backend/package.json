@@ -7,6 +7,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "db:reset:minimal": "npx prisma migrate reset --force",
+    "db:reset:full": "npx prisma migrate reset --force --skip-seed && ts-node prisma/seed-full.ts",
 	"postbuild": "copyfiles -u 1 \"src/auth/mail/templates/**/*\" dist/src/auth/mail/templates",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

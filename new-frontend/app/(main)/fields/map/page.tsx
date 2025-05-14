@@ -44,6 +44,7 @@ const FieldsMapView = () => {
   // Add translation hooks
   const t = useTranslations('common');
   const fm = useTranslations('fieldsMap');
+  const f = useTranslations('fields');
   const taskT = useTranslations('tasks');
   
   const mapRef = useRef(null);
@@ -436,7 +437,7 @@ const FieldsMapView = () => {
               <p className="text-gray-600 mb-3">{fm('noFieldsDescription')}</p>
               {canCreateField && (
                 <Button
-                  label={fm('createFirstField')}
+                  label={f('createFirstField')}
                   icon="pi pi-plus"
                   className="p-button-success"
                   onClick={() => router.push('/create-field')}

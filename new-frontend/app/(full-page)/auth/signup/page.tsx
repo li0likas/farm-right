@@ -63,15 +63,16 @@ const RegisterPage = () => {
         if (!validate()) return;
 
         setLoading(true);
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('email', email);
-        formData.append('password', password);
-        if (profileImage) formData.append('file', profileImage);
-
+        
         try {
-            await api.post('/auth/signup', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+            const requestData = {
+                name: name,
+                email: email,
+                password: password
+            };
+
+            await api.post('/auth/signup', requestData, {
+                headers: { 'Content-Type': 'application/json' }
             });
 
             toast.success(t('registrationSuccess'));

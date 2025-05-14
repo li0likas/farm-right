@@ -791,67 +791,67 @@
     },
     "landing": {
         "nav": {
-        "features": "Funkcijos",
-        "howItWorks": "Kaip tai veikia",
+        "features": "Siūlomos funkcijos",
+        "howItWorks": "Kaip veikia ši sistema?",
         "pricing": "Kainos",
-        "testimonials": "Atsiliepimai",
+        "testimonials": "Ūkininkų atsiliepimai",
         "login": "Prisijungti",
         "signup": "Registruotis"
         },
         "hero": {
-        "title": "Išmani ūkio valdymo sistema",
-        "subtitle": "Transformuokite savo žemės ūkio veiklą su mūsų intuityvia ūkio valdymo sistema. Sekite laukus, valdykite užduotis, stebėkite techniką ir maksimizuokite savo ūkio produktyvumą.",
+        "title": "Žemės ūkio valdymo sistema",
+        "subtitle": "Skaitmenizuokite savo žemės ūkio veiklą su mūsų intuityvia žemės ūkio valdymo sistema. Sekite laukus, valdykite užduotis, stebėkite techniką ir padidinkite savo ūkio produktyvumą.",
         "cta": {
             "primary": "Pradėti nemokamai",
             "secondary": "Žiūrėti demonstraciją"
         }
         },
         "features": {
-        "title": "Viskas, ko reikia jūsų ūkiui valdyti",
-        "subtitle": "Mūsų išsamus įrankių rinkinys padeda supaprastinti veiklą ir priimti duomenimis pagrįstus sprendimus",
+        "title": "Viskas, ko reikia jūsų ūkio veiklos procesams valdyti",
+        "subtitle": "Mūsų platus funkcionalumas padeda supaprastinti veiklą ir priimti duomenimis pagrįstus sprendimus",
         "fieldManagement": {
             "title": "Laukų valdymas",
-            "description": "Tiksliai kartografuokite ir stebėkite savo laukus. Sekite sėjomainą, dirvožemio sveikatą ir laukų ribas vienoje vietoje."
+            "description": "Tiksliai brėžkite ir stebėkite savo laukus."
         },
         "taskManagement": {
             "title": "Užduočių valdymas",
-            "description": "Kurkite, priskirkite ir sekite užduotis visame ūkyje. Niekada nepraleiskite svarbių veiklų kaip sėja, purškimas ar derliaus nuėmimas."
+            "description": "Kurkite, priskirkite ir sekite užduotis ūkyje."
         },
         "equipment": {
-            "title": "Technikos sekimas",
-            "description": "Stebėkite technikos naudojimą, planuokite priežiūrą ir sekite degalų sąnaudas, kad optimizuotumėte savo išteklius."
+            "title": "Įrangos sekimas",
+            "description": "Stebėkite technikos naudojimą ir sekite degalų sąnaudas."
         },
         "weather": {
-            "title": "Orų integracija",
+            "title": "Orų prognozių integracija",
             "description": "Gaukite realaus laiko orų duomenis ir prognozes jūsų laukams. Planuokite užduotis pagal optimalias oro sąlygas."
         },
         "analytics": {
-            "title": "Analitika ir ataskaitos",
+            "title": "Ataskaitos",
             "description": "Gaukite įžvalgas su išsamiomis ataskaitomis apie užduočių vykdymą, technikos naudojimą ir ūkio veiklą."
         },
         "collaboration": {
-            "title": "Komandos bendradarbiavimas",
-            "description": "Dirbkite kartu su savo komanda. Priskirkite roles, dalinkitės užduotimis ir efektyviai komunikuokite visose ūkio operacijose."
+            "title": "Ūkio darbuotojų valdymas",
+            "description": "Priskirkite roles, priskirkite užduotims rašykite komentarus prie užduočių."
         }
         },
         "howItWorks": {
         "title": "Pradėkite 4 paprastais žingsniais",
-        "subtitle": "Skaitmeninio ūkio kūrimas dar niekada nebuvo toks paprastas",
+        "subtitle": "Modernaus ūkio kūrimas dar niekada nebuvo toks paprastas",
         "step1": {
             "title": "Registracija",
-            "description": "Sukurkite paskyrą ir nustatykite savo ūkio profilį per kelias minutes"
+            "description": "Sukurkite paskyrą ir savo ūkį per kelias minutes"
         },
         "step2": {
-            "title": "Laukų kartografavimas",
-            "description": "Nubrėžkite laukų ribas ir pridėkite pasėlių informaciją naudodami mūsų intuityvų kartografavimo įrankį"
+            "title": "Laukų brėžimas",
+            "description": "Nubrėžkite laukų ribas ir pridėkite pasėlių informaciją naudodami mūsų intuityvų žemėlapių įrankį"
         },
         "step3": {
             "title": "Užduočių planavimas",
-            "description": "Kurkite ir planuokite sėjos, apdorojimo ir derliaus nuėmimo užduotis"
+            "description": "Kurkite ir planuokite sėjos, derliaus nuėmimo ir kitas užduotis"
         },
         "step4": {
             "title": "Progreso stebėjimas",
-            "description": "Stebėkite užduočių vykdymą, analizuokite ataskaitas ir optimizuokite savo veiklą"
+            "description": "Stebėkite užduočių progresą, generuokite ataskaitas ir optimizuokite savo ūkio veiklą"
         }
         },
         "pricing": {
@@ -899,24 +899,24 @@
         }
         },
         "testimonials": {
-        "title": "Ką ūkininkai sako apie ŽŪVS",
-        "subtitle": "Prisijunkite prie tūkstančių ūkininkų, kurie transformavo savo veiklą",
+        "title": "Ką ūkininkai mano apie ŽŪVS",
+        "subtitle": "Prisijunkite prie ūkininkų, kurie skaitmenizavo savo ūkio veiklą",
         "testimonial1": {
-            "role": "Grūdų augintojas, 500 ha",
+            "role": "Ūkininkas, 50 ha",
             "content": "ŽŪVS pakeitė tai, kaip valdome savo grūdų ūkį. Užduočių sekimas ir orų integracija sutaupė mums begales valandų ir pagerino derlingumą."
         },
         "testimonial2": {
-            "role": "Pieno ūkio vadovas",
-            "content": "Vien technikos sekimo funkcija atsipirko. Sumažinome priežiūros išlaidas 30% ir niekada nepraleidžiame suplanuotų aptarnavimų."
+            "role": "Ūkininkas, 200 ha",
+            "content": "ŽŪVS pakeitė tai, kaip valdome savo grūdų ūkį. Užduočių sekimas ir orų integracija sutaupė mums begales valandų ir pagerino derlingumą."
         },
         "testimonial3": {
-            "role": "Žemės ūkio kooperatyvo direktorius",
-            "content": "Kelių ūkių valdymas dar niekada nebuvo toks paprastas. Bendradarbiavimo funkcijos leidžia mūsų komandoms dirbti sklandžiai visose vietose."
+            "role": "Ūkininkas, 20 ha",
+            "content": "ŽŪVS pakeitė tai, kaip valdome savo grūdų ūkį. Užduočių sekimas ir orų integracija sutaupė mums begales valandų ir pagerino derlingumą."
         }
         },
         "cta": {
-        "title": "Pasiruošę transformuoti savo ūkį?",
-        "subtitle": "Prisijunkite prie tūkstančių ūkininkų, jau naudojančių ŽŪVS savo veiklai optimizuoti",
+        "title": "Pasiruošę pagerinti savo ūkio produktyvumą?",
+        "subtitle": "Prisijunkite prie ūkininkų, jau naudojančių ŽŪVS savo ūkio veiklai optimizuoti",
         "start": "Pradėti nemokamai",
         "contact": "Susisiekti"
         },
@@ -934,7 +934,7 @@
         "footer": {
         "about": {
             "title": "Apie ŽŪVS",
-            "description": "ŽŪVS yra išsami ūkio valdymo sistema, sukurta padėti šiuolaikiniams ūkininkams optimizuoti savo veiklą naudojant pažangias technologijas ir duomenimis pagrįstas įžvalgas."
+            "description": "ŽŪVS yra išsami ūkio valdymo sistema, sukurta padėti ūkininkams optimizuoti savo veiklą naudojant pažangias technologijas ir duomenimis pagrįstus sprendimus."
         },
         "links": {
             "title": "Nuorodos",
@@ -947,7 +947,7 @@
             "title": "Kontaktai",
             "email": "info@zuvs.lt",
             "phone": "+370 600 12345",
-            "address": "Vilnius, Lietuva"
+            "address": "Kaunas, Lietuva"
         },
         "social": {
             "title": "Sekite mus"
