@@ -46,3 +46,4 @@ Thumbs.db
 
 
 .VSCodeCounter/
+backend/prisma/migrations
