@@ -6,12 +6,12 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { toast } from 'sonner';
 import api from '@/utils/api';
-import { useTranslations } from 'next-intl'; // ✅ Add this
-import LanguageToggle from '@/app/components/LanguageToggle'; // ✅ Import Language Toggle
+import { useTranslations } from 'next-intl';
+import LanguageToggle from '@/app/components/LanguageToggle'; 
 
 const FarmCreatePage = () => {
   const router = useRouter();
-  const t = useTranslations('farm'); // ✅ Farm translations
+  const t = useTranslations('farm');
 
   const [farmName, setFarmName] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +59,6 @@ const FarmCreatePage = () => {
   return (
     <div className="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">
       
-      {/* ✅ Language Toggle in top right */}
       <div className="absolute top-0 right-0 m-4">
         <LanguageToggle />
       </div>

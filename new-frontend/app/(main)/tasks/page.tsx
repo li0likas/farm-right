@@ -13,10 +13,6 @@ import api from "@/utils/api";
 import { usePermissions } from "@/context/PermissionsContext";
 import { useTranslations } from "next-intl";
 
-// Import custom icons libraries (if needed)
-// import { FaTractor, FaSprayCan, FaSeedling, FaEye } from "react-icons/fa";
-// import { GiWheat, GiWateringCan, GiFarmTractor } from "react-icons/gi";
-
 interface Task {
     id: string;
     title: string;
@@ -92,9 +88,7 @@ const TasksPage = () => {
         setActiveTab(newStatus);
     };
 
-    // Helper to get the appropriate icon based on task type
     const getTaskTypeIcon = (typeName: string) => {
-        // Using PrimeIcons for compatibility - these are built into PrimeReact
         const typeNameLower = typeName.toLowerCase();
         if (typeNameLower.includes("harvest") || typeNameLower.includes("derlius")) return "pi pi-shopping-bag";
         if (typeNameLower.includes("spray") || typeNameLower.includes("puršk")) return "pi pi-cloud";
@@ -106,7 +100,6 @@ const TasksPage = () => {
         return "pi pi-check-square"; // Default icon
     };
 
-    // Helper to get background color for task card based on type
     const getTaskCardBg = (typeName: string) => {
         const typeNameLower = typeName.toLowerCase();
         if (typeNameLower.includes("harvest") || typeNameLower.includes("derlius")) return "bg-yellow-50";
@@ -131,7 +124,6 @@ const TasksPage = () => {
         return "text-gray-700"; // Default icon color
     };
 
-    // Translate the status name
     const getTranslatedStatus = (statusName: string) => {
         const statusKey = statusName.toLowerCase();
         return statusKey === "pending" ? taskT('taskStatusPending') :

@@ -69,13 +69,11 @@ const Dashboard = () => {
     const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null);
 
     useEffect(() => {
-        // Get user data
         const user = getUser();
         if (user) {
             setUserName(user.username || user.email?.split('@')[0] || "User");
         }
 
-        // Fetch farm details
         const fetchFarmDetails = async () => {
             const selectedFarmId = localStorage.getItem('x-selected-farm-id');
             if (selectedFarmId) {
@@ -86,7 +84,6 @@ const Dashboard = () => {
                     }
                 } catch (error) {
                     console.error("Error fetching farm details:", error);
-                    // Try to get farm name from user's farms list
                     try {
                         const farmsResponse = await api.get('/users/farms');
                         const selectedFarm = farmsResponse.data.find((farm: any) => farm.id === parseInt(selectedFarmId));
@@ -102,7 +99,6 @@ const Dashboard = () => {
 
         fetchFarmDetails();
 
-        // Get user's current location
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -113,12 +109,10 @@ const Dashboard = () => {
                 },
                 (error) => {
                     console.error("Error getting location:", error);
-                    // If location access is denied, use default coordinates (Kaunas)
                     setUserLocation({ lat: 54.8985, lng: 23.9036 });
                 }
             );
         } else {
-            // If geolocation is not supported, use default coordinates
             setUserLocation({ lat: 54.8985, lng: 23.9036 });
         }
 
@@ -145,7 +139,6 @@ const Dashboard = () => {
     }, [canReadTasks, canReadTaskStats, canReadFields, canReadAiSummary]);
 
     useEffect(() => {
-        // Fetch weather data when user location is available
         if (userLocation) {
             fetchWeatherData();
         }
@@ -223,7 +216,6 @@ const Dashboard = () => {
                 lng: userLocation.lng 
             };
             
-            // If we have fields, try to get coordinates from farm's first field instead
             try {
                 const fieldsResponse = await api.get("/fields");
                 if (fieldsResponse.data.length > 0 && fieldsResponse.data[0].boundary) {
@@ -254,7 +246,6 @@ const Dashboard = () => {
         } catch (error) {
             console.error("Failed to fetch weather data:", error);
             toast.error(dt('weatherError'));
-            // Fallback to mock data if API fails
             setWeatherData({
                 temperature: 12,
                 condition: "Unable to load weather",

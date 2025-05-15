@@ -30,13 +30,11 @@ export class FarmInvitationController {
     return this.farmInvitationService.getPendingInvitationsByEmail(user.email);
   }
 
-  // 🔍 Only verify the invitation token (no login required)
   @Get(':token/verify')
   async verifyInvitation(@Param('token') token: string) {
     return this.farmInvitationService.verifyInvitation(token);
   }
 
-  // ✅ Accept invitation (login required)
   @Post(':token')
   @UseGuards(AuthGuard('jwt'))
   async acceptInvitation(@Param('token') token: string, @Request() req) {

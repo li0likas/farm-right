@@ -39,13 +39,6 @@ async getUserPermissions(@Request() req) {
     return this.userService.getUserPermissions(userId, selectedFarmId);
 }
 
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('users/:userId/last-seen')
-  // async getLastSeenLocation(@Param('userId') userId: number) {
-  //   return this.userService.getLastSeenLocation(userId);
-  // }
-
-
 
   @Post('change-username')
   async changeUsername(@Body() data: { username: string }, @Request() req) {
@@ -62,7 +55,6 @@ async getUserPermissions(@Request() req) {
     }
   }
 
-  // this has to be last because it catches all /users/xxxx routes
   @Get(':id')
   async getUserById(@Param('id') id: string) {
     try {
@@ -75,23 +67,4 @@ async getUserPermissions(@Request() req) {
       throw new Error('Error fetching user details: ' + error.message);
     }
   }
-
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('leaderboard/top10')
-  // async getTop10UsersByPoints(@Req() req) {
-  //   const userId = req.user.id;
-  //   try {
-  //     return this.userService.getTop10UsersByPoints(userId);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // }
-
-
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('popup/:userId')
-  // async getUserPopupInfo(@Param('userId') userId: number, @Req() req): Promise<any> {
-  //   const requestingUserId = req.user.id;
-  //   return this.userService.getUserPopupInfo(parseInt(userId.toString()), requestingUserId);
-  // }
 }

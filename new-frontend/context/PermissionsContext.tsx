@@ -7,14 +7,14 @@ import { toast } from "sonner";
 interface PermissionsContextProps {
   permissions: string[];
   hasPermission: (permission: string) => boolean;
-  loading: boolean; // ✅ Global loading state
+  loading: boolean;
 }
 
 const PermissionsContext = createContext<PermissionsContextProps | undefined>(undefined);
 
 export const PermissionsProvider = ({ children }: { children: React.ReactNode }) => {
   const [permissions, setPermissions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true); // ✅ Track permission loading
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchPermissions();
@@ -27,7 +27,7 @@ export const PermissionsProvider = ({ children }: { children: React.ReactNode })
     } catch (error) {
       toast.error("Failed to load permissions.");
     } finally {
-      setLoading(false); // ✅ Mark as loaded
+      setLoading(false); 
     }
   };
 

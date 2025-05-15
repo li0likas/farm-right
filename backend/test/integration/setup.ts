@@ -1,4 +1,3 @@
-// test/integration/setup.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { TestAppModule } from './test-app.module';
@@ -9,19 +8,15 @@ import { cleanDatabase } from './helpers';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load test environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env.test') });
 
-// Keep track of initialization state
 let isInitialized = false;
 
 export async function setupIntegrationTest() {
-  // Check if we need to initialize the database
   if (!isInitialized) {
     console.log('Initializing test database...');
     
     try {
-      // Import and run the database setup function
       const setupTestDatabase = (await import('./setup-test-db')).default;
       await setupTestDatabase();
       isInitialized = true;
@@ -31,7 +26,6 @@ export async function setupIntegrationTest() {
     }
   }
   
-  // Create test application
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [TestAppModule],
   }).compile();
@@ -43,13 +37,10 @@ export async function setupIntegrationTest() {
   const prismaService = app.get<PrismaService>(PrismaService);
   const jwtService = app.get<JwtService>(JwtService);
 
-  // Clean database before tests
 
-  // Function to create test data
   async function createTestData() {
-    await cleanDatabase(prismaService); // Do this every time
+    await cleanDatabase(prismaService);
 
-    // Create roles
     const ownerRole = await prismaService.role.create({
       data: { name: 'OWNER' },
     });

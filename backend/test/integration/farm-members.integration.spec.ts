@@ -18,7 +18,6 @@ describe('Farm Members API (Integration)', () => {
     ownerToken = await testUtils.getToken(testData.owner.id, testData.owner.email);
     workerToken = await testUtils.getToken(testData.worker.id, testData.worker.email);
     
-    // Create a new user for testing member addition
     const hashedPassword = await argon2.hash('testpassword');
     
     const newUser = await prismaService.user.create({

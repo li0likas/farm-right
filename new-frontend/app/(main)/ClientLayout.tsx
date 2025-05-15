@@ -1,4 +1,3 @@
-// new-frontend/app/(main)/ClientLayout.tsx
 'use client';
 
 import React from "react";

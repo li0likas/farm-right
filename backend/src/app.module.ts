@@ -38,7 +38,6 @@ import * as Joi from 'joi';
         USER: Joi.string().optional(), // For email service
         PASSWORD: Joi.string().optional(), // For email service
         USER_PHOTO_PATH: Joi.string().optional(),
-        // Add other environment variables as needed
       }),
     }),
     AuthModule,

@@ -10,7 +10,7 @@ export class SeasonController {
 constructor(private readonly seasonService: SeasonService) {}
 
     @Get()
-    @Permissions('TASK_CREATE') // or your preferred permission
+    @Permissions('TASK_CREATE')
     async getSeasonsForSelectedFarm(@Request() req) {
         const farmId = parseInt(req.headers['x-selected-farm-id'], 10);
         if (isNaN(farmId)) throw new ForbiddenException('Invalid farm selection.');

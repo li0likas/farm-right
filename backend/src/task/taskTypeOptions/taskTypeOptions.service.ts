@@ -12,11 +12,11 @@ export class TaskTypeOptionsService {
 
     async getTaskTypeNameById(id: number): Promise<string> {
         const taskType = await this.prisma.taskTypeOptions.findUnique({
-          where: { id: Number(id) }, // Ensure id is an integer
+          where: { id: Number(id) },
         });
         if (!taskType) {
           throw new NotFoundException(`Task type with id ${id} not found`);
         }
-        return taskType.name; // Return only the name property
+        return taskType.name;
       }
 }

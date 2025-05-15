@@ -56,7 +56,6 @@ const TaskCreatePage = () => {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [isRecommendedDateUsed, setIsRecommendedDateUsed] = useState(false);
 
-  // Check for specific permissions
   const canCreateTasks = hasPermission("TASK_CREATE");
 
   useEffect(() => {
@@ -76,7 +75,6 @@ const TaskCreatePage = () => {
   }, [canCreateTasks]);
 
   useEffect(() => {
-    // Fetch field name if coming from field page
     if (fieldIdFromUrl && canCreateTasks) {
       fetchFieldName();
     }
@@ -92,11 +90,9 @@ const TaskCreatePage = () => {
   
         if (parsed.fieldId) setTaskField(parsed.fieldId);
   
-        // Set "Spraying" task type if available
         const spraying = taskTypeOptions.find((t: { label: string; value: number }) => t.label.toLowerCase().includes("purškimas"));
         if (spraying) setTaskType(spraying.value);
   
-        // Set "Pending" task status if available
         const pending = taskStatusOptions.find(s => s.label.toLowerCase() === "pending");
         if (pending) setTaskStatus(pending.value);
   
@@ -118,7 +114,6 @@ const TaskCreatePage = () => {
     }
   };
 
-  // Fetch dropdown options for fields, task types, and statuses
   const fetchOptions = async () => {
     try {
       const promises = [
@@ -126,20 +121,17 @@ const TaskCreatePage = () => {
         api.get("/task-status-options")
       ];
       
-      // Only fetch fields if not coming from field detail page
       if (!fieldIdFromUrl) {
         promises.push(api.get("/fields"));
       }
       
       const responses = await Promise.all(promises);
       
-      // Set task types (first response)
       setTaskTypeOptions(responses[0].data.map((type: any) => ({ 
         label: type.name, 
         value: type.id 
       })));
       
-      // Set task statuses (second response)
       setTaskStatusOptions(
         responses[1].data
           .filter((option: any) => option.name.toLowerCase() !== "canceled")
@@ -149,7 +141,6 @@ const TaskCreatePage = () => {
           }))
       );
       
-      // Set field options if we fetched them (third response)
       if (!fieldIdFromUrl && responses[2]) {
         setTaskFieldOptions(responses[2].data.map((field: any) => ({ 
           label: field.name, 
@@ -161,7 +152,6 @@ const TaskCreatePage = () => {
     }
   };
 
-  // Fetch weather insights and optimal task time
   const fetchWeatherInsights = async (lat: number, lon: number) => {
     setLoadingOptimalDate(true);
     try {
@@ -185,7 +175,7 @@ const TaskCreatePage = () => {
       setSeasonOptions(res.data.map((season: any) => ({
         label: season.name,
         value: season.id,
-        ...season, // keep startDate, endDate for validation
+        ...season, 
       })));
   
       if (res.data.length > 0) setSelectedSeason(res.data[0].id);
@@ -211,7 +201,6 @@ const TaskCreatePage = () => {
       const response = await api.get(`/fields/${taskField}`);
       const boundary = response.data.boundary;
       
-      // Check if boundary exists and has the proper structure
       if (boundary?.geometry?.coordinates?.[0]?.[0]) {
         const [lon, lat] = boundary.geometry.coordinates[0][0];
         console.log("Successfully extracted coordinates:", lon, lat);
@@ -233,8 +222,6 @@ const TaskCreatePage = () => {
     }
   }, [taskType, dueDate, taskField, taskStatus]);
 
-
-  // Form Validation
   const validateForm = () => {
     if (!taskDescription || !taskStatus || !taskField || !taskType || !selectedEquipment.length || !selectedSeason) {
       toast.warning(ct('requiredFieldsWarning') || "Please fill in all required fields.");
@@ -311,7 +298,6 @@ const TaskCreatePage = () => {
     }
   };
 
-   // Voice recording
    const startVoiceRecognition = () => {
     if (!("webkitSpeechRecognition" in window)) {
       toast.error(ct('browserSupportError') || "Speech recognition not supported in this browser.");
@@ -340,7 +326,6 @@ const TaskCreatePage = () => {
     recognition.start();
   };
 
-  // Stop voice recognition
   const stopVoiceRecognition = () => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
@@ -349,7 +334,6 @@ const TaskCreatePage = () => {
     }
   };
 
-  // Send raw text to AI for refinement
   const refineDescriptionWithAI = async (rawText: string) => {
     setLoadingAI(true);
     try {
@@ -362,7 +346,6 @@ const TaskCreatePage = () => {
     setLoadingAI(false);
   };
 
-  // Handle translation of task status options
   const getTranslatedStatusOptions = () => {
     if (!taskStatusOptions.length) return [];
     

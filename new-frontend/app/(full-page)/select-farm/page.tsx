@@ -12,7 +12,7 @@ import LanguageToggle from '@/app/components/LanguageToggle';
 
 const SelectFarmPage = () => {
     const router = useRouter();
-    const t = useTranslations('login'); // Reusing translations from login
+    const t = useTranslations('login');
     const { layoutConfig } = useContext(LayoutContext);
 
     const [farms, setFarms] = useState([]);

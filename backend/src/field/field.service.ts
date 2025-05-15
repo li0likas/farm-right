@@ -16,7 +16,7 @@ export class FieldService {
   async findAll(userId: number, selectedFarmId: number): Promise<Field[]> {
     return this.prisma.field.findMany({
       where: {
-        farmId: selectedFarmId, // Ensure fields belong to the selected farm
+        farmId: selectedFarmId,
       },
       include: {
         crop: true,
@@ -29,7 +29,7 @@ export class FieldService {
     return this.prisma.field.findFirst({
       where: { 
         id, 
-        farmId: selectedFarmId, // Ensure field belongs to selected farm
+        farmId: selectedFarmId,
       },
       include: {
         crop: true,
@@ -42,7 +42,7 @@ export class FieldService {
     return this.prisma.field.update({
       where: { 
         id,
-        farmId: selectedFarmId, // Ensure field belongs to selected farm
+        farmId: selectedFarmId,
       },
       data,
     });
@@ -50,7 +50,7 @@ export class FieldService {
 
   async delete(id: number, selectedFarmId: number): Promise<Field | null> {
     const field = await this.prisma.field.findFirst({ 
-      where: { id, farmId: selectedFarmId }, // Ensure field belongs to selected farm
+      where: { id, farmId: selectedFarmId },
     });
   
     if (!field) {

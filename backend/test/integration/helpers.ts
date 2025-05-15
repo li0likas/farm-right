@@ -1,15 +1,8 @@
-// test/integration/helpers.ts
 
-/**
- * Cleans up the database by truncating all tables
- * Preserves the database schema while removing all data
- */
 export async function cleanDatabase(prisma) {
   try {
-    // Disable foreign key constraints for the cleanup
     await prisma.$executeRaw`SET session_replication_role = 'replica';`;
     
-    // Execute deletion in the correct order to respect foreign key constraints
     await prisma.$transaction([
       prisma.taskParticipant.deleteMany({}),
       prisma.taskEquipment.deleteMany({}),
@@ -31,7 +24,6 @@ export async function cleanDatabase(prisma) {
       prisma.equipmentTypeOptions.deleteMany({}),
     ]);
     
-    // Re-enable foreign key constraints
     await prisma.$executeRaw`SET session_replication_role = 'origin';`;
     
     console.log('Database cleaned successfully');

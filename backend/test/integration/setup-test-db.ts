@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv';
 
 const result = dotenv.config({ path: '.env.test' });
-console.log(result); // Check if { error, parsed } looks correct
+console.log(result);
 
 import { PrismaClient } from '@prisma/client';
 import { exec } from 'child_process';
@@ -26,7 +26,7 @@ async function setupTestDatabase() {
   }
   
   const dbUrl = new URL(databaseUrl);
-  const dbName = dbUrl.pathname.replace('/', ''); // "farm-right-test-db"
+  const dbName = dbUrl.pathname.replace('/', '');
 
   console.log(`Setting up test database: ${dbName}`);
   

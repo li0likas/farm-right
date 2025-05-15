@@ -56,11 +56,9 @@ const CreateEquipmentPage = () => {
         }
     };
 
-    // Function to get localized type name
     const getLocalizedTypeName = (type: EquipmentType) => {
         const translationKey = `types.${type.name}`;
         const translation = e(translationKey);
-        // If translation doesn't exist, return original name
         return translation !== translationKey ? translation : type.name;
     };
 

@@ -64,14 +64,12 @@ const TaskPage = () => {
   const taskId = Number(pathname.split("/").pop());
   const { hasPermission } = usePermissions();
 
-  // Load translations
   const t = useTranslations('common');
   const taskT = useTranslations('tasks');
   const fieldT = useTranslations('fields');
   const weatherT = useTranslations('weather');
   const equipmentT = useTranslations('equipment');
 
-  // State variables
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentContent, setCommentContent] = useState("");
@@ -91,12 +89,10 @@ const TaskPage = () => {
   const [weatherData, setWeatherData] = useState<any>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
 
-  // Task status flags
   const isCompleted = task?.status.name === "Completed";
   const isCanceled = task?.status.name === "Canceled";
   const isPending = task?.status.name === "Pending";
 
-  // Permission checks
   const canReadTasks = hasPermission("TASK_READ");
   const canComment = hasPermission("FIELD_TASK_COMMENT_CREATE");
   const canDeleteComment = hasPermission("FIELD_TASK_COMMENT_DELETE");
@@ -109,7 +105,6 @@ const TaskPage = () => {
   const canReadParticipants = hasPermission("TASK_READ_PARTICIPANTS");
   const canChangeStatus = hasPermission("TASK_CHANGE_STATUS");
 
-  // Load data on component mount
   useEffect(() => {
     if (!canReadTasks || !taskId) return;
     
@@ -190,7 +185,6 @@ const TaskPage = () => {
     try {
       const allEquipmentRes = await api.get("/equipment");
 
-      // Exclude already assigned
       const assignedIds = new Set((existingEquipmentList || equipment).map((e) => e.id));
       const available = allEquipmentRes.data
         .filter((equip: any) => !assignedIds.has(equip.id))
@@ -405,7 +399,6 @@ const TaskPage = () => {
   };
 
   const getTaskTypeIcon = (typeName: string) => {
-    // Using PrimeIcons for compatibility - these are built into PrimeReact
     const typeNameLower = typeName.toLowerCase();
     if (typeNameLower.includes("harvest") || typeNameLower.includes("derlius")) return "pi pi-shopping-bag";
     if (typeNameLower.includes("spray") || typeNameLower.includes("puršk")) return "pi pi-cloud";
@@ -414,7 +407,7 @@ const TaskPage = () => {
     if (typeNameLower.includes("plant") || typeNameLower.includes("sėj") || typeNameLower.includes("sod")) return "pi pi-inbox";
     if (typeNameLower.includes("inspect") || typeNameLower.includes("tikrin")) return "pi pi-search";
     if (typeNameLower.includes("maint") || typeNameLower.includes("prieži")) return "pi pi-wrench";
-    return "pi pi-check-square"; // Default icon
+    return "pi pi-check-square";
   };
 
   const getTaskTypeColor = (typeName: string) => {
@@ -426,7 +419,7 @@ const TaskPage = () => {
     if (typeNameLower.includes("plant") || typeNameLower.includes("sėj") || typeNameLower.includes("sod")) return "bg-teal-100 text-teal-800";
     if (typeNameLower.includes("inspect") || typeNameLower.includes("tikrin")) return "bg-purple-100 text-purple-800";
     if (typeNameLower.includes("maint") || typeNameLower.includes("prieži")) return "bg-indigo-100 text-indigo-800";
-    return "bg-gray-100 text-gray-800"; // Default color
+    return "bg-gray-100 text-gray-800";
   };
 
   const getFormattedDate = (dateString?: string) => {

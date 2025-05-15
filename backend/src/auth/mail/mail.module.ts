@@ -5,7 +5,6 @@ import { ConfigService, ConfigModule } from '@nestjs/config';
 import { MailService } from './mail.service';
 import { join } from 'path';
 
-// 🔥 Add this
 const isProd = process.env.NODE_ENV === 'production';
 const templatesDir = isProd
   ? join(__dirname, 'templates')
@@ -31,7 +30,7 @@ const templatesDir = isProd
           from: config.get<string>('email.from') || '"No Reply" <noreply@gmail.com>',
         },
         template: {
-          dir: templatesDir, // 🔥 Use the dynamic path here
+          dir: templatesDir,
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,

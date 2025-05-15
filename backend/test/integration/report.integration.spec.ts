@@ -1,4 +1,3 @@
-// test/integration/report.integration.spec.ts
 import * as request from 'supertest';
 import { setupIntegrationTest } from './setup';
 
@@ -19,7 +18,6 @@ describe('Report API (Integration)', () => {
     ownerToken = await testUtils.getToken(testData.owner.id, testData.owner.email);
     workerToken = await testUtils.getToken(testData.worker.id, testData.worker.email);
     
-    // Create test equipment
     const equipment = await prismaService.equipment.create({
       data: {
         name: 'Report Test Tractor',
@@ -30,21 +28,19 @@ describe('Report API (Integration)', () => {
     });
     equipmentId = equipment.id;
     
-    // Create a completed task for reports
     const task = await prismaService.task.create({
       data: {
         description: 'Task for report testing',
         typeId: testData.taskTypes[0].id,
-        statusId: testData.taskStatuses[0].id, // Completed
+        statusId: testData.taskStatuses[0].id,
         fieldId: testData.field.id,
         seasonId: testData.season.id,
         completionDate: new Date(),
-        createdAt: new Date(Date.now() - 3600000), // 1 hour ago
+        createdAt: new Date(Date.now() - 3600000), 
       }
     });
     taskId = task.id;
     
-    // Add worker as participant
     const farmMember = await prismaService.farmMember.findFirst({
       where: { 
         userId: testData.worker.id,
@@ -60,7 +56,6 @@ describe('Report API (Integration)', () => {
       }
     });
     
-    // Add equipment usage
     await prismaService.taskEquipment.create({
       data: {
         taskId,
@@ -92,7 +87,6 @@ describe('Report API (Integration)', () => {
           expect(res.body).toHaveProperty('groupedByField');
           expect(res.body).toHaveProperty('groupedByType');
           
-          // Should have at least one completed task
           expect(res.body.completedTasks).toBeGreaterThan(0);
         });
     });
@@ -110,7 +104,6 @@ describe('Report API (Integration)', () => {
           expect(Array.isArray(res.body)).toBe(true);
           expect(res.body.length).toBeGreaterThan(0);
           
-          // Find our test equipment
           const equipmentReport = res.body.find(e => e.id === equipmentId);
           expect(equipmentReport).toBeDefined();
           expect(equipmentReport.totalTasks).toBe(1);
@@ -132,7 +125,6 @@ describe('Report API (Integration)', () => {
           expect(Array.isArray(res.body)).toBe(true);
           expect(res.body.length).toBeGreaterThan(0);
           
-          // Find worker data
           const workerReport = res.body.find(m => m.username === testData.worker.username);
           expect(workerReport).toBeDefined();
           expect(workerReport.taskCount).toBeGreaterThan(0);

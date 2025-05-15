@@ -29,8 +29,6 @@ const ResetPasswordPage = () => {
 
   const verifyToken = async () => {
     try {
-      // In a real app, you might want to verify the token with the backend
-      // For now, we'll assume the token is valid if it exists
       if (token) {
         setTokenValid(true);
       } else {

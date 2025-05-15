@@ -16,7 +16,6 @@ export class WeatherService {
     private aiService: AiService,
     private configService: ConfigService
   ) {
-    // Get all weather-related config in constructor
     this.apiKey = this.configService.get<string>('weather.apiKey');
     this.forecastUrl = this.configService.get<string>('weather.forecastUrl');
     this.currentWeatherUrl = this.configService.get<string>('weather.currentWeatherUrl');
@@ -82,7 +81,7 @@ export class WeatherService {
 
   getOptimalDate(weatherData: any, dueDate: string, taskType: number): string | null {
     const forecasts = weatherData.list
-      .filter((f: any) => f.dt_txt <= dueDate) // Filter by dueDate
+      .filter((f: any) => f.dt_txt <= dueDate)
       .map((f: any) => ({
         dateTime: f.dt_txt,
         windSpeed: f.wind.speed,

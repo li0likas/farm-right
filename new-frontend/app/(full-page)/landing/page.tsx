@@ -180,7 +180,6 @@ const LandingPage = () => {
             toast.error(t('contact.fillFields'));
             return;
         }
-        // Here you would implement actual contact form submission
         toast.success(t('contact.success'));
         setShowContactDialog(false);
         setContactEmail('');

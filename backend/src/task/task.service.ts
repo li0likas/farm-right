@@ -10,7 +10,6 @@ export class TaskService {
   async create(data: CreateTaskDto, farmId: number): Promise<Task> {
     const { fieldId, typeId, description, dueDate, completionDate, statusId, seasonId, equipmentIds } = data;
   
-    // Ensure the field belongs to the selected farm
     const fieldExists = await this.prisma.field.findFirst({
       where: { id: fieldId, farmId },
     });
@@ -19,7 +18,6 @@ export class TaskService {
       throw new NotFoundException(`Field with id ${fieldId} not found in the selected farm`);
     }
   
-    // Ensure all selected equipment belongs to the farm
     if (equipmentIds && equipmentIds.length > 0) {
       const validEquipment = await this.prisma.equipment.findMany({
         where: {
@@ -124,12 +122,11 @@ export class TaskService {
   }
 
   async changeTaskStatus(id: number, newStatusId: number, farmId: number): Promise<Task> {
-    // Ensure the task belongs to the selected farm
     const task = await this.prisma.task.findFirst({
       where: {
         id,
         field: {
-          farmId, // ✅ Ensure task's field belongs to the selected farm
+          farmId,
         },
       },
     });
@@ -146,7 +143,6 @@ export class TaskService {
   
 
   async findAllTasksForField(fieldId: number, farmId: number): Promise<Task[]> {
-    // Ensure field exists within the selected farm
     const field = await this.prisma.field.findFirst({
       where: { id: fieldId, farmId },
     });
@@ -166,7 +162,6 @@ export class TaskService {
   }
 
   async createTaskForField(fieldId: number, data: CreateTaskDto, farmId: number): Promise<Task> {
-    // Ensure the field belongs to the selected farm
     const field = await this.prisma.field.findFirst({
       where: { id: fieldId, farmId },
     });
@@ -184,7 +179,6 @@ export class TaskService {
   }
 
   async updateTaskForField(fieldId: number, taskId: number, data: Partial<Task>, farmId: number): Promise<Task> {
-    // Ensure the field exists in the selected farm
     const field = await this.prisma.field.findFirst({
       where: { id: fieldId, farmId },
     });
@@ -200,7 +194,6 @@ export class TaskService {
   }
 
   async deleteTaskForField(fieldId: number, taskId: number, farmId: number): Promise<Task | null> {
-    // Ensure the field exists in the selected farm
     const field = await this.prisma.field.findFirst({
       where: { id: fieldId, farmId },
     });
@@ -209,7 +202,6 @@ export class TaskService {
       throw new NotFoundException(`Field with id ${fieldId} not found in the selected farm.`);
     }
   
-    // Ensure the task belongs to the field and farm before deleting
     const task = await this.prisma.task.findUnique({
       where: { id: taskId, fieldId },
     });
@@ -299,13 +291,12 @@ export class TaskService {
     minutesWorked: number,
     equipmentData: { [equipmentId: number]: number }
   ) {
-    // Fetch the task and related data
     const task = await this.prisma.task.findUnique({
       where: { id: taskId },
       include: {
         participants: true,
         equipments: true,
-        field: true, // Needed to verify farm ownership
+        field: true,
       },
     });
 
@@ -313,7 +304,6 @@ export class TaskService {
       throw new NotFoundException('Task not found in selected farm');
     }
 
-    // Get the status ID for 'Completed' dynamically
     const completedStatus = await this.prisma.taskStatusOptions.findFirst({
       where: { name: 'Completed' },
     });
@@ -322,7 +312,6 @@ export class TaskService {
       throw new Error('Task status "Completed" not found');
     }
 
-    // Update the task with completed status
     await this.prisma.task.update({
       where: { id: taskId },
       data: {
@@ -331,7 +320,6 @@ export class TaskService {
       },
     });
 
-    // Update minutes worked for each participant
     for (const participant of task.participants) {
       await this.prisma.taskParticipant.update({
         where: {
@@ -346,7 +334,6 @@ export class TaskService {
       });
     }
 
-    // Update equipment usage
     for (const equipment of task.equipments) {
       const fuelUsed = equipmentData[equipment.equipmentId] ?? null;
       await this.prisma.taskEquipment.update({

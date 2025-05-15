@@ -6,7 +6,6 @@ interface GoogleMapComponentProps {
   boundary?: any;
 }
 
-// Memoized constants
 const containerStyle = {
   width: '100%',
   height: '300px'
@@ -32,7 +31,6 @@ const polygonOptions = {
 const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ center, boundary }) => {
   const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   
-  // Memoized polygon paths
   const polygonPaths = useMemo(() => {
     if (!boundary) return [];
     
@@ -49,7 +47,6 @@ const GoogleMapComponent: React.FC<GoogleMapComponentProps> = ({ center, boundar
     return coordinates.map(coord => ({ lat: coord[1], lng: coord[0] }));
   }, [boundary]);
   
-  // Only render polygon if we have at least 3 points
   const shouldRenderPolygon = polygonPaths.length >= 3;
 
   return (

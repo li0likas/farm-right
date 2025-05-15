@@ -13,7 +13,6 @@ interface GoogleMapDrawProps {
   resetTrigger?: number;
 }
 
-// Memoized constants
 const containerStyle = { width: "100%", height: "500px" };
 
 const googleMapOptions = {
@@ -25,7 +24,6 @@ const googleMapOptions = {
   gestureHandling: "cooperative",
 };
 
-// Helper function to extract polygon paths
 const extractPolygonPaths = (boundary: any): { lat: number; lng: number }[] => {
   if (!boundary) return [];
   
@@ -46,7 +44,6 @@ const extractPolygonPaths = (boundary: any): { lat: number; lng: number }[] => {
   }
 };
 
-// Memoized field component
 const ExistingFieldPolygon = memo(({ field, emptyIcon }: { field: any; emptyIcon: any }) => {
   const paths = useMemo(() => extractPolygonPaths(field.boundary), [field.boundary]);
   
@@ -118,7 +115,6 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
   const googleMapsRef = useRef<any>(null);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
 
-  // Create icons only when Google Maps is loaded
   const emptyIcon = useMemo(() => {
     if (googleApiLoaded && window.google?.maps?.Size) {
       return {
@@ -139,7 +135,6 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
     return null;
   }, [googleApiLoaded]);
 
-  // Memoized calculations
   const calculateBounds = useCallback((fieldsToFit: any[], map: google.maps.Map) => {
     if (!googleApiLoaded || !googleMapsRef.current || !map) return;
 
@@ -167,7 +162,6 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
 
     const coords = path.map(p => [p.lng, p.lat]) as [number, number][];
     
-    // Only create polygon if we have at least 3 points
     if (coords.length >= 3) {
       const closedCoords = [...coords, coords[0]];
       const turfPoly = turfPolygon([closedCoords]);
@@ -181,13 +175,12 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
         position: lastPoint,
       });
     } else {
-      // For less than 3 points, just calculate the line length
       const turfLine = lineString(coords);
       const perimeterM = turfLength(turfLine, { units: "meters" });
       
       const lastPoint = path[path.length - 1];
       setLiveMeasurement({
-        area: 0, // No area for incomplete polygon
+        area: 0,
         perimeter: perimeterM,
         position: lastPoint,
       });
@@ -294,14 +287,12 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
     }
   }, [resetTrigger, handleCancelDrawing]);
 
-  // Memoized map load handler
   const handleMapLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
     googleMapsRef.current = window.google;
     setGoogleApiLoaded(true);
   }, []);
 
-  // Memoized polygon options
   const polygonOptions = useMemo(() => ({
     fillColor: "#2196F3",
     fillOpacity: 0.4,
@@ -367,7 +358,6 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
             />
           )}
 
-          {/* Manual point markers - only show when polygon isn't created yet */}
           {drawingPath.length > 0 && drawingPath.length < 3 && !polygonCreated && markerIcon && drawingPath.map((point, index) => (
             <Marker
               key={`manual-point-${index}`}
@@ -377,17 +367,6 @@ const GoogleMapDraw: React.FC<GoogleMapDrawProps> = ({
           ))}
         </GoogleMap>
       </LoadScript>
-
-      {/* Floating Measurement Card */}
-      {/* {liveMeasurement && (
-        <Card
-          className="absolute top-4 right-4 shadow-2 p-3 text-sm"
-          title={t('currentMeasurement')}
-        >
-          <div><strong>{t('area')}:</strong> {liveMeasurement.area.toFixed(2)} ha</div>
-          <div><strong>{t('perimeter')}:</strong> {liveMeasurement.perimeter.toFixed(2)} m</div>
-        </Card>
-      )} */}
     </div>
   );
 };

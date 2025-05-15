@@ -91,14 +91,12 @@ const Fields = () => {
   const filterFields = () => {
     let filtered = [...fields];
 
-    // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(field =>
         field.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Filter by crop type
     if (selectedCrop) {
       filtered = filtered.filter(field => field.cropId === selectedCrop);
     }
@@ -112,7 +110,6 @@ const Fields = () => {
     const cropName = field.crop.name;
     let color = 'primary';
     
-    // Assign colors based on crop type (example logic)
     if (cropName.toLowerCase().includes('wheat')) color = 'warning';
     else if (cropName.toLowerCase().includes('corn')) color = 'success';
     else if (cropName.toLowerCase().includes('soy')) color = 'info';
@@ -239,12 +236,10 @@ const Fields = () => {
       <div className="col-12 my-2">
         <Card className="shadow-2 border-round-lg">
           <div className="grid">
-            {/* Map on the left (1/3 width) */}
             <div className="col-12 md:col-4 flex align-items-center justify-content-center p-0 overflow-hidden" style={{ height: '200px' }}>
               <GoogleMapComponent center={center} boundary={field.boundary} />
             </div>
             
-            {/* Details on the right (2/3 width) */}
             <div className="col-12 md:col-8 flex flex-column p-3">
               <div className="flex align-items-center mb-3">
                 <h3 className="text-xl font-semibold m-0 text-primary flex-1">{field.name}</h3>

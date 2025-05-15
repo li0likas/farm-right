@@ -1,4 +1,3 @@
-// new-frontend/app/(main)/crop-health/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -28,7 +27,6 @@ const CropHealthPage = () => {
   const router = useRouter();
   const { hasPermission } = usePermissions();
   
-  // Get translations
   const t = useTranslations('common');
   const ch = useTranslations('cropHealth');
 
@@ -72,7 +70,7 @@ const CropHealthPage = () => {
   const handleImagePreview = (file: File) => {
     setUploadedFile(file);
     setUploadedFileName(file.name);
-    setResult(null); // Clear previous results
+    setResult(null); 
 
     const reader = new FileReader();
     reader.onloadend = () => {

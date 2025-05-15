@@ -6,7 +6,7 @@ import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Dropdown } from 'primereact/dropdown';
 import { toast } from 'sonner';
-import { useTranslations } from 'next-intl'; // ✅ Add this
+import { useTranslations } from 'next-intl';
 import api from '@/utils/api';
 
 interface InvitationFormProps {

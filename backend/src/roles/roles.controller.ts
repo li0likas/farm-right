@@ -10,7 +10,7 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
-  @Permissions('PERMISSION_READ', 'FARM_MEMBER_UPDATE_ROLE') // Allow both permissions
+  @Permissions('PERMISSION_READ', 'FARM_MEMBER_UPDATE_ROLE')
   async getAllRoles(@Request() req) {
     const selectedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
     if (isNaN(selectedFarmId)) {
@@ -38,7 +38,7 @@ export class RolesController {
   ) {
     const parsedRoleId = parseInt(roleId, 10);
     const parsedPermissionId = parseInt(body.permissionId, 10);
-    const parsedFarmId = parseInt(req.headers['x-selected-farm-id'], 10); // Use farmId from header
+    const parsedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
 
     if (isNaN(parsedRoleId) || isNaN(parsedPermissionId) || isNaN(parsedFarmId)) {
       throw new HttpException('Invalid roleId, permissionId, or farmId', HttpStatus.BAD_REQUEST);
@@ -56,7 +56,7 @@ export class RolesController {
   ) {
     const parsedRoleId = parseInt(roleId, 10);
     const parsedPermissionId = parseInt(permissionId, 10);
-    const parsedFarmId = parseInt(req.headers['x-selected-farm-id'], 10); // Use farmId from header
+    const parsedFarmId = parseInt(req.headers['x-selected-farm-id'], 10);
 
     if (isNaN(parsedRoleId) || isNaN(parsedPermissionId) || isNaN(parsedFarmId)) {
       throw new HttpException('Invalid roleId, permissionId, or farmId', HttpStatus.BAD_REQUEST);

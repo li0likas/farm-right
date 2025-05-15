@@ -103,10 +103,8 @@ describe('SeasonService', () => {
     });
   });
 
-  // These methods don't exist in the current implementation but would be good to add
   describe('createSeason', () => {
     it('should create a new season for a farm', async () => {
-      // This is a test for a method that would need to be implemented
       const farmId = 1;
       const newSeason = {
         name: 'Season 2025',
@@ -118,20 +116,12 @@ describe('SeasonService', () => {
       const createdSeason = { id: 3, ...newSeason };
       
       mockPrismaService.season.create.mockResolvedValue(createdSeason);
-      
-      // Assuming we add this method to the service
-      // const result = await service.createSeason(newSeason);
-      
-      // expect(mockPrismaService.season.create).toHaveBeenCalledWith({
-      //   data: newSeason,
-      // });
-      // expect(result).toEqual(createdSeason);
+
     });
   });
 
   describe('findById', () => {
     it('should return a season by id', async () => {
-      // This is a test for a method that would need to be implemented
       const seasonId = 1;
       const farmId = 1;
       const mockSeason = {
@@ -144,13 +134,6 @@ describe('SeasonService', () => {
       
       mockPrismaService.season.findUnique.mockResolvedValue(mockSeason);
       
-      // Assuming we add this method to the service
-      // const result = await service.findById(seasonId, farmId);
-      
-      // expect(mockPrismaService.season.findUnique).toHaveBeenCalledWith({
-      //   where: { id: seasonId, farmId },
-      // });
-      // expect(result).toEqual(mockSeason);
     });
   });
 });

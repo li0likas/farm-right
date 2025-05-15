@@ -68,7 +68,6 @@ const FieldViewPage = () => {
     const [loading, setLoading] = useState(true);
     const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
     const [weatherLoading, setWeatherLoading] = useState(false);
-    const [soilData, setSoilData] = useState<any>(null);
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [statistics, setStatistics] = useState({
         totalTasks: 0,
@@ -91,17 +90,14 @@ const FieldViewPage = () => {
     }, [fieldId, canRead, canViewTasks]);
 
     useEffect(() => {
-        // Filter tasks when season selection changes
         if (tasks.length > 0) {
             filterTasksBySeason(tasks, selectedSeasonId);
         }
     }, [selectedSeasonId, tasks]);
 
     useEffect(() => {
-        // Fetch weather data when field info is loaded
         if (fieldInfo?.boundary) {
             fetchWeatherData();
-            fetchSoilData();
         }
     }, [fieldInfo]);
 
@@ -129,7 +125,6 @@ const FieldViewPage = () => {
             setTasks(sortedTasks);
             filterTasksBySeason(sortedTasks, selectedSeasonId);
             
-            // Calculate task statistics
             const stats = {
                 totalTasks: sortedTasks.length,
                 completedTasks: sortedTasks.filter((t: { status: { name: string; }; }) => t.status.name === "Completed").length,
@@ -190,18 +185,6 @@ const FieldViewPage = () => {
         }
     };
 
-    const fetchSoilData = async () => {
-        // This would be a real API call in production
-        // Simulating soil data for demonstration purposes
-        setSoilData({
-            type: "Clay Loam",
-            ph: 6.5,
-            organicMatter: "Medium (2-4%)",
-            fertility: "Good",
-            drainage: "Moderate",
-            lastTested: "2024-01-15"
-        });
-    };
 
     const handleDeleteField = async () => {
         try {
@@ -219,7 +202,6 @@ const FieldViewPage = () => {
         const cropName = field.crop.name;
         let color = 'primary';
         
-        // Assign colors based on crop type (example logic)
         if (cropName.toLowerCase().includes('wheat')) color = 'warning';
         else if (cropName.toLowerCase().includes('corn')) color = 'success';
         else if (cropName.toLowerCase().includes('soy')) color = 'info';
@@ -243,31 +225,6 @@ const FieldViewPage = () => {
         }
     };
 
-    const getSoilQualityIndicator = (value: string | number, type: string) => {
-        let status = 'warning';
-        let icon = 'pi-exclamation-circle';
-        
-        // Logic to determine soil quality indicators (examples)
-        if (type === 'ph') {
-            const ph = Number(value);
-            if (ph >= 6.0 && ph <= 7.5) status = 'success';
-            else if ((ph >= 5.5 && ph < 6.0) || (ph > 7.5 && ph <= 8.0)) status = 'warning';
-            else status = 'danger';
-        } else if (type === 'organicMatter') {
-            if (value.toString().includes('High')) status = 'success';
-            else if (value.toString().includes('Medium')) status = 'warning';
-            else status = 'danger';
-        } else if (type === 'fertility' || type === 'drainage') {
-            if (value === 'Good' || value === 'Excellent') {
-                status = 'success';
-                icon = 'pi-check-circle';
-            }
-            else if (value === 'Moderate') status = 'warning';
-            else status = 'danger';
-        }
-        
-        return <i className={`pi ${icon} text-${status} ml-2`} style={{ fontSize: '1rem' }}></i>;
-    };
 
     const getFieldCenter = () => {
         if (fieldInfo?.boundary?.geometry?.coordinates?.[0]?.[0]) {

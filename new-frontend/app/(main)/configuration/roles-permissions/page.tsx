@@ -1,4 +1,3 @@
-// new-frontend/app/(main)/configuration/roles-permissions/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -107,7 +106,6 @@ const RolesPermissionsPage = () => {
     
     setSaving(true);
     try {
-      // Process all changes in parallel
       await Promise.all(
         Object.entries(unsavedChanges).map(([permissionId, action]) => {
           if (action === 'add') {
@@ -121,11 +119,9 @@ const RolesPermissionsPage = () => {
       toast.success(r('changesSaved'));
       setUnsavedChanges({});
       
-      // Refresh data
       const updatedRoles = await api.get('/roles');
       setRoles(updatedRoles.data);
       
-      // Update selected role
       const updatedRole = updatedRoles.data.find(r => r.id === selectedRole.id);
       if (updatedRole) {
         setSelectedRole(updatedRole);
@@ -139,7 +135,6 @@ const RolesPermissionsPage = () => {
     }
   };
 
-  // Group permissions by category
   const groupedPermissions = permissions.reduce((groups, perm) => {
     const [group] = perm.name.split('_');
     if (!groups[group]) groups[group] = [];
@@ -147,7 +142,6 @@ const RolesPermissionsPage = () => {
     return groups;
   }, {});
 
-  // Filter permissions based on search
   const filterPermissions = (perms) => {
     if (!filter) return perms;
     return perms.filter(p => 
@@ -156,7 +150,6 @@ const RolesPermissionsPage = () => {
     );
   };
 
-  // Create permission category tabs
   const permissionTabs = Object.entries(groupedPermissions).map(([group, perms], index) => ({
     title: r(`permissionGroups.${group}`) || group,
     content: filterPermissions(perms),

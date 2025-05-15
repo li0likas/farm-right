@@ -11,7 +11,7 @@ export const metadata: Metadata = {
         title: "ŽŪVS",
         url: "https://zuvs.lt/",
         description: "ŽŪVS – žemės ūkio valdymo sistema",
-        images: ["/images/og-image.png"], // Update with your actual image
+        images: ["/images/og-image.png"],
         ttl: 604800,
     },
     icons: {

@@ -1,4 +1,3 @@
-// test/integration/business-process.integration.spec.ts
 import * as request from 'supertest';
 import { setupIntegrationTest } from './setup';
 

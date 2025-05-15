@@ -130,7 +130,6 @@ const InvitationPage = () => {
   return (
     <div className="surface-ground flex justify-content-center align-items-center min-h-screen relative">
 
-      {/* ✅ Language Toggle */}
       <div className="absolute top-0 right-0 m-4">
         <LanguageToggle />
       </div>

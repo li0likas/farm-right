@@ -4,11 +4,11 @@
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { Button } from 'primereact/button';
-import { useTranslations } from 'next-intl'; // ✅ Added
+import { useTranslations } from 'next-intl';
 
 const ErrorPage = () => {
     const router = useRouter();
-    const t = useTranslations('errorPage'); // ✅ Create small "errorPage" section
+    const t = useTranslations('errorPage');
 
     return (
         <div className="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">

@@ -35,7 +35,6 @@ export class ReportService {
       return acc;
     }, {} as Record<string, number>);
   
-    // 🕓 Average completion time in minutes
     const completedTasks = tasks.filter(
       (t) => t.status.name === "Completed" && t.completionDate && t.createdAt
     );
@@ -117,7 +116,6 @@ export class ReportService {
   }
 
   async getFarmMemberActivityReport(farmId: number, seasonId: number) {
-    // Get all relevant task participants for the farm and season
     const taskParticipants = await this.prisma.taskParticipant.findMany({
       where: {
         task: {
@@ -141,7 +139,6 @@ export class ReportService {
       },
     });
   
-    // Group by farmMember
     const memberMap = new Map<number, {
       id: number;
       username: string;
@@ -172,5 +169,4 @@ export class ReportService {
   
     return Array.from(memberMap.values());
   }
-  
 }

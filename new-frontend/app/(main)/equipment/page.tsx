@@ -118,11 +118,9 @@ const EquipmentPage = () => {
         const type = equipmentTypes.find((t) => t.id === typeId);
         if (!type) return et('unknown');
         
-        // Translation key pattern: "equipment.types.Tractor"
         const translationKey = `types.${type.name}`;
         const translation = et(translationKey);
         
-        // If translation doesn't exist, return original name
         return translation !== translationKey ? translation : type.name;
     };
 

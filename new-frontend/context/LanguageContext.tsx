@@ -17,21 +17,18 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    // Load language preference from localStorage on initial load
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'lt')) {
       setLanguageState(savedLanguage);
     } else {
-      // Changed default to 'lt' instead of using browser language
       setLanguageState('lt');
-      // Also set it in localStorage for persistence
       localStorage.setItem('language', 'lt');
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     localStorage.setItem('language', lang);
-    languageService.setLanguage(lang); // Update the language service
+    languageService.setLanguage(lang);
     setLanguageState(lang);
   };
 

@@ -14,11 +14,10 @@ export class PermissionsGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.get<string[]>('permissions', context.getHandler());
     if (!requiredPermissions) {
-      return true; // if no permissions are required, allow access
+      return true; 
     }
 
     const req = context.switchToHttp().getRequest<Request>();
-    //console.log("REQ.USER:", req.user); // 🔴 DEBUGGING: Log `req.user`
     const user = req.user as AuthenticatedUser;
     const selectedFarmId = req.headers['x-selected-farm-id'];
     const userId = user.id;
@@ -28,14 +27,13 @@ export class PermissionsGuard implements CanActivate {
     }  
     const farmId = parseInt(selectedFarmId as string);
 
-    // ✅ Fetch user's role and permissions for the selected farm
     const farmMember = await this.prisma.farmMember.findUnique({
-        where: { userId_farmId: { userId, farmId } }, // ✅ Only fetch for the selected farm
+        where: { userId_farmId: { userId, farmId } },
         include: {
           role: {
             include: {
               farmPermissions: {
-                where: { farmId }, // ✅ Filter permissions for the selected farm
+                where: { farmId }, 
                 include: { permission: true },
               },
             },
@@ -47,17 +45,11 @@ export class PermissionsGuard implements CanActivate {
     throw new ForbiddenException('User does not belong to the selected farm.');
     }
     
-    // 🔴 Debugging
-    //console.log("Full farmMember Object:", JSON.stringify(farmMember, null, 2));
       
 
-    // ✅ Extract user's permissions from their assigned role
     const userPermissions = farmMember.role.farmPermissions.map((fp) => fp.permission.name);
 
-    //console.log("UserPermissions:", userPermissions);
-    //console.log("RequiredPermissions:", requiredPermissions);
 
-    // ✅ Check if user has **at least one** of the required permissions
     const hasPermission = requiredPermissions.some((perm) => userPermissions.includes(perm));
 
     if (!hasPermission) {

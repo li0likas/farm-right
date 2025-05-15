@@ -9,12 +9,12 @@ import { InputText } from 'primereact/inputtext';
 import { FileUpload } from 'primereact/fileupload';
 import { logout } from "@/utils/auth";
 import api from '@/utils/api';
-import { useTranslations } from 'next-intl'; // ✅ Import for translations
-import LanguageToggle from '@/app/components/LanguageToggle'; // ✅ Import Language Toggle
+import { useTranslations } from 'next-intl';
+import LanguageToggle from '@/app/components/LanguageToggle';
 
 const RegisterPage = () => {
     const router = useRouter();
-    const t = useTranslations('auth'); // ✅ Use 'auth' namespace (you can adjust)
+    const t = useTranslations('auth');
 
     // Form state
     const [name, setName] = useState('');
@@ -103,7 +103,6 @@ const RegisterPage = () => {
     return (
         <div className="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden">
             
-            {/* ✅ Language Toggle at top right */}
             <div className="absolute top-0 right-0 m-4">
                 <LanguageToggle />
             </div>

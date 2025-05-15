@@ -17,7 +17,6 @@ export class FarmService {
       throw new ForbiddenException('Maximum of 3 farms allowed per user');
     }
 
-    // Create the farm
     const farm = await this.prisma.farm.create({
       data: {
         name,
@@ -25,7 +24,6 @@ export class FarmService {
       },
     });
 
-    // Get all available roles
     const ownerRole = await this.prisma.role.findUnique({
       where: { name: 'OWNER' },
     });
@@ -42,7 +40,6 @@ export class FarmService {
     if (!workerRole) throw new ForbiddenException('WORKER role not found');
     if (!agronomistRole) throw new ForbiddenException('AGRONOMIST role not found');
 
-    // Make the user a farm member with OWNER role
     await this.prisma.farmMember.create({
       data: {
         userId,
@@ -51,14 +48,12 @@ export class FarmService {
       },
     });
 
-    // Get all permissions except ADMIN_ACCESS
     const allPermissions = await this.prisma.permission.findMany({
       where: {
         name: { not: 'ADMIN_ACCESS' },
       },
     });
 
-    // Get WORKER permissions (basic read permissions)
     const workerPermissions = await this.prisma.permission.findMany({
       where: {
         name: {
@@ -76,7 +71,6 @@ export class FarmService {
       },
     });
 
-    // Get AGRONOMIST permissions (worker permissions + some additional ones)
     const agronomistPermissions = await this.prisma.permission.findMany({
       where: {
         name: {
@@ -103,7 +97,6 @@ export class FarmService {
       },
     });
 
-    // Assign ALL permissions to OWNER role
     for (const permission of allPermissions) {
       await this.prisma.farmRolePermission.create({
         data: {
@@ -114,7 +107,6 @@ export class FarmService {
       });
     }
 
-    // Assign default WORKER permissions
     for (const permission of workerPermissions) {
       await this.prisma.farmRolePermission.create({
         data: {
@@ -125,7 +117,6 @@ export class FarmService {
       });
     }
 
-    // Assign default AGRONOMIST permissions
     for (const permission of agronomistPermissions) {
       await this.prisma.farmRolePermission.create({
         data: {
@@ -136,7 +127,6 @@ export class FarmService {
       });
     }
 
-    // Create default seasons for the farm
     const seasons = [
       {
         name: '2024-2025',
@@ -281,7 +271,6 @@ export class FarmService {
       throw new NotFoundException('Membership not found');
     }
   
-    // Do not allow leaving own farm (Owner must delete)
     const farm = await this.prisma.farm.findUnique({ where: { id: farmId } });
     if (farm.ownerId === userId) {
       throw new ForbiddenException('Owner must delete farm instead of leaving');

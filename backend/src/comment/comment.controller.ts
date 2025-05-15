@@ -54,7 +54,7 @@
 //   @ApiResponse({ status: 404, description: 'Comment not found.' })
 //   @HttpCode(204)
 //   async delete(@Request() req, @Param('id') id: string): Promise<void> {
-//     const farmId = parseInt(req.headers['x-selected-farm-id'], 10); // ✅ Extract farmId
+//     const farmId = parseInt(req.headers['x-selected-farm-id'], 10); // Extract farmId
 //     if (isNaN(farmId)) {
 //       throw new NotFoundException('Invalid farm ID.');
 //     }

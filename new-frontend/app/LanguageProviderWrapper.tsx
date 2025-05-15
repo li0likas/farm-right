@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import { LanguageProvider, useLanguage } from '@/context/LanguageContext';
 import { IntlProvider } from 'next-intl';
 
-// Import translations
 import enTranslations from '@/translations/en.json';
 import ltTranslations from '@/translations/lt.json';
 
